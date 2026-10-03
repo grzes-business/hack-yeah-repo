@@ -5,7 +5,8 @@ export const CHECKIN_DIMENSIONS = ["energy", "soreness", "mood", "illness"] as c
 export type CheckinDimension = (typeof CHECKIN_DIMENSIONS)[number];
 
 // Local window [05:00, 12:00) in the user's time zone. Starting and resuming both require it.
-export const CHECKIN_WINDOW = { opensAt: "05:00", closesAt: "12:00", startMinute: 5 * 60, endMinute: 12 * 60 } as const;
+export type CheckinWindow = { opensAt: string; closesAt: string; startMinute: number; endMinute: number };
+export const CHECKIN_WINDOW: CheckinWindow = { opensAt: "05:00", closesAt: "12:00", startMinute: 5 * 60, endMinute: 12 * 60 };
 
 export type CheckinProgress = {
  localDate: LocalDate;
@@ -28,14 +29,14 @@ export function localClock(instant: string, timeZone: string): { localDate: Loca
  return { localDate: getLocalDate(instant, timeZone), minute: value("hour") * 60 + value("minute") };
 }
 
-export function isWindowOpen(minute: number): boolean {
- return minute >= CHECKIN_WINDOW.startMinute && minute < CHECKIN_WINDOW.endMinute;
+export function isWindowOpen(minute: number, window: CheckinWindow = CHECKIN_WINDOW): boolean {
+ return minute >= window.startMinute && minute < window.endMinute;
 }
 
 // Pure and deterministic: identical progress and clock produce the identical step.
-export function getNextStep(progress: CheckinProgress, minute: number): CheckinStep {
+export function getNextStep(progress: CheckinProgress, minute: number, window: CheckinWindow = CHECKIN_WINDOW): CheckinStep {
  if (progress.ended) return { kind: "closed", localDate: progress.localDate, reason: "ended" };
- if (!isWindowOpen(minute)) return { kind: "closed", localDate: progress.localDate, reason: "outside_window" };
+ if (!isWindowOpen(minute, window)) return { kind: "closed", localDate: progress.localDate, reason: "outside_window" };
  for (const dimension of CHECKIN_DIMENSIONS) {
   if (progress.answered.includes(dimension) || progress.skipped.includes(dimension)) continue;
   return { kind: "ask", dimension, localDate: progress.localDate };

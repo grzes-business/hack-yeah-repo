@@ -12,9 +12,10 @@ create table public.morning_checkins (
 );
 alter table public.morning_checkins enable row level security;
 revoke all on public.morning_checkins from public, anon;
-grant select, insert, update on public.morning_checkins to authenticated;
+grant select, insert, update, delete on public.morning_checkins to authenticated;
 grant all on public.morning_checkins to service_role;
 create policy owner_select on public.morning_checkins for select to authenticated using ((select auth.uid()) = user_id);
 create policy owner_insert on public.morning_checkins for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy owner_delete on public.morning_checkins for delete to authenticated using ((select auth.uid()) = user_id);
 create policy owner_update on public.morning_checkins for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 commit;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useHealthSession } from "./session";
 import type { CheckinDimension } from "@/lib/checkin/controller";
+import { HEALTH_HISTORY_CHANGED } from "./voice-conversation";
 
 type Step =
  | { kind: "ask"; dimension: CheckinDimension; localDate: string; question: string }
@@ -16,6 +17,15 @@ type Checkin = {
  ended: boolean;
  step: Step;
 };
+
+// TEMPORARY test window. Remove with the marked lines, lib/checkin/dev-window.ts, and the header in app/api/checkin/route.ts.
+const DEV_WINDOW_KEY = "checkin-dev-window";
+const DEV_WINDOW_HEADER = "x-checkin-dev-window";
+const isDevBuild = process.env.NODE_ENV !== "production";
+function savedDevWindow(): string | null {
+ if (!isDevBuild || typeof window === "undefined") return null;
+ try { return window.localStorage.getItem(DEV_WINDOW_KEY); } catch { return null; }
+}
 
 const labels: Record<CheckinDimension, string> = { energy: "Energy", soreness: "Soreness", mood: "Mood", illness: "Illness symptoms" };
 
@@ -33,13 +43,32 @@ export function MorningCheckin() {
  const [checkin, setCheckin] = useState<Checkin | null>(null);
  const [error, setError] = useState<string | null>(null);
  const [busy, setBusy] = useState(false);
+ // TEMPORARY test window state.
+ const [devWindow, setDevWindow] = useState<string | null>(savedDevWindow);
+ const [devFrom, setDevFrom] = useState("00:00");
+ const [devTo, setDevTo] = useState("23:59");
  const token = session?.access_token;
 
- async function request(method: "GET" | "POST", body?: unknown) {
+ function devHeaders(): Record<string, string> {
+  return devWindow ? { [DEV_WINDOW_HEADER]: devWindow } : {};
+ }
+
+ function applyDevWindow() {
+  const value = `${devFrom}-${devTo}`;
+  try { window.localStorage.setItem(DEV_WINDOW_KEY, value); } catch { /* Test-only convenience. */ }
+  setDevWindow(value);
+ }
+
+ function clearDevWindow() {
+  try { window.localStorage.removeItem(DEV_WINDOW_KEY); } catch { /* Test-only convenience. */ }
+  setDevWindow(null);
+ }
+
+ async function request(method: "GET" | "POST" | "DELETE", body?: unknown) {
   if (!token) return;
   setBusy(true);
   try {
-   const response = await fetch("/api/checkin", { method, headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+   const response = await fetch("/api/checkin", { method, headers: { Authorization: `Bearer ${token}`, ...devHeaders(), ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
    const json = await response.json();
    if (!response.ok) throw new Error(json.error ?? "Morning check-in could not update.");
    setCheckin(json.checkin as Checkin);
@@ -54,26 +83,42 @@ export function MorningCheckin() {
  useEffect(() => {
   if (!token) return;
   let active = true;
-  fetch("/api/checkin", { headers: { Authorization: `Bearer ${token}` } })
-   .then(async response => {
-    const json = await response.json();
-    if (!response.ok) throw new Error(json.error ?? "Morning check-in could not load.");
-    if (active) { setCheckin(json.checkin as Checkin); setError(null); }
-   })
-   .catch(caught => { if (active) setError(caught instanceof Error ? caught.message : "Morning check-in could not load."); });
-  return () => { active = false; };
- }, [token]);
+  const load = () => {
+   fetch("/api/checkin", { headers: { Authorization: `Bearer ${token}`, ...(devWindow ? { [DEV_WINDOW_HEADER]: devWindow } : {}) } })
+    .then(async response => {
+     const json = await response.json();
+     if (!response.ok) throw new Error(json.error ?? "Morning check-in could not load.");
+     if (active) { setCheckin(json.checkin as Checkin); setError(null); }
+    })
+    .catch(caught => { if (active) setError(caught instanceof Error ? caught.message : "Morning check-in could not load."); });
+  };
+  load();
+  // A voice answer saved elsewhere on the page re-reads accepted observations without a manual Refresh.
+  window.addEventListener(HEALTH_HISTORY_CHANGED, load);
+  return () => { active = false; window.removeEventListener(HEALTH_HISTORY_CHANGED, load); };
+ }, [token, devWindow]);
 
  if (!session) return null;
  return (
   <section className="card" aria-label="Morning check-in">
    <h2>Morning check-in</h2>
+   {isDevBuild && (
+    <details className="small">
+     <summary>Test window (temporary, dev only){devWindow ? ` · active ${devWindow}` : ""}</summary>
+     <label>From <input type="time" value={devFrom} onChange={event => setDevFrom(event.target.value)} /></label>{" "}
+     <label>To <input type="time" value={devTo} onChange={event => setDevTo(event.target.value)} /></label>{" "}
+     <button onClick={applyDevWindow} disabled={!devFrom || !devTo || devFrom >= devTo}>Apply window</button>{" "}
+     <button onClick={clearDevWindow} disabled={!devWindow}>Use real window</button>
+     <p className="small">Dev only. Reset clears today&apos;s skips and end marker and deletes today&apos;s energy, soreness, mood and illness answers. Capture history stays.</p>
+     <button onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }} disabled={busy}>Reset today&apos;s check-in and answers</button>
+    </details>
+   )}
    {checkin ? (
     <>
      <p role="status">{statusText(checkin.step, checkin.window)}</p>
      {checkin.step.kind === "ask" && <>
       <p><strong>{checkin.step.question}</strong></p>
-      <p className="small">Answer aloud in the conversation below. The answer is saved as a normal report and counted here after you refresh.</p>
+      <p className="small">Answer aloud in the conversation below. The answer is saved as a normal report and counted here as soon as it is saved.</p>
       <div className="voice-actions">
        <button onClick={() => void request("POST", { action: "skip", dimension: checkin.step.kind === "ask" ? checkin.step.dimension : undefined })} disabled={busy}>Skip this question</button>
        <button onClick={() => void request("POST", { action: "end" })} disabled={busy}>End check-in for today</button>

@@ -19,6 +19,11 @@ function record(row: Row<"turn_extractions">, owner: string) {
 function databaseFailure(operation: string, error: {code: string}) {
  console.error("[capture] Database operation failed", {operation, code:error.code});
 }
+// Diagnostics name the failing rule only; they never include transcript text or extracted values.
+function validationReason(error: unknown) {
+ if (error instanceof z.ZodError) return error.issues.map(issue => `${issue.path.join(".") || "(root)"}:${issue.code}`).slice(0, 8);
+ return error instanceof Error ? error.message.slice(0, 120) : "unknown";
+}
 function failed(error: unknown) {
  if(!(error instanceof RequestFailure)) console.error("[capture] Unexpected processing failure", JSON.stringify({kind:error instanceof z.ZodError ? "validation" : "internal"}));
  return Response.json({error:error instanceof RequestFailure ? error.message : "Extraction could not complete. No new observations were confirmed. Retry the capture."},{status:error instanceof RequestFailure ? error.status:503,headers});
@@ -61,8 +66,8 @@ export async function POST(request: Request) {
    let candidates;
    try { candidates=await extractCandidates({transcript:root.transcript,followup:source.id===root.id?null:source.transcript,previousResult:{ latest:job.result, accepted:job.accepted_result },anchorDate:getLocalDate(anchorAt,job.time_zone),timeZone:job.time_zone}); }
    catch { throw new RequestFailure("The extraction service could not return a complete observation. Check connection, API billing/model access, then retry.",502); }
-   try { result=ExtractionResultSchema.parse(canonicalizeExtraction(candidates,{rootTurnId:turnId,sourceTurnId:source.id,anchorAt,capturedAt,timeZone:job.time_zone})); }
-   catch { console.error("[capture] Candidate validation failed", JSON.stringify({attempt})); }
+   try { result=ExtractionResultSchema.parse(canonicalizeExtraction(candidates,{rootTurnId:turnId,sourceTurnId:source.id,anchorAt,capturedAt,timeZone:job.time_zone,sourceText:[root.transcript,source.id!==root.id?source.transcript:""].join(" ")})); }
+   catch (error) { console.error("[capture] Candidate validation failed", JSON.stringify({attempt, reason: validationReason(error)})); }
   }
   if (!result) throw new RequestFailure("The extraction service returned an invalid observation. No new observations were saved. Retry capture.",502);
   if(source.id!==root.id){

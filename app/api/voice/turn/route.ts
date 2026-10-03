@@ -13,6 +13,13 @@ import type { Json, Row } from "@/lib/db/database.types";
 export const runtime="nodejs";
 export const maxDuration=90;
 const headers={"Cache-Control":"no-store"};
+function claimRefusalMessage(reason: string) {
+ if(reason.includes("Completed owned target"))return "The selected report is still saving or has no completed capture. Wait a moment, or clear the follow-up target and try again.";
+ if(reason.includes("Owned capture turn"))return "This turn is not part of a capture conversation. Speak again in the Talk conversation.";
+ if(reason.includes("Transcript changed"))return "This turn's transcript changed. Reload history and try again.";
+ if(reason.includes("Invalid follow-up root"))return "The selected report cannot be its own follow-up target. Clear the target and try again.";
+ return "This turn or selected report changed. Reload history and select the report again.";
+}
 const cancelPhrase=/^\W*(cancel|skip|never ?mind|forget it|stop|anuluj|pomi[nń])(\s+(this|that|it|the clarification|that report))?\W*$/iu;
 function followupId(turnId:string){const h=createHash("sha256").update("voice-followup-v1:"+turnId).digest("hex");return `${h.slice(0,8)}-${h.slice(8,12)}-5${h.slice(13,16)}-8${h.slice(17,20)}-${h.slice(20,32)}`;}
 export async function POST(request:Request){
@@ -28,7 +35,12 @@ export async function POST(request:Request){
   const zone=TimeZoneSchema.parse(profile.data.time_zone),today=getLocalDate(new Date(turn.data.occurred_at).toISOString(),zone);
   const token=randomUUID();
   const claim=await client.rpc("claim_voice_turn",{p_turn:input.turnId,p_token:token,p_target:input.targetRootId});
-  if(claim.error)throw new RequestFailure(claim.error.code==="P0001"?"This turn or selected report changed. Reload history and select the report again.":"Voice processing storage is unavailable. Apply migration 005.",claim.error.code==="P0001"?409:503);
+  if(claim.error){
+   // Database raise messages are fixed strings; they name the rule, never transcript text.
+   console.error("[voice] Claim refused",JSON.stringify({code:claim.error.code,reason:claim.error.message?.slice(0,120)??null}));
+   if(claim.error.code==="P0001")throw new RequestFailure(claimRefusalMessage(claim.error.message??""),409);
+   throw new RequestFailure("Voice processing storage is unavailable. Apply migration 005.",503);
+  }
   const claimed=z.object({state:z.enum(["ready","cached","busy"]),job:z.unknown().optional()}).parse(claim.data);
   if(claimed.state==="busy")throw new RequestFailure("This turn is still processing. Wait briefly, then retry.",409);
   const job=claimed.job as Row<"voice_turn_runs">;

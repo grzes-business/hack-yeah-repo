@@ -10,6 +10,8 @@ import { observationText } from "@/lib/conversation/feedback";
 import { readTranscriptEvent } from "@/lib/conversation/events";
 import { ConversationSchema, ConversationTurnSchema, type Conversation, type ConversationTurn } from "@/lib/db/records";
 
+// Lets other panels (such as the morning check-in) re-read accepted observations after a voice save.
+export const HEALTH_HISTORY_CHANGED = "health-history-changed";
 type Pending = { kind: "conversation"; value: Conversation } | { kind: "turn"; value: ConversationTurn };
 type Phase = "idle" | "requesting" | "connecting" | "active" | "stopping" | "failed";
 const labels: Record<Phase, string> = { idle: "Microphone off", requesting: "Waiting for microphone permission…", connecting: "Connecting voice…", active: "Conversation live", stopping: "Stopping…", failed: "Microphone off · connection ended" };
@@ -88,7 +90,7 @@ function VoiceSession() {
       else if(outcome.capture&&outcome.targetRootId)chooseTarget(outcome.targetRootId);
       if(outcome.reply&&entry.epoch===voiceEpoch.current)transport.current?.say(outcome.reply,entry.turn.id);
      }
-     refreshHistory();setHistoryRevision(v=>v+1);
+     refreshHistory();setHistoryRevision(v=>v+1);window.dispatchEvent(new Event(HEALTH_HISTORY_CHANGED));
     }catch(error){
      if(!alive.current||uid.current!==owner)return;
      const message=error instanceof Error&&error.name!=="AbortError"?error.message:"Processing interrupted. Retry this saved turn.";

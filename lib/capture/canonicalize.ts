@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { addCalendarDays, getLocalDate, LocalDateSchema, ExtractionDraftResultSchema, ExtractionResultSchema, SubjectiveEventDraftSchema, SubjectiveEventSchema, SubjectiveEventRegistry, type ExtractionResult } from "../domain";
 import { ProviderExtractionSchema, type CandidateSchema } from "./contracts";
+import { isSupportedBy } from "./mentions";
 import type { z } from "zod";
 
 type Candidate = z.infer<typeof CandidateSchema>;
-export type CaptureContext = { rootTurnId: string; sourceTurnId: string; anchorAt: string; capturedAt: string; timeZone: string };
+export type CaptureContext = { rootTurnId: string; sourceTurnId: string; anchorAt: string; capturedAt: string; timeZone: string; sourceText?: string };
 
 function clockInstant(date: string, clock: string, zone: string): string {
  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(clock)) throw new Error("Please specify the time as hours and minutes.");
@@ -40,15 +41,22 @@ function valueFor(candidate: Candidate) {
 }
 export function canonicalizeExtraction(input: unknown, context: CaptureContext): ExtractionResult {
  const response = ProviderExtractionSchema.parse(input);
- if (response.status !== "captured") {
-  if (response.events.length || !response.reason?.trim()) throw new Error("Invalid empty/clarification outcome.");
-  if (response.status === "needs_clarification") return ExtractionResultSchema.parse({ status: response.status, eventTypes: response.eventTypes, reason: response.reason });
-  if (response.eventTypes.length) throw new Error("Unexpected event type.");
+ // The status and the events decide the outcome. Fields that do not apply to that status are ignored, so nothing extra is saved.
+ if (response.status === "needs_clarification") {
+  if (!response.reason?.trim()) throw new Error("Invalid clarification outcome.");
+  return ExtractionResultSchema.parse({ status: response.status, eventTypes: response.eventTypes, reason: response.reason });
+ }
+ if (response.status === "nothing_trackable") {
+  if (!response.reason?.trim()) throw new Error("Invalid empty outcome.");
   return ExtractionResultSchema.parse({ status: response.status, reason: response.reason });
  }
- if (response.reason !== null || response.eventTypes.length || !response.events.length) throw new Error("Invalid captured outcome.");
+ if (!response.events.length) throw new Error("Invalid captured outcome.");
+ // Pain and illness events must be supported by the words spoken; an unsupported event is removed, never saved.
+ const supported = response.events.filter(event => context.sourceText === undefined || isSupportedBy(event.type, context.sourceText));
+ if (!supported.length) return ExtractionResultSchema.parse({ status: "nothing_trackable", reason: "That statement does not contain a supported observation. Please say it again." });
+ const supportedEvents = supported;
  const drafts = [];
- for (const event of response.events) {
+ for (const event of supportedEvents) {
   const value = valueFor(event);
   // Validate value semantics before handling temporal clarification.
   const validatedValue = SubjectiveEventDraftSchema.safeParse({ type:event.type, value, occurredAt:context.anchorAt, extractionConfidence:null });
