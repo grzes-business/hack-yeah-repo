@@ -2,7 +2,7 @@
 
 ## Status and entry points
 
-Implemented 2026-10-03. Migration `202610030003_turn_extractions.sql` was applied successfully to the existing hosted Supabase project through SQL Editor. Type/lint/build checks passed; **live extraction, two-user integration, failure/replay, and correction acceptance checks remain pending**. No automated tests or live extraction requests were run in this turn. The user confirmed Stage 3 live voice works; that confirmation does not verify every Stage 3 failure/security criterion.
+Implemented 2026-10-03. Migration `202610030003_turn_extractions.sql` was applied successfully to the existing hosted Supabase project through SQL Editor. Type/lint/build checks passed; **live extraction, two-user integration, failure/replay, and correction acceptance checks remain pending**. No automated tests or live extraction requests were run during the initial implementation. The timestamp incident checks below subsequently verified one live capture and cached replay; the broader acceptance matrix remains pending. The user confirmed Stage 3 live voice works; that confirmation does not verify every Stage 3 failure/security criterion.
 
 The capture pipeline is finalized saved user turn → authenticated `/api/capture` → owned extraction claim → provider candidate → deterministic date/value validation → atomic event/result save → UI confirmation. The live voice model still has no health-writing tools. No feature builder, statistics, autonomous question controller, or investigation was added.
 
@@ -68,3 +68,13 @@ Run when requested/authorized and record actual results under Stage 4 AC IDs:
 - Two-user isolation and forged transcript/provenance attempts, plus speech→saved turn→saved observation→Timeline walkthrough.
 
 A representative manual phrase is “My energy is four out of ten, and I had two beers yesterday.” Confirm both observations and their separate dates; then correct alcohol on the original turn and inspect Timeline/reload.
+
+## Capture 503 incident — 2026-10-03
+
+The response “Observations were not confirmed. Retry to recover the transaction result.” came from `finish_turn_extraction`. Reproduction against hosted Supabase returned `P0001 / Event provenance mismatch`: Postgres `now()` retains microseconds, while the application canonicalizes `capturedAt` with JavaScript `Date.toISOString()` to milliseconds. The original equality check therefore rejected otherwise valid events.
+
+Additive migration `202610030004_capture_timestamp_precision.sql` was applied through hosted SQL Editor. It compares event `capturedAt` with `date_trunc('milliseconds', j.captured_at)`; ownership, source, zone, occurrence bounds, lease checks, and atomic correction remain intact. Existing failed claims retain their frozen context and can be retried. Apply this migration after 003 on other environments.
+
+Focused diagnosis verified the original database failure, then one synthetic saved turn through the actual localhost `/api/capture` route and live provider: HTTP 200, captured result, revision 1, one persisted event. Replay returned HTTP 200 with the same revision and one event. Synthetic database records were removed; two disposable anonymous Auth accounts remain. This does not verify all event types, correction, concurrency, or cross-user capture acceptance.
+
+The route now logs only failed database operation names and error codes, plus a validation/internal category for unexpected failures. It does not log transcripts, observation payloads, or credentials.
