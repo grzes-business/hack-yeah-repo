@@ -1,0 +1,123 @@
+:root {
+  --background: #f7f7f5;
+  --foreground: #18181b;
+  --muted: #6b6b73;
+  --card: #ffffff;
+  --border: #e4e4e7;
+  --green: #15803d;
+  --green-bg: #dcfce7;
+  --amber: #b45309;
+  --amber-bg: #fef3c7;
+  --blue: #1d4ed8;
+  --blue-bg: #dbeafe;
+  --gray-bg: #f0f0f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0e0e10;
+    --foreground: #f4f4f5;
+    --muted: #a1a1aa;
+    --card: #18181b;
+    --border: #27272a;
+    --green: #86efac;
+    --green-bg: #14532d;
+    --amber: #fcd34d;
+    --amber-bg: #78350f;
+    --blue: #93c5fd;
+    --blue-bg: #1e3a8a;
+    --gray-bg: #27272a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.lede {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.card p {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--gray-bg);
+  color: var(--foreground);
+}
+
+.badge-local {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.badge-preview {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+.badge-production,
+.badge-ok {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.badge-muted {
+  color: var(--muted);
+}
