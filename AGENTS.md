@@ -8,27 +8,61 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Project guidance
+# Agent entry point
 
-## Stack
+Read these in order before changing product behavior:
 
-- Next.js (App Router) with TypeScript, React 19
-- Supabase for Postgres, Auth, and Storage, via `@supabase/supabase-js` only. Do not add Drizzle, Prisma, or another ORM.
-- Deployed on Vercel. Package manager: pnpm (lockfile: `pnpm-lock.yaml`).
+1. [`CONTEXT.md`](CONTEXT.md) — canonical product thesis, domain vocabulary, architecture boundaries, and invariants.
+2. [`docs/ROADMAP.md`](docs/ROADMAP.md) — read the stage relevant to your task and its prerequisites.
+3. Read the focused references below for the affected boundary.
+4. Read the repo-specific rules here and inspect the existing code before editing it.
 
-## Commands
+| Working on | Read |
+| --- | --- |
+| Structure, storage, native/web seam | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Registries, schemas, time/value semantics | [`docs/DOMAIN.md`](docs/DOMAIN.md) |
+| Voice, extraction, check-ins, question selection | [`docs/CONVERSATION.md`](docs/CONVERSATION.md) and domain |
+| Features, analytics, investigation, experiments | [`docs/EVIDENCE.md`](docs/EVIDENCE.md), domain, and architecture |
+| Product UI or demo fixtures | [`docs/DEMO.md`](docs/DEMO.md) and relevant domain/evidence rules |
 
-- `pnpm install`: install dependencies
-- `pnpm dev`: dev server at http://localhost:3000
-- `pnpm build`: production build; must pass before merging
-- `pnpm start`: serve the production build
-- `pnpm lint`: ESLint
+For a change, read the relevant section(s) above and the code it touches. If a future domain contract document is added, link it from `CONTEXT.md` and update this reading path.
 
-## Conventions
+## Non-negotiable product constraints
 
-- Shared helpers go in `lib/`. Routes go in `app/`.
-- Supabase: create clients with `createSupabaseClient()` from `lib/supabase.ts`. It returns `null` when credentials are missing, so the app must keep building and rendering without them. Do not query the database on the status page or during build.
-- Environment: only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are used. Never commit `.env*` files except `.env.example`. Never add service role keys or other secrets with a `NEXT_PUBLIC_` prefix.
-- Deployment environment: use `getDeploymentEnvironment()` from `lib/deployment.ts`. It reads Vercel's `VERCEL_ENV`.
-- Env var changes on Vercel take effect only after a redeploy.
-- Keep the starter small. Add dependencies only when a feature needs them.
+- **AI can communicate evidence; AI cannot create evidence.** Deterministic, validated code defines accepted variables and relationships and calculates baselines, anomalies, comparisons, sample sizes, evidence labels, and experiment results. The model may converse, phrase application-selected questions, extract into predefined schemas, and explain structured evidence.
+- The model must not invent metrics, subjective event types, relationship edges, statistical results, or causal claims. Unknown speech stays unstructured or is marked not trackable / needing clarification.
+- Keep raw observations separate from derived daily features and evidence. Preserve source and conversation provenance.
+- Every investigated relationship is predefined and specifies its temporal lag and method. Report associations as associations, with uncertainty and sample size.
+- Mock data is a first-class source for development, demos, and analytics validation. HealthKit is a later adapter, not a prerequisite for product logic.
+- Unknown values must stay unknown; absence of a report/sample is not zero or false. Every numerical explanation must trace to deterministic evidence.
+- Keep HealthKit and Capacitor details behind `HealthDataSource`; web/backend and native integration meet at normalized `MetricSample[]`.
+- Do not implement a later roadmap stage while working on an earlier stage unless the user explicitly changes scope. Treat roadmap entries as direction, not already-approved implementation details.
+
+## Repository rules
+
+- Stack: Next.js App Router, TypeScript, React 19, Supabase Postgres/Auth/Storage via `@supabase/supabase-js`, deployed on Vercel; use pnpm.
+- Shared helpers belong in `lib/`; routes belong in `app/`. Keep the starter small and add dependencies only when a feature needs them.
+- Create Supabase clients with `createSupabaseClient()` from `lib/supabase.ts`. It returns `null` without credentials. The app must build and render without Supabase credentials; do not query the database on the status page or during build.
+- Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are currently used. Never commit `.env*` files except `.env.example`; never expose service-role keys or other secrets with a `NEXT_PUBLIC_` prefix.
+- Use `getDeploymentEnvironment()` from `lib/deployment.ts` for Vercel environment detection. Vercel environment-variable changes require a redeploy.
+- Preserve the existing Next.js/Supabase setup. Do not add Drizzle, Prisma, or another ORM.
+- Before code changes, follow the generated Next.js rules at the top of this file and inspect the relevant installed Next.js guide. Keep documentation-only work independent of app changes.
+
+### Commands
+
+- `pnpm install` — dependencies; `pnpm dev` — local server; `pnpm start` — production server.
+- `pnpm build` — production build; must pass before merging application changes.
+- `pnpm lint` — ESLint for `app` and `lib`.
+
+See [`README.md`](README.md) for startup, environment variables, and deployment instructions.
+
+## Working and documentation conventions
+
+- Before changing an architectural boundary, check `CONTEXT.md` and `docs/ARCHITECTURE.md`; update those docs in the same change if the agreed design changes.
+- Keep product behavior in code aligned with the registries and schemas defined during Stage 0. Do not quietly create an alternate source of truth.
+- Future stage issues should link to `CONTEXT.md` and the relevant roadmap/architecture section, state their stage and outcome, list in-scope work and acceptance criteria, and identify dependencies. Keep umbrella issues concise; put detailed implementation contracts in versioned docs when they become stable.
+- For new domain/architecture docs, add a link here or in `CONTEXT.md` so agents can find them. Prefer updating an existing canonical doc over duplicating rules.
+- State the stage, intended outcome, and affected boundaries before implementing. Identify existing work so a stage does not rebuild the starter.
+- Resolve an open decision in its owning document when implementation needs it. Do not silently treat illustrative values, schemas, or methods as finalized contracts. Ask the user when a choice changes product scope or an agreed constraint; routine implementation choices can be documented and made within the task.
+- Validate the changed behavior at its boundary. Report checks actually performed and known limitations. For documentation-only work, check links, consistency, and changed-file scope; application tests are not needed merely because docs changed.
+- Keep `CLAUDE.md` pointing to this file as the shared routing source.

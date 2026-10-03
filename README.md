@@ -2,6 +2,12 @@
 
 Next.js (App Router, TypeScript) with Supabase for Postgres, Auth, and Storage, deployed on Vercel. The home page shows whether the app is running locally, as a Vercel preview, or in production, and whether Supabase is configured.
 
+## Health-app project documentation
+
+This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stage -1 establishes the documentation; product implementation follows the staged roadmap.
+
+Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. The setup instructions below describe the existing starter.
+
 ## Prerequisites
 
 - Node.js 20.9 or newer
