@@ -8,8 +8,8 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Hackathon starter",
-  description: "Next.js, Supabase, and Vercel starter for the hackathon.",
+  title: "Personal Evidence",
+  description: "Connect wearable observations with the context of your day.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

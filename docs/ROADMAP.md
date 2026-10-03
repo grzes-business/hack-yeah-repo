@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 and 0 are implemented; Stage 1 is next.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
+This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 is next.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
 
 | Stage | Umbrella scope | Outcome |
 |---|---|---|
@@ -48,11 +48,15 @@ Done when mock, extraction, and analytics developers can consume one set of cont
 
 ### Stage 1 — Application and persistence foundation
 
+Status: shell, demo session flow, typed repository, and seven-table migration implemented. The migration is applied with all seven tables using RLS. Anonymous Auth is enabled; browser demo/profile restoration, live ownership/provenance/permission checks, and missing-credential build/render passed. See [Persistence](PERSISTENCE.md) for setup and remaining acceptance checks.
+
 Extend the existing Next.js/Supabase setup with suitable module boundaries, migrations/typed access, user ownership, and a documented demo/test-user flow. Create core storage and minimal navigation. Preserve starter configuration conventions.
 
 Done when the chosen user can store/read their intended records under documented access rules, the shell exposes planned areas, and missing credentials still allow the starter to build/render. Excludes voice, analytics, and native work. Depends on Stage 0.
 
 ### Stage 2 — Mock source and ingestion
+
+Status: implemented and verified. [Fixtures](FIXTURES.md) owns the versioned 56-day recipe, planted relationships/gaps, stable IDs, separate subjective fixtures, retry/reset semantics, and complete range reads. The interval migration is applied to hosted Supabase.
 
 Implement the source contract and canonical objective ingestion. Seed roughly 45–60 days with realistic variation and deliberate patterns. Define a separate subjective fixture path to support those patterns; record seed/ground truth/reset behavior.
 
@@ -153,4 +157,4 @@ Decisions to resolve: [open choices owned by this stage]
 Documentation updates: [canonical documents affected]
 ```
 
-Start with Stage 1 as the next umbrella issue. Reference the implemented Stage 0 types and refine persistence acceptance criteria against them. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.
+Stages 1–2 are verified. The next umbrella issue is Stage 3 live voice: reference [conversation rules](CONVERSATION.md), [persistence](PERSISTENCE.md), and implemented domain contracts; resolve the concrete voice API and secure session transport. Extraction remains Stage 4. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.

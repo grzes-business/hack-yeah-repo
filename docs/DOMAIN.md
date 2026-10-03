@@ -112,7 +112,7 @@ Serialized modes are lowercase: `capture`, `morning_checkin`, `post_workout`, `i
 
 `HealthDataSource.getSamples({ from: Date, to: Date, metrics: Metric[] })` returns `Promise<MetricSample[]>`. Bounds are valid increasing instants with half-open semantics `[from, to)`. Requested metrics are nonempty and unique. Instantaneous samples include the start and exclude the end; interval samples are returned when they overlap, retaining full bounds. `parseHealthDataSourceResponse()` validates records, requested keys, overlaps, and unique batch IDs. Empty results mean no returned samples, not proof of inactivity.
 
-Adapters can be bound to a user's source context; source requests/payloads do not authorize user access. Mock subjective fixtures use a separate seeding path. Neither a mock nor Apple adapter is implemented in Stage 0.
+Adapters can be bound to a user's source context; source requests/payloads do not authorize user access. Mock subjective fixtures use a separate seeding path. Stage 0 defines the interface only. Stage 2 implements the mock adapter and separate subjective fixture path; see [Fixtures](FIXTURES.md). Apple integration remains later work.
 
 ## Change and verification rules
 

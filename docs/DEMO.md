@@ -1,6 +1,6 @@
 # Product experience and stage demo
 
-Wearables observe a change; conversation supplies context they cannot measure. Demonstrate that loop with provenance and uncertainty. This is a target for later stages, not functionality present in the starter.
+Wearables observe a change; conversation supplies context they cannot measure. Demonstrate that loop with provenance and uncertainty. The complete evidence loop is a target for later stages. Stage 2 currently provides the sample-history preparation and Timeline inspection steps.
 
 ## Demo sequence
 
@@ -30,7 +30,7 @@ Choose a fixture whose registry entries support the outcome and question. Exampl
 
 ## Demo milestones
 
-- Stage 2: repeatable mock history and resettable fixture story.
+- Stage 2 complete: Today loads/removes 56 days of synthetic history; Timeline labels wearable and subjective fixtures. [FIXTURES.md](FIXTURES.md) records ground truth and omissions. No investigation/baseline/evidence is shown yet.
 - Stages 3–5: conversation, validated capture, controlled check-ins.
 - Stages 6–8: features, calculated evidence, voice explanation.
 - Stage 9: differentiating active-sensing loop; Stage 10: clear product UI.

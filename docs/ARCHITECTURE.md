@@ -4,9 +4,9 @@ This is a target architecture for staged implementation, not a claim that these 
 
 ## Current repository baseline
 
-The inspected repository uses Next.js 16.3.8, React 19, TypeScript, pnpm, and `@supabase/supabase-js`. `app/page.tsx` displays local/preview/production status and whether public Supabase credentials are present. `lib/supabase.ts` creates a client or returns `null`; `lib/deployment.ts` reads Vercel environment status. Configuration presence is not a connectivity or database-health check.
+The inspected repository uses Next.js 16.3.8, React 19, TypeScript, pnpm, and `@supabase/supabase-js`. `app/status/page.tsx` displays local/preview/production status and whether public Supabase credentials are present. `lib/supabase.ts` creates a client or returns `null`; `lib/deployment.ts` reads Vercel environment status. Configuration presence is not a connectivity or database-health check.
 
-Stage 0 now provides the shared registries and Zod contracts under `lib/domain/`, and the health-source interface/validation under `lib/health/`. No product migrations, ingestion pipelines, voice sessions, analytical algorithms, or native project are implemented. External Supabase schema and deployment state were not inspected. Stage 1 should extend the existing foundation rather than recreate it. Setup remains documented in [README](../README.md).
+Stage 0 now provides the shared registries and Zod contracts under `lib/domain/`, and the health-source interface/validation under `lib/health/`. Stage 1 adds seven-table migration SQL, `lib/db/` typed/validated access, browser-owned anonymous demo sessions, and Today/Talk/Evidence/Timeline navigation. The status page stays outside the session boundary. The hosted migration is applied; anonymous Auth is enabled; see [Persistence](PERSISTENCE.md). Stage 2 adds `MockHealthDataSource`, canonical ingestion, separate subjective fixtures, owned batch persistence, paginated range reads, and sample controls. Voice, analytical algorithms, and native integration remain later stages. Setup remains documented in [README](../README.md).
 
 ## Data and trust flow
 
@@ -74,7 +74,7 @@ Initial table candidates: profiles; raw metric samples and subjective events; co
 
 Define ownership/access for user records before storing personal data. Stage 1 must make its demo/test-user strategy explicit and decide authentication and row-level access rules. Shared helpers using public keys do not confer unrestricted access. Any future model-provider credential belongs to server-only configuration. Existing public Supabase variables and the missing-credentials starter behavior remain supported.
 
-Record ingestion identity/replay semantics before repeated sync or capture can create duplicate observations. Stages 2/4 establish repeatable mock ingestion/capture; Stage 13 hardens source-specific duplicate handling with real data. Stage 6 defines how changed observations invalidate or rebuild features, and later analytical results must use the updated feature state. These are implementation requirements to settle in those stages, not current mechanisms.
+Record ingestion identity/replay semantics before repeated sync or capture can create duplicate observations. Stages 2/4 establish repeatable mock ingestion/capture; Stage 13 hardens source-specific duplicate handling with real data. Stage 6 defines how changed observations invalidate or rebuild features, and later analytical results must use the updated feature state. Mock replay is implemented in Stage 2 as documented in [Fixtures](FIXTURES.md). Capture replay, derived-data invalidation, and real-source handling remain responsibilities of their owning stages.
 
 ## Native/web collaboration
 
@@ -89,8 +89,8 @@ The following decisions are settled by the project context: preserve Next.js/Sup
 | Open choice | Owner stage | Record the result in |
 | --- | --- | --- |
 | Initial registry entries, units/scales, timestamps, range semantics, lag alignment — resolved in version 1 | 0 complete | [Domain contracts](DOMAIN.md) and `lib/domain/` |
-| Auth/demo user, user isolation, migrations, query ownership | 1 | Architecture and persistence guidance |
-| Mock objective/subjective fixtures, planted patterns, seed/reset behavior | 2 | Fixture documentation |
+| Auth/demo user, user isolation, migrations, query ownership — implemented; migrations applied, anonymous Auth enabled, acceptance checked | 1 | [Persistence](PERSISTENCE.md) |
+| Mock objective/subjective fixtures, planted patterns, seed/reset behavior — implemented | 2 complete | [Fixtures](FIXTURES.md) |
 | Concrete voice API, session authorization and persistence | 3 | Conversation and integration guidance |
 | Mixed utterances, partial capture, confirmation/replay semantics | 4 | Conversation/domain contracts |
 | Check-in completion/resumption rules | 5 | Conversation |

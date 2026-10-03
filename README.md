@@ -1,10 +1,10 @@
-# Hackathon starter
+# Personal Evidence
 
-Next.js (App Router, TypeScript) with Supabase for Postgres, Auth, and Storage, deployed on Vercel. The home page shows whether the app is running locally, as a Vercel preview, or in production, and whether Supabase is configured.
+Next.js (App Router, TypeScript) with Supabase for Postgres, Auth, and Storage, deployed on Vercel. Today, Talk, Evidence, and Timeline form the initial app shell. `/status` retains the starter deployment/configuration diagnostics.
 
 ## Health-app project documentation
 
-This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stage -1 documentation and Stage 0 shared domain contracts are implemented; product pipelines follow the staged roadmap.
+This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stages -1 through 2 are implemented and verified. Hosted migrations and anonymous Auth are active. Follow [docs/PERSISTENCE.md](docs/PERSISTENCE.md) for migration and anonymous demo setup. Product pipelines follow the staged roadmap.
 
 Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. The setup instructions below describe the existing starter.
 
@@ -22,7 +22,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000. The app runs without any Supabase credentials. The deployment card shows "Local development" and the Supabase card shows "Not configured".
+Open http://localhost:3000. The app runs without any Supabase credentials. Product pages show a setup message; `/status` shows "Local development" and "Not configured".
 
 Other commands:
 
@@ -32,7 +32,8 @@ Other commands:
 | `pnpm build` | Production build (run this before deploying) |
 | `pnpm start` | Serve the production build locally |
 | `pnpm lint` | Run ESLint |
-| `pnpm test` | Compile and run domain/source contract validation tests |
+| `pnpm test` | Run contract, fixture, ingestion, and repository tests |
+| `pnpm verify:hosted` | Opt-in live acceptance checks; creates disposable anonymous Auth accounts and cleans their test records |
 | `pnpm typecheck` | TypeScript check (run build first on a fresh checkout to generate Next.js types) |
 
 ## Supabase setup
@@ -46,9 +47,9 @@ Other commands:
    ```
 
 4. Replace the placeholder values in `.env.local` with the values from step 2.
-5. Restart `pnpm dev`. The Supabase card should now read "Configured".
+5. Follow [hosted database/demo setup](docs/PERSISTENCE.md#hosted-setup), then restart `pnpm dev`. Configuration presence on `/status` is not a database-health check.
 
-Client code lives in `lib/supabase.ts`. Use `createSupabaseClient()` from server or client code. It returns `null` when the credentials are missing, so check for that or call `isSupabaseConfigured()` first. Creating the client makes no network request; only your queries do.
+Client code lives in `lib/supabase.ts`. Use `createSupabaseClient()` from server or client code. It returns `null` when the credentials are missing, so check for that or call `isSupabaseConfigured()` first. Auth and repository operations contact Supabase as needed; `/status` checks configuration presence only.
 
 ## Environment variables
 
@@ -71,19 +72,28 @@ Both variables are exposed to the browser by design. Never add a secret or servi
 4. Deploy. Every pull request or non-production branch gets a preview URL, and pushes to the production branch (usually `main`) deploy to production.
 5. After changing environment variables, redeploy. Variables are baked in at build time.
 
-Check the deployed URL: the deployment card should read "Vercel preview" or "Vercel production", and the Supabase card should match your configuration.
+Check `/status` at the deployed URL: the deployment card should read "Vercel preview" or "Vercel production", and the Supabase card should match your configuration.
 
 ## Project layout
 
 ```
 app/
   layout.tsx        Root layout and metadata
-  page.tsx          Home page with environment and Supabase status
+  (product)/        Today, Talk, Evidence, Timeline and session shell
+  components/       Browser session, navigation, profile settings
+  status/page.tsx   Environment and Supabase configuration presence
   globals.css       Global styles
 lib/
   deployment.ts     getDeploymentEnvironment(): local | preview | production
-  supabase.ts       isSupabaseConfigured(), createSupabaseClient()
+  supabase.ts       Typed client; null without credentials
+  domain/           Stage 0 contracts
+  db/               Typed ownership, validated batches, paginated range reads
+  demo/             Scenario, separate subjective fixtures, seed orchestration
+  health/           HealthDataSource contract
+supabase/migrations/ Hosted SQL migrations
 .env.example        Variable names with placeholder values
 ```
+
+After starting a demo session, choose **Load sample history** on Today, then inspect Timeline. The records are fictional and explicitly labeled. See [docs/FIXTURES.md](docs/FIXTURES.md) for the 56-day recipe, planted patterns, gaps, and safe removal/retry behavior.
 
 Add new routes under `app/`, shared helpers under `lib/`. See `AGENTS.md` for conventions.
