@@ -4,9 +4,9 @@ These guides preserve the implementation context in the repository so work can r
 
 ## Current checkpoint
 
-As of **2026-10-03**, Stages **-1, 0, 1, and 2 are implemented**. Stage 1 hosted/browser acceptance and Stage 2 fixture/ingestion/replay/removal checks passed. **Stage 3 is the next feature stage.** This documentation task does not implement or authorize the future stages. Previous checks describe that checkpoint, not a guarantee about a later checkout or hosted configuration.
+As of **2026-10-03**, Stages **-1, 0, 1, and 2 are implemented**. Stage 1 hosted/browser acceptance and Stage 2 fixture/ingestion/replay/removal checks passed. **Stage 3 is implemented with live/provider/browser acceptance pending. Stage 4 is the next feature scope after Stage 3 acceptance.** The guides themselves do not authorize future-stage implementation. Previous checks describe that checkpoint, not a guarantee about a later checkout or hosted configuration.
 
-The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in, two applied SQL migrations, private raw persistence, and synthetic sample-history load/removal are available. Voice, extraction execution, check-in controllers, daily builders, statistics, investigation, active questions, native integration, and experiments are still future work.
+The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in, two applied SQL migrations, private raw persistence, and synthetic sample-history load/removal are available. Capture-only voice and transcript persistence are implemented but await live acceptance. Extraction execution, check-in controllers, daily builders, statistics, investigation, active questions, native integration, and experiments are still future work.
 
 ## Guides
 
@@ -16,7 +16,7 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 0 | [Domain contracts](stage-00-domain-contracts.md) | Implemented |
 | 1 | [Web and persistence foundation](stage-01-web-persistence.md) | Implemented |
 | 2 | [Mock source and canonical ingestion](stage-02-mock-ingestion.md) | Implemented |
-| 3 | [Live voice and persistent transcript](stage-03-live-voice.md) | Planned |
+| 3 | [Live voice and persistent transcript](stage-03-live-voice.md) | Implemented; acceptance pending |
 | 4 | [Canonical structured observations](stage-04-structured-observations.md) | Planned |
 | 5 | [Deterministic morning check-ins](stage-05-deterministic-check-ins.md) | Planned |
 | 6 | [Deterministic daily feature pipeline](stage-06-daily-features.md) | Planned |

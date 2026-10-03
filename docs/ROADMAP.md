@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 is next.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
+This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 voice/transcript implementation is in place with live acceptance pending; Stage 4 follows acceptance.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
 
 | Stage | Umbrella scope | Outcome |
 |---|---|---|
@@ -75,6 +75,8 @@ Implement the source contract and canonical objective ingestion. Seed roughly 45
 Done when repeated demo setup is predictable, normalized samples pass the shared contract, and downstream work has fixtures including known relationships and gaps. Excludes real HealthKit. Depends on Stages 0–1; fixtures support Stage 7 validation.
 
 ### Stage 3 — Live voice
+
+Status: implemented; type/lint/build passed, live/provider/browser and hosted transcript checks pending. See [VOICE](VOICE.md).
 
 Detailed guide: [Stage 3 — Live voice and persistent transcript](stages/stage-03-live-voice.md).
 
@@ -193,4 +195,4 @@ Decisions to resolve: [open choices owned by this stage]
 Documentation updates: [canonical documents affected]
 ```
 
-Stages 1–2 are verified. The next umbrella issue is Stage 3 live voice: reference [conversation rules](CONVERSATION.md), [persistence](PERSISTENCE.md), and implemented domain contracts; resolve the concrete voice API and secure session transport. Extraction remains Stage 4. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.
+Stages 1–2 are verified. Stage 3 is implemented with live acceptance pending; see [VOICE](VOICE.md). The Stage 3 acceptance scope should still reference [conversation rules](CONVERSATION.md), [persistence](PERSISTENCE.md), and implemented domain contracts; verify the implemented voice API and secure session transport. Extraction remains Stage 4. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.

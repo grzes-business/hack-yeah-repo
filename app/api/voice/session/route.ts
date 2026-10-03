@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   };
   const form = new FormData(); form.set("sdp", input.sdp); form.set("session", JSON.stringify(session));
   try {
-   const provider = await fetch("https://api.openai.com/v1/realtime/calls", { method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "OpenAI-Safety-Identifier": createHash("sha256").update(owner).digest("hex") }, body: form, signal: AbortSignal.timeout(25000) });
+   const provider = await fetch("https://api.openai.com/v1/realtime/calls", { method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "OpenAI-Safety-Identifier": createHash("sha256").update(owner).digest("hex") }, body: form, signal: AbortSignal.any([AbortSignal.timeout(25000), request.signal]) });
    if (!provider.ok) throw new Error("provider");
    const sdp = await provider.text();
    return Response.json({ sdp, startedAt }, { headers });

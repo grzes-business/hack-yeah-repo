@@ -102,3 +102,7 @@ The following decisions are settled by the project context: preserve Next.js/Sup
 | Experiment eligibility, duration, summaries and limitations | 14 | Domain/evidence |
 
 When a choice is implemented, update its owning document rather than leaving an unresolved question beside contradictory code. New decisions changing the product thesis must also update `CONTEXT.md`.
+
+## Stage 3 voice boundary
+
+Capture-only WebRTC now runs through `lib/conversation/`, the Talk component, and authenticated `/api/voice/session`. The server verifies the Supabase JWT and forwards SDP with server-selected provider configuration; the browser receives no provider key. Final transcript turns use existing raw persistence, with expected-owner checks and a same-tab recovery queue. No new migration, health-event tool, or analytics exists in this stage. See [VOICE](VOICE.md) for finalization, cleanup, limitations, and pending live acceptance.

@@ -44,7 +44,7 @@ For a change, read the relevant section(s) above and the code it touches. If a f
 - Stack: Next.js App Router, TypeScript, React 19, Supabase Postgres/Auth/Storage via `@supabase/supabase-js`, deployed on Vercel; use pnpm.
 - Shared helpers belong in `lib/`; routes belong in `app/`. Keep the starter small and add dependencies only when a feature needs them.
 - Create Supabase clients with `createSupabaseClient()` from `lib/supabase.ts`. It returns `null` without credentials. The app must build and render without Supabase credentials; do not query the database on the status page or during build.
-- Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are currently used. Never commit `.env*` files except `.env.example`; never expose service-role keys or other secrets with a `NEXT_PUBLIC_` prefix.
+- Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; voice additionally uses server-only `OPENAI_API_KEY` and optional `OPENAI_REALTIME_MODEL`. Never commit `.env*` files except `.env.example`; never expose service-role keys or other secrets with a `NEXT_PUBLIC_` prefix.
 - Use `getDeploymentEnvironment()` from `lib/deployment.ts` for Vercel environment detection. Vercel environment-variable changes require a redeploy.
 - Preserve the existing Next.js/Supabase setup. Do not add Drizzle, Prisma, or another ORM.
 - Before code changes, follow the generated Next.js rules at the top of this file and inspect the relevant installed Next.js guide. Keep documentation-only work independent of app changes.
@@ -61,6 +61,8 @@ For a change, read the relevant section(s) above and the code it touches. If a f
 See [`README.md`](README.md) for startup, environment variables, and deployment instructions.
 
 ## Working and documentation conventions
+
+- Stage 3 capture-only WebRTC and transcript persistence are implemented, with live acceptance pending. Read [VOICE](docs/VOICE.md) before changes. Preserve server-verified ownership, final-turn IDs, save-status/recovery semantics, resource cleanup, and the absence of health/tool dispatch.
 
 - Before changing an architectural boundary, check `CONTEXT.md` and `docs/ARCHITECTURE.md`; update those docs in the same change if the agreed design changes.
 - Keep product behavior in code aligned with the registries and schemas defined during Stage 0. Do not quietly create an alternate source of truth.

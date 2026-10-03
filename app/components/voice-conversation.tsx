@@ -1,0 +1,195 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useHealthSession } from "./session";
+import { VoiceTransport } from "@/lib/conversation/transport";
+import { readTranscriptEvent } from "@/lib/conversation/events";
+import { ConversationSchema, ConversationTurnSchema, type Conversation, type ConversationTurn } from "@/lib/db/records";
+
+type Pending = { kind: "conversation"; value: Conversation } | { kind: "turn"; value: ConversationTurn };
+type Phase = "idle" | "requesting" | "connecting" | "active" | "stopping" | "failed";
+const labels: Record<Phase, string> = { idle: "Microphone off", requesting: "Waiting for microphone permission…", connecting: "Connecting voice…", active: "Conversation live", stopping: "Stopping…", failed: "Microphone off · connection ended" };
+
+export function VoiceConversation() {
+ const { session } = useHealthSession();
+ return <VoiceSession key={session?.user.id ?? "signed-out"} />;
+}
+
+function VoiceSession() {
+ const { session, repository, refreshHistory } = useHealthSession();
+ const owner = session?.user.id;
+ const [phase, setPhase] = useState<Phase>("idle");
+ const [message, setMessage] = useState<string | null>(null);
+ const [muted, setMuted] = useState(false);
+ const [conversations, setConversations] = useState<Conversation[]>([]);
+ const [selected, setSelected] = useState<string | null>(null);
+ const [turns, setTurns] = useState<ConversationTurn[]>([]);
+ const [drafts, setDrafts] = useState<Record<string, { role: string; text: string }>>({});
+ const [pendingSnapshot, setPendingSnapshot] = useState<Pending[]>([]);
+ const [saving, setSaving] = useState(false);
+ const [historyError, setHistoryError] = useState<string | null>(null);
+ const [historyRevision, setHistoryRevision] = useState(0);
+ const audio = useRef<HTMLAudioElement>(null);
+ const transport = useRef<VoiceTransport | null>(null);
+ const current = useRef<Conversation | null>(null);
+ const pending = useRef(new Map<string, Pending>());
+ const finalIds = useRef(new Set<string>());
+ const generation = useRef(0);
+ const alive = useRef(true);
+ const savingRef = useRef(false);
+ const uid = useRef(owner);
+ useEffect(() => { uid.current = owner; }, [owner]);
+ const busy = ["requesting", "connecting", "active", "stopping"].includes(phase);
+ const storageKey = owner ? `personal-evidence:voice-pending:${owner}` : null;
+
+ function publish() {
+  if (!alive.current) return;
+  setPendingSnapshot([...pending.current.values()]);
+  if (storageKey) {
+   try { if (pending.current.size) sessionStorage.setItem(storageKey, JSON.stringify([...pending.current.values()])); else sessionStorage.removeItem(storageKey); }
+   catch { setMessage("This browser cannot keep an unsaved recovery copy. Keep this page open and retry saving before leaving."); }
+  }
+ }
+ function enqueue(item: Pending) { pending.current.set(`${item.kind}:${item.value.id}`, item); publish(); }
+ async function flush() {
+  if (!repository || !owner || savingRef.current || uid.current !== owner) return;
+  savingRef.current = true; setSaving(true);
+  try {
+   while (pending.current.size) {
+    const [key, item] = pending.current.entries().next().value!;
+    if (uid.current !== owner) break;
+    if (item.kind === "conversation") await repository.saveConversation(item.value, owner);
+    else await repository.saveTurn(item.value, owner);
+    if (pending.current.get(key) === item) pending.current.delete(key);
+    publish();
+   }
+   if (alive.current && uid.current === owner) { refreshHistory(); setHistoryRevision(v => v + 1); }
+  } catch { if (alive.current) setMessage("Some transcript changes are not saved. Retry saving; the recovery copy stays in this tab when available."); }
+  finally { savingRef.current = false; if (alive.current) setSaving(false); }
+ }
+ function finish(failed = false) {
+  generation.current += 1;
+  transport.current?.close(); transport.current = null;
+  setMuted(false); setDrafts({});
+  if (current.current) {
+   const ended = { ...current.current, endedAt: new Date().toISOString() };
+   current.current = null; enqueue({ kind: "conversation", value: ended });
+   setConversations(v => [ended, ...v.filter(c => c.id !== ended.id)]);
+   void flush();
+  }
+  setPhase(failed ? "failed" : "idle");
+ }
+ useEffect(() => {
+  alive.current = true;
+  const recoveryQueue = pending.current;
+  return () => {
+   alive.current = false; generation.current += 1; transport.current?.close();
+   const conversation = current.current;
+   if (conversation && repository && owner) {
+    const ended = { ...conversation, endedAt: new Date().toISOString() };
+    recoveryQueue.set(`conversation:${ended.id}`, { kind: "conversation", value: ended });
+    try { sessionStorage.setItem(`personal-evidence:voice-pending:${owner}`, JSON.stringify([...recoveryQueue.values()])); } catch { /* Recovery may be unavailable in private browsing. */ }
+    void repository.saveConversation(ended, owner).catch(() => { /* Recovery copy remains for the next visit. */ });
+   }
+  };
+ }, [owner, repository]);
+ useEffect(() => {
+  pending.current.clear(); finalIds.current.clear(); current.current = null;
+  if (!owner) return;
+  try {
+   const raw = sessionStorage.getItem(`personal-evidence:voice-pending:${owner}`);
+   if (raw) for (const item of JSON.parse(raw) as Pending[]) {
+    const value = item.kind === "conversation" ? ConversationSchema.parse(item.value) : ConversationTurnSchema.parse(item.value);
+    if (item.kind !== "conversation" && item.kind !== "turn") continue;
+    pending.current.set(`${item.kind}:${value.id}`, { kind: item.kind, value } as Pending);
+   }
+  } catch { sessionStorage.removeItem(`personal-evidence:voice-pending:${owner}`); }
+  setPendingSnapshot([...pending.current.values()]);
+ }, [owner]);
+ useEffect(() => {
+  if (!repository || !owner) return;
+  let active = true;
+  repository.listConversations().then(value => { if (active) { setConversations(value.filter(c => c.mode === "capture")); setHistoryError(null); } }).catch(() => { if (active) setHistoryError("Conversation history could not load. Retry history."); });
+  return () => { active = false; };
+ }, [owner, repository, historyRevision]);
+ useEffect(() => {
+  if (!selected || !repository || !owner) return;
+  let active = true;
+  repository.listTurns(selected).then(value => { if (active) { setTurns(value); setHistoryError(null); } }).catch(() => { if (active) setHistoryError("Transcript history could not load. Retry history."); });
+  return () => { active = false; };
+ }, [selected, repository, owner, historyRevision]);
+
+ async function start() {
+  if (!session || !repository || !audio.current || transport.current || pending.current.size) return;
+  const run = ++generation.current;
+  const id = crypto.randomUUID();
+  setMessage(null); setTurns([]); setDrafts({}); setSelected(id); finalIds.current.clear(); setMuted(false);
+  const connection = new VoiceTransport(audio.current, {
+   state: state => { if (generation.current === run) setPhase(state); },
+   created: startedAt => {
+    if (generation.current !== run) {
+     if (!alive.current) { void repository.saveConversation({ id, mode: "capture", startedAt, endedAt: new Date().toISOString() }, session.user.id).catch(() => {}); return; }
+     enqueue({ kind: "conversation", value: { id, mode: "capture", startedAt, endedAt: new Date().toISOString() } }); void flush(); return;
+    }
+    current.current = { id, mode: "capture", startedAt, endedAt: null };
+    setConversations(v => [current.current!, ...v.filter(c => c.id !== id)]);
+   },
+   notice: notice => { if (generation.current === run) setMessage(notice); },
+   error: error => { if (generation.current === run) { setMessage(error); finish(true); } },
+   event: event => {
+    if (generation.current !== run) return;
+    const update = readTranscriptEvent(event, id, new Date().toISOString());
+    if (!update || finalIds.current.has(update.key)) return;
+    if (update.final && update.turn) {
+     finalIds.current.add(update.key);
+     setDrafts(v => { const next = { ...v }; delete next[update.key]; return next; });
+     setTurns(v => [...v.filter(t => t.id !== update.key), update.turn!]);
+     enqueue({ kind: "turn", value: update.turn }); void flush();
+    } else setDrafts(v => ({ ...v, [update.key]: { role: update.role, text: ((v[update.key]?.text ?? "") + update.text).slice(0,20000) } }));
+   },
+  });
+  transport.current = connection;
+  try { await connection.start(session.access_token, id); }
+  catch (error) {
+   if (generation.current !== run) return;
+   // Setup may have inserted a conversation before a network/SDP failure.
+   try { const created = (await repository.listConversations()).find(c => c.id === id); if (created) current.current = created; } catch { /* History exposes an unrecorded end if storage cannot be reached. */ }
+   if (generation.current !== run) return;
+   const denied = error instanceof DOMException && error.name === "NotAllowedError";
+   setMessage(denied ? "Microphone permission was denied. Allow it in your browser settings, then retry." : error instanceof Error ? error.message : "Voice could not start. Check your microphone and connection.");
+   finish(true);
+  }
+ }
+ const pendingTurns = pendingSnapshot.filter((v): v is Extract<Pending, { kind: "turn" }> => v.kind === "turn" && v.value.conversationId === selected).map(v => v.value);
+ const displayed = [...new Map([...turns, ...pendingTurns].map(t => [t.id, t])).values()].sort((a,b) => a.occurredAt.localeCompare(b.occurredAt) || a.id.localeCompare(b.id));
+
+ return <>
+  <section className="card" aria-label="Voice conversation">
+   <h2>Tell us about your day</h2>
+   <p>Speak naturally. Your audio is sent to OpenAI for this conversation. Finalized transcripts are saved to your private demo history; audio recordings are not stored by this app.</p>
+   <p className="small">This stage records conversation only. Structured observations and evidence investigation come later.</p>
+   <p role="status">{labels[phase]}{muted && phase === "active" ? " · microphone muted" : ""}</p>
+   <div className="voice-actions">
+    <button onClick={() => void start()} disabled={!session || !repository || busy || pendingSnapshot.length > 0 || saving}>Start voice</button>
+    <button onClick={() => { setPhase("stopping"); finish(); }} disabled={!busy}>Stop voice</button>
+    <button onClick={() => { transport.current?.mute(!muted); setMuted(v => !v); }} disabled={phase !== "active"}>{muted ? "Unmute microphone" : "Mute microphone"}</button>
+   </div>
+   <audio ref={audio} controls aria-label="Assistant voice playback" />
+   {!session && <p>Start a private demo session above to use voice.</p>}
+   {message && <p role="alert">{message}</p>}
+   <p role="status">{saving ? "Saving transcript…" : pendingSnapshot.length ? `${pendingSnapshot.length} changes not saved` : "No pending transcript saves"}</p>
+   {pendingSnapshot.length > 0 && <button onClick={() => void flush()} disabled={saving}>Retry saving transcript</button>}
+   <p className="small">Stop ends the current call. Start opens a new conversation. Unfinished speech is not saved; finalized assistant text can include words generated before an interruption, so it may differ from what you heard.</p>
+  </section>
+  <section className="card" aria-label="Saved conversations">
+   <h2>Conversation history</h2>
+   <label>Choose a conversation<select value={selected ?? ""} disabled={busy} onChange={event => { setTurns([]); setSelected(event.target.value || null); }}><option value="">Select history</option>{conversations.map(c => <option key={c.id} value={c.id}>{new Date(c.startedAt).toLocaleString()} {c.endedAt ? "" : "· end not recorded"}</option>)}</select></label>
+   {historyError && <p role="alert">{historyError}</p>}
+   <button onClick={() => setHistoryRevision(v => v + 1)} disabled={busy}>Retry history</button>
+   <p className="small">History shows up to 100 conversations and 500 turns per conversation. Unsaved recovery copies stay in this tab’s session storage when available; closing the tab can lose them.</p>
+   {!displayed.length && <p>No finalized transcript to show yet.</p>}
+   <ol className="voice-transcript">{displayed.map(turn => <li key={turn.id}><strong>{turn.role === "user" ? "You" : "Assistant"}</strong><p>{turn.transcript}</p><span className="small">{new Date(turn.occurredAt).toLocaleTimeString()} · {pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id) ? "Not saved" : "Saved"}</span></li>)}</ol>
+   {Object.entries(drafts).map(([key, draft]) => <p key={key} className="voice-draft"><strong>{draft.role === "user" ? "You" : "Assistant"} · live, not saved:</strong> {draft.text}</p>)}
+  </section>
+ </>;
+}

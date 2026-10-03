@@ -1,5 +1,5 @@
 export type VoiceState = "requesting" | "connecting" | "active";
-export type VoiceCallbacks = { state: (state: VoiceState) => void; event: (event: unknown) => void; error: (message: string) => void; created: (startedAt: string) => void };
+export type VoiceCallbacks = { state: (state: VoiceState) => void; event: (event: unknown) => void; error: (message: string) => void; notice: (message: string) => void; created: (startedAt: string) => void };
 
 export class VoiceTransport {
  private peer: RTCPeerConnection | null = null;
@@ -18,7 +18,7 @@ export class VoiceTransport {
   this.callbacks.state("connecting");
   const peer = new RTCPeerConnection(); this.peer = peer;
   stream.getTracks().forEach(track => peer.addTrack(track, stream));
-  peer.ontrack = event => { if (this.closed) return; this.audio.srcObject = event.streams[0] ?? new MediaStream([event.track]); void this.audio.play().catch(() => this.callbacks.error("Audio playback is blocked. Use Play voice to hear the assistant.")); };
+  peer.ontrack = event => { if (this.closed) return; this.audio.srcObject = event.streams[0] ?? new MediaStream([event.track]); void this.audio.play().catch(() => this.callbacks.notice("Audio playback is blocked. Use the audio playback control to hear the assistant.")); };
   peer.onconnectionstatechange = () => { if (this.closed) return; if (["failed", "disconnected", "closed"].includes(peer.connectionState)) { this.callbacks.error("Voice disconnected. Your finalized transcript can still be saved. Start a new conversation to reconnect."); this.close(); } };
   const channel = peer.createDataChannel("oai-events"); this.channel = channel;
   channel.onopen = () => {
@@ -34,7 +34,7 @@ export class VoiceTransport {
    try {
     const event = JSON.parse(message.data);
     if (event.type === "error") { this.callbacks.error("The voice provider reported an error. Stop and start again; finalized transcript remains available."); this.close(); return; }
-    if (event.type === "conversation.item.input_audio_transcription.failed") this.callbacks.error("A spoken turn could not be transcribed. Please repeat it; no guessed transcript was saved.");
+    if (event.type === "conversation.item.input_audio_transcription.failed") this.callbacks.notice("A spoken turn could not be transcribed. Please repeat it; no guessed transcript was saved.");
     this.callbacks.event(event);
    } catch { /* Non-JSON messages cannot trigger app actions. */ }
   };

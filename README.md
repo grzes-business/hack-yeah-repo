@@ -6,7 +6,7 @@ Next.js (App Router, TypeScript) with Supabase for Postgres, Auth, and Storage, 
 
 This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stages -1 through 2 are implemented and verified. Hosted migrations and anonymous Auth are active. Follow [docs/PERSISTENCE.md](docs/PERSISTENCE.md) for migration and anonymous demo setup. Product pipelines follow the staged roadmap.
 
-Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. Use [docs/stages/README.md](docs/stages/README.md) for self-contained implementation guides and explicit acceptance criteria for every stage (-1 through 14). Stage 3 is next; future guides are specifications, not shipped features. The setup instructions below describe the existing starter.
+Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. Use [docs/stages/README.md](docs/stages/README.md) for self-contained implementation guides and explicit acceptance criteria for every stage (-1 through 14). Stage 3 voice is implemented with live acceptance pending; later guides remain specifications. The setup instructions below describe the existing starter.
 
 ## Prerequisites
 
@@ -97,3 +97,7 @@ supabase/migrations/ Hosted SQL migrations
 After starting a demo session, choose **Load sample history** on Today, then inspect Timeline. The records are fictional and explicitly labeled. See [docs/FIXTURES.md](docs/FIXTURES.md) for the 56-day recipe, planted patterns, gaps, and safe removal/retry behavior.
 
 Add new routes under `app/`, shared helpers under `lib/`. See `AGENTS.md` for conventions.
+
+## Live voice (Stage 3)
+
+Add the server-only `OPENAI_API_KEY` to `.env.local`, restart the app, start a private demo session, and open `/talk`. Optional `OPENAI_REALTIME_MODEL` defaults to `gpt-realtime-2.1`. The provider account needs API billing and model access; ChatGPT subscription usage does not configure this API key. Never expose the key through `NEXT_PUBLIC_`. See [VOICE](docs/VOICE.md) for transcript/retry policies and pending acceptance checks.

@@ -2,7 +2,9 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented on 2026-10-03; live/provider/browser and hosted transcript acceptance pending.**
+
+See [implemented voice behavior](../VOICE.md). Type checking, lint, and production build passed. No automated tests or live acceptance checks were run in this turn. Stage 3 is not yet acceptance-complete. The user will perform the live microphone conversation walkthrough manually.
 
 A user can start/stop a voice conversation, see finalized transcript turns, and restore its persisted history without health reasoning.
 
@@ -16,7 +18,7 @@ Start with [agent instructions](../../AGENTS.md), [product context](../../CONTEX
 
 ## Starting point
 
-`app/(product)/talk/page.tsx` is a placeholder. Conversation/turn schemas, repository persistence, authenticated browser sessions, and the `capture` mode already exist. There is no voice provider integration or server session-authentication layer yet. “GPT-Live” describes the intended experience, not a frozen SDK/model/transport choice.
+`app/(product)/talk/page.tsx` now hosts voice controls and transcript history. Conversation/turn schemas, repository persistence, authenticated browser sessions, and the `capture` mode already exist. The implementation now includes `lib/conversation/`, `app/components/voice-conversation.tsx`, and authenticated `app/api/voice/session/route.ts`. “GPT-Live” describes the intended experience, not a frozen SDK/model/transport choice.
 
 ## Implementation work
 
@@ -30,7 +32,7 @@ Start with [agent instructions](../../AGENTS.md), [product context](../../CONTEX
 
 ## Decisions and constraints
 
-Resolve transport, model, finalized-turn boundary, interruption/reconnect policy, and retention policy here before coding their consumers. Do not assume browser Supabase auth implies server cookies. Do not send unrelated history to the provider. The transcript is untrusted input and cannot grant tools or expand permissions. Event extraction remains separate Stage 4 work.
+Resolved implementation choices are recorded in [VOICE](../VOICE.md): unified WebRTC SDP exchange, server-only provider key, Realtime model default, final-event boundaries, new-call reconnect, same-tab recovery, and immediate cleanup. All S03 ACs still require their described behavioral acceptance checks; type/lint/build success alone does not mark them passed. Do not assume browser Supabase auth implies server cookies. Do not send unrelated history to the provider. The transcript is untrusted input and cannot grant tools or expand permissions. Event extraction remains separate Stage 4 work.
 
 ## Acceptance criteria
 

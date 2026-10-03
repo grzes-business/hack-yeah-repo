@@ -43,12 +43,12 @@ export function createHealthRepository(client: SupabaseClient<Database>) {
    const { error } = await client.from("subjective_events").upsert({ user_id: id, id: record.id, conversation_turn_id: record.conversationTurnId, payload: json(record), observed_at: record.occurredAt }, { onConflict: "user_id,id" }); fail(error);
    return record;
   },
-  async saveConversation(value: Conversation) {
-   const id = await userId(); const record = ConversationSchema.parse(value);
+  async saveConversation(value: Conversation, expectedUserId?: string) {
+   const id = await userId(); if (expectedUserId && id !== expectedUserId) throw new Error("Session owner changed."); const record = ConversationSchema.parse(value);
    const { error } = await client.from("conversations").upsert({ user_id: id, id: record.id, mode: record.mode, started_at: record.startedAt, ended_at: record.endedAt }, { onConflict: "user_id,id" }); fail(error); return record;
   },
-  async saveTurn(value: ConversationTurn) {
-   const id = await userId(); const record = ConversationTurnSchema.parse(value);
+  async saveTurn(value: ConversationTurn, expectedUserId?: string) {
+   const id = await userId(); if (expectedUserId && id !== expectedUserId) throw new Error("Session owner changed."); const record = ConversationTurnSchema.parse(value);
    const { error } = await client.from("conversation_turns").upsert({ user_id: id, id: record.id, conversation_id: record.conversationId, role: record.role, transcript: record.transcript, occurred_at: record.occurredAt }, { onConflict: "user_id,id" }); fail(error); return record;
   },
   async listConversations() {

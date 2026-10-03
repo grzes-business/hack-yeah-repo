@@ -24,6 +24,7 @@ This file owns shared product meaning and non-negotiable principles. Read it fir
 | [Architecture](docs/ARCHITECTURE.md) | Current versus target layers, persistence, integration, and open decisions. |
 | [Persistence](docs/PERSISTENCE.md) | Hosted migrations, demo identity, access/validation boundaries, and repository behavior. |
 | [Domain](docs/DOMAIN.md) | Registry vocabulary, record semantics, missingness, modes, Stage 0 requirements. |
+| [Voice implementation](docs/VOICE.md) | Stage 3 configuration, authenticated transport, transcript/recovery semantics, limits, and pending live acceptance. |
 | [Conversation](docs/CONVERSATION.md) | Extraction, controlled questions, active sensing, failure semantics. |
 | [Evidence](docs/EVIDENCE.md) | Analytical responsibilities, bundle contents, interpretation rules. |
 | [Fixtures](docs/FIXTURES.md) | Implemented sample history, planted patterns/gaps, identity/retry/removal, and validation. |
@@ -84,7 +85,7 @@ Hackathon demo: show an unusual metric (for example, low HRV) alongside personal
 
 ## Current scope
 
-Stage 0 is implemented: the nine metrics, ten event types, four allowed relationships, lowercase agent modes, reusable Zod schemas, and health-source contract are defined. [DOMAIN.md](docs/DOMAIN.md) records canonical units, 0–10 scales, wake-date sleep, temporal lags, missingness, provenance, and schema usage. This is a contract foundation; feature building, statistics, voice, and native adapters remain later stages. Stage 1 storage and shell acceptance checks pass; hosted migrations and anonymous Auth are active. Stage 2 supplies repeatable objective and subjective fixtures with sample loading/removal and validated ingestion. See [FIXTURES.md](docs/FIXTURES.md); feature building and evidence generation remain later work.
+Stage 0 is implemented: the nine metrics, ten event types, four allowed relationships, lowercase agent modes, reusable Zod schemas, and health-source contract are defined. [DOMAIN.md](docs/DOMAIN.md) records canonical units, 0–10 scales, wake-date sleep, temporal lags, missingness, provenance, and schema usage. This is a contract foundation; feature building, statistics, voice, and native adapters remain later stages. Stage 1 storage and shell acceptance checks pass; hosted migrations and anonymous Auth are active. Stage 2 supplies repeatable objective and subjective fixtures with sample loading/removal and validated ingestion. See [FIXTURES.md](docs/FIXTURES.md); Stage 3 now implements capture-only voice and finalized transcript persistence, with live acceptance pending; see [VOICE](docs/VOICE.md). Structured extraction, feature building, and evidence generation remain later work.
 
 Stage -1 establishes shared understanding and agent routing only. It does not implement registries, schemas, database migrations, voice features, analytics, or native integrations. Follow [`docs/ROADMAP.md`](docs/ROADMAP.md) for later stage boundaries and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the intended data flow.
 

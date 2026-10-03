@@ -1,6 +1,6 @@
 # Conversation and active sensing
 
-GPT-Live is the project's name for its planned real-time voice experience. Stage 3 selects the concrete provider API/session integration. These are product boundaries, not SDK instructions or a final tool API.
+Stage 3 now implements capture-only live voice using OpenAI Realtime over browser WebRTC. See [voice implementation](VOICE.md) for configuration, transport, transcript finalization, ownership, retry/cleanup, and pending live acceptance. Canonical event extraction remains Stage 4. GPT-Live remains the project's product label; this implementation uses the Realtime API.
 
 ## Canonical capture pipeline
 
