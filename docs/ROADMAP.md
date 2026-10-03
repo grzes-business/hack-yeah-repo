@@ -21,9 +21,13 @@ This roadmap records stage boundaries and outcomes. The order is intentional: pr
 | **13 — Real-data hardening** | Validate against team member history; handle duplicates, multiple sources, gaps, time zones, partial sessions, device changes, and units; settle aggregation/deduplication; keep fixes in adapter/normalization. | Reliable demo on real history. |
 | **14 — Personal experiments** | Add `EXPERIMENT` mode and domain models; turn uncertain predefined relationships into N-of-1 proposals with outcomes, duration, inclusion criteria, confounders; descriptive baseline/intervention comparison and conservative conclusions. | Uncertain evidence can lead to a practical next step without medical causal claims. |
 
+## Detailed implementation guides
+
+Read the [stage index](stages/README.md) and the linked stage guide for implementation work, decisions, stable AC IDs, verification, and handoff. This roadmap retains umbrella scope and ordering; guides distinguish completed checkpoints from future work.
+
 ## Issue-writing guidance
 
-- Use one concise umbrella issue per stage; link this roadmap and `CONTEXT.md` instead of copying foundational rules into every issue.
+- Use one concise umbrella issue per stage; link this roadmap, `CONTEXT.md`, and the relevant stage guide/AC IDs instead of copying a second specification.
 - Include the stage outcome, in-scope work, explicit exclusions/dependencies, and observable acceptance criteria. Split implementation details into child issues only when they can be worked and reviewed independently.
 - Stage 0 should be completed before downstream code assumes domain types. Stage 11 follows a stable browser/backend experience; Stage 12 follows the `HealthDataSource` contract; Stage 14 follows the evidence engine.
 - Record contract changes in their canonical docs and update [`AGENTS.md`](../AGENTS.md) routing when new guidance is introduced.
@@ -34,11 +38,15 @@ The table above is the umbrella overview. The criteria below make each stage rev
 
 ### Stage -1 — Shared project knowledge
 
+Detailed guide: [Stage -1 — Shared project knowledge](stages/stage-minus-1-context.md).
+
 Deliver `CONTEXT.md`, agent routing, architecture/domain/conversation/evidence/demo references, and this roadmap. A new contributor should be able to explain the product and evidence boundary, find the mock/native seam, distinguish current code from planned work, and identify unresolved decisions.
 
 Done when documentation links resolve, terminology is consistent, later-stage examples are clearly marked, and the starter remains intact. Scope is documentation only: no dependencies, migrations, schemas, or product code.
 
 ### Stage 0 — Freeze domain contracts
+
+Detailed guide: [Stage 0 — Domain contracts](stages/stage-00-domain-contracts.md).
 
 Status: implemented in `lib/domain/` and `lib/health/data-source.ts`, with contract validation tests. [DOMAIN.md](DOMAIN.md) records the frozen version 1 choices and import surface.
 
@@ -48,6 +56,8 @@ Done when mock, extraction, and analytics developers can consume one set of cont
 
 ### Stage 1 — Application and persistence foundation
 
+Detailed guide: [Stage 1 — Web and persistence foundation](stages/stage-01-web-persistence.md).
+
 Status: shell, demo session flow, typed repository, and seven-table migration implemented. The migration is applied with all seven tables using RLS. Anonymous Auth is enabled; browser demo/profile restoration, live ownership/provenance/permission checks, and missing-credential build/render passed. See [Persistence](PERSISTENCE.md) for setup and remaining acceptance checks.
 
 Extend the existing Next.js/Supabase setup with suitable module boundaries, migrations/typed access, user ownership, and a documented demo/test-user flow. Create core storage and minimal navigation. Preserve starter configuration conventions.
@@ -55,6 +65,8 @@ Extend the existing Next.js/Supabase setup with suitable module boundaries, migr
 Done when the chosen user can store/read their intended records under documented access rules, the shell exposes planned areas, and missing credentials still allow the starter to build/render. Excludes voice, analytics, and native work. Depends on Stage 0.
 
 ### Stage 2 — Mock source and ingestion
+
+Detailed guide: [Stage 2 — Mock source and canonical ingestion](stages/stage-02-mock-ingestion.md).
 
 Status: implemented and verified. [Fixtures](FIXTURES.md) owns the versioned 56-day recipe, planted relationships/gaps, stable IDs, separate subjective fixtures, retry/reset semantics, and complete range reads. The interval migration is applied to hosted Supabase.
 
@@ -64,11 +76,15 @@ Done when repeated demo setup is predictable, normalized samples pass the shared
 
 ### Stage 3 — Live voice
 
+Detailed guide: [Stage 3 — Live voice and persistent transcript](stages/stage-03-live-voice.md).
+
 Create `/talk`, session/microphone controls, transcript display, and conversation persistence boundaries in capture mode. Select and document the concrete integration; provider secrets remain server-only.
 
 Done when speech produces persisted turns and session/microphone failures are understandable. No analytical explanations or canonical event extraction required yet. Depends on Stages 0–1.
 
 ### Stage 4 — Canonical event extraction
+
+Detailed guide: [Stage 4 — Canonical structured observations](stages/stage-04-structured-observations.md).
 
 Implement [capture flow](CONVERSATION.md), validation, accepted event persistence, provenance, and captured-observation UI. Define mixed/partial input and replay semantics.
 
@@ -76,11 +92,15 @@ Done when known speech yields validated events, ambiguous speech triggers clarif
 
 ### Stage 5 — Deterministic morning check-in
 
+Detailed guide: [Stage 5 — Deterministic morning check-ins](stages/stage-05-deterministic-check-ins.md).
+
 Application logic selects energy, soreness, mood, or illness questions; the model phrases them. Track known/missing/clarification state and interview completion/resumption.
 
 Done when multi-dimension answers update state, known dimensions are not repeatedly requested, and completion follows application rules. Post-workout is an extension seam, not required scope. Depends on Stage 4.
 
 ### Stage 6 — Daily feature pipeline
+
+Detailed guide: [Stage 6 — Deterministic daily feature pipeline](stages/stage-06-daily-features.md).
 
 Implement daily/range building with declared aggregation, date boundaries, missingness, source overlap, and provenance. Keep raw records separate; define rebuild behavior after changed input.
 
@@ -88,11 +108,15 @@ Done when the same canonical inputs yield consistent features across sources, un
 
 ### Stage 7 — Deterministic statistics
 
+Detailed guide: [Stage 7 — Deterministic analytics](stages/stage-07-deterministic-analytics.md).
+
 Implement [evidence modules](EVIDENCE.md): personal baselines, anomalies, Spearman, exposure comparisons, explicit lags, effect/count reporting, and documented evidence criteria.
 
 Done when planted fixture patterns are recovered under chosen criteria and sparse/constant/missing inputs yield honest outputs; calculations are reproducible without an LLM. No causal inference or model explanation. Depends on Stage 6 and Stage 2 fixtures.
 
 ### Stage 8 — Investigation and explanation
+
+Detailed guide: [Stage 8 — Evidence-backed investigation and explanation](stages/stage-08-evidence-investigation.md).
 
 Assemble `EvidenceBundle` via `investigateOutcome()`, add investigate mode, and communicate only supplied facts with limitations. Keep unknown outcomes and inconclusive results explicit.
 
@@ -100,11 +124,15 @@ Done when every numerical claim is traceable to structured evidence and explanat
 
 ### Stage 9 — Missing evidence loop
 
+Detailed guide: [Stage 9 — Missing evidence and active sensing](stages/stage-09-missing-evidence-loop.md).
+
 Detect relevant unknowns, rank/select one question deterministically, capture its answer, and rerun investigation. Define tie handling, skipped/unavailable context, and visible before/after state.
 
 Done when the [demo loop](DEMO.md) shows a persisted input and genuine evidence-state update; no stronger label is invented when only current context changed. Depends on Stages 5 and 8.
 
 ### Stage 10 — Product UI
+
+Detailed guide: [Stage 10 — Evidence-first product UI](stages/stage-10-evidence-ui.md).
 
 Polish Today, Talk, Evidence, and Timeline around investigation. Render provenance, effects/counts, confounders, unknowns, and insufficient-data states. Optimize the demo narrative.
 
@@ -112,11 +140,15 @@ Done when a user can follow unusual observation → question → accepted answer
 
 ### Stage 11 — Capacitor integration
 
+Detailed guide: [Stage 11 — Capacitor shell](stages/stage-11-capacitor-shell.md).
+
 Wrap the stable web experience, establish iOS project/runtime permission groundwork, and document shell loading plus hosted backend/native communication. Preserve web health logic.
 
 Done when the existing experience runs in the shell and the source boundary can exchange canonical data. Excludes native analytical implementations and real HealthKit querying. Depends on stable web/backend stages and Stage 0 source semantics.
 
 ### Stage 12 — Apple Health source
+
+Detailed guide: [Stage 12 — Apple Health source adapter](stages/stage-12-healthkit-adapter.md).
 
 Implement permissions, registry-bounded queries, normalization, provenance/external IDs, and canonical ingestion using `AppleHealthDataSource`.
 
@@ -124,15 +156,19 @@ Done when real samples satisfy the shared contract and reach the existing featur
 
 ### Stage 13 — Real-data hardening
 
+Detailed guide: [Stage 13 — Real-data hardening](stages/stage-13-real-data-hardening.md).
+
 Exercise historical team-member data; resolve duplicates, source overlaps, gaps, time zones, partial sessions, device changes, and units. Document source policies; keep native quirks in adapter/normalization.
 
 Done when known real-data cases yield expected normalized/derived outputs and mock fallback still works. Shared domain changes must be explicit rather than hidden HealthKit exceptions. Depends on Stage 12.
 
 ### Stage 14 — Personal experiments
 
+Detailed guide: [Stage 14 — Personal experiments](stages/stage-14-personal-experiments.md).
+
 Add experiment contracts/mode and N-of-1 proposals from uncertain predefined relationships. Define primary/secondary outcomes, duration, inclusion criteria, confounders, observations, and descriptive period comparisons.
 
-Done when a proposal can be followed and summarized conservatively without claiming causal proof or medical treatment. The original example is sleep ≥7.5 hours over five training sessions with workout RPE primary and energy/HRV secondary; values remain illustrative. Depends on the evidence engine and capture/features; ordered after real-data hardening in the original roadmap.
+Done when a proposal can be followed and summarized conservatively without claiming causal proof or medical treatment. The original example is sleep ≥7.5 hours over five training sessions with workout RPE primary and energy/HRV secondary; values remain illustrative. Workout RPE is outside the current registered outcome set, so that example requires an explicit contract/registry extension; begin with a compatible registered plan unless the extension is approved. Depends on the evidence engine and capture/features; ordered after real-data hardening in the original roadmap.
 
 ## Reusable umbrella issue scaffold
 

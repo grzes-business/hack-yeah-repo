@@ -14,8 +14,9 @@ Read these in order before changing product behavior:
 
 1. [`CONTEXT.md`](CONTEXT.md) — canonical product thesis, domain vocabulary, architecture boundaries, and invariants.
 2. [`docs/ROADMAP.md`](docs/ROADMAP.md) — read the stage relevant to your task and its prerequisites.
-3. Read the focused references below for the affected boundary.
-4. Read the repo-specific rules here and inspect the existing code before editing it.
+3. Read [`docs/stages/README.md`](docs/stages/README.md) and the relevant stage guide — implementation work, dependencies, decisions, acceptance criteria, verification, and handoff.
+4. Read the focused references below for the affected boundary.
+5. Read the repo-specific rules here and inspect the existing code before editing it.
 
 | Working on | Read |
 | --- | --- |
@@ -66,7 +67,7 @@ See [`README.md`](README.md) for startup, environment variables, and deployment 
 - Stage 1 implementation provides `lib/db/`, the hosted migration under `supabase/migrations/`, and the product shell. Read `docs/PERSISTENCE.md` before storage/auth changes. The hosted migration is applied and anonymous Auth is enabled. Stage 1 browser, hosted ownership/provenance, and missing-credential acceptance checks passed; persistence guidance records the checks. Derived tables are read-only for browser users.
 - Stage 2 is implemented. Read `docs/FIXTURES.md` for sample identity, gaps, separate subjective fixture provenance, batch failures/retry, and removal. Use `ingestHealthData()` for canonical source ingestion and paginated repository range reads for full history. Never impute fixture gaps from scenario ground truth or turn generating formulas into user evidence.
 - Stage 0 is implemented. Import contracts from `@/lib/domain` and the source interface from `@/lib/health/data-source`. Read `docs/DOMAIN.md` for the frozen version 1 choices. Unknown values are explicit states; missing-factor context includes a date and registry-defined lag. Model extraction uses draft schemas; application code supplies accepted-event ownership/provenance fields.
-- Future stage issues should link to `CONTEXT.md` and the relevant roadmap/architecture section, state their stage and outcome, list in-scope work and acceptance criteria, and identify dependencies. Keep umbrella issues concise; put detailed implementation contracts in versioned docs when they become stable.
+- Future stage issues should link to `CONTEXT.md`, the relevant `docs/stages/` guide and its AC IDs, and the relevant roadmap/architecture section, state their stage and outcome, list in-scope work and acceptance criteria, and identify dependencies. Keep umbrella issues concise; put detailed implementation contracts in versioned docs when they become stable.
 - For new domain/architecture docs, add a link here or in `CONTEXT.md` so agents can find them. Prefer updating an existing canonical doc over duplicating rules.
 - State the stage, intended outcome, and affected boundaries before implementing. Identify existing work so a stage does not rebuild the starter.
 - Resolve an open decision in its owning document when implementation needs it. Do not silently treat illustrative values, schemas, or methods as finalized contracts. Ask the user when a choice changes product scope or an agreed constraint; routine implementation choices can be documented and made within the task.

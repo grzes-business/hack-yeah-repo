@@ -6,7 +6,7 @@ Next.js (App Router, TypeScript) with Supabase for Postgres, Auth, and Storage, 
 
 This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stages -1 through 2 are implemented and verified. Hosted migrations and anonymous Auth are active. Follow [docs/PERSISTENCE.md](docs/PERSISTENCE.md) for migration and anonymous demo setup. Product pipelines follow the staged roadmap.
 
-Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. The setup instructions below describe the existing starter.
+Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. Use [docs/stages/README.md](docs/stages/README.md) for self-contained implementation guides and explicit acceptance criteria for every stage (-1 through 14). Stage 3 is next; future guides are specifications, not shipped features. The setup instructions below describe the existing starter.
 
 ## Prerequisites
 

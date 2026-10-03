@@ -20,6 +20,7 @@ This file owns shared product meaning and non-negotiable principles. Read it fir
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Agent routing, repository conventions, and change workflow. |
 | [Roadmap](docs/ROADMAP.md) | Stages, dependencies, boundaries, completion criteria, and issue scaffold. |
+| [Stage guides](docs/stages/README.md) | Self-contained implementation context, dependencies, decisions, acceptance criteria, verification, and handoff for Stages -1 through 14. |
 | [Architecture](docs/ARCHITECTURE.md) | Current versus target layers, persistence, integration, and open decisions. |
 | [Persistence](docs/PERSISTENCE.md) | Hosted migrations, demo identity, access/validation boundaries, and repository behavior. |
 | [Domain](docs/DOMAIN.md) | Registry vocabulary, record semantics, missingness, modes, Stage 0 requirements. |
