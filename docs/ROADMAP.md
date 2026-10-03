@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-This roadmap records intended stage boundaries and outcomes; it is not implementation approval. The order is intentional: prove product and analytics with mock data before adding native HealthKit access. **Stage -1 is the current documentation stage.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies.
+This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 and 0 are implemented; Stage 1 is next.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
 
 | Stage | Umbrella scope | Outcome |
 |---|---|---|
@@ -39,6 +39,8 @@ Deliver `CONTEXT.md`, agent routing, architecture/domain/conversation/evidence/d
 Done when documentation links resolve, terminology is consistent, later-stage examples are clearly marked, and the starter remains intact. Scope is documentation only: no dependencies, migrations, schemas, or product code.
 
 ### Stage 0 — Freeze domain contracts
+
+Status: implemented in `lib/domain/` and `lib/health/data-source.ts`, with contract validation tests. [DOMAIN.md](DOMAIN.md) records the frozen version 1 choices and import surface.
 
 Use [domain requirements](DOMAIN.md). Resolve initial registries, units/scales, time/range semantics, relationship alignment, modes, core records, and source abstraction. Define reusable validation independently from integrations.
 
@@ -151,4 +153,4 @@ Decisions to resolve: [open choices owned by this stage]
 Documentation updates: [canonical documents affected]
 ```
 
-Start with Stage 0 as the next umbrella issue. Once its contracts are agreed, refine later acceptance criteria against actual types and storage. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.
+Start with Stage 1 as the next umbrella issue. Reference the implemented Stage 0 types and refine persistence acceptance criteria against them. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.

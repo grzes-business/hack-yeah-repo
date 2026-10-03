@@ -53,6 +53,8 @@ For a change, read the relevant section(s) above and the code it touches. If a f
 - `pnpm install` — dependencies; `pnpm dev` — local server; `pnpm start` — production server.
 - `pnpm build` — production build; must pass before merging application changes.
 - `pnpm lint` — ESLint for `app` and `lib`.
+- `pnpm test` — compile and run domain/source contract tests with Node's built-in runner.
+- `pnpm typecheck` — TypeScript check; run after `pnpm build` on a fresh checkout so Next.js route types exist.
 
 See [`README.md`](README.md) for startup, environment variables, and deployment instructions.
 
@@ -60,6 +62,7 @@ See [`README.md`](README.md) for startup, environment variables, and deployment 
 
 - Before changing an architectural boundary, check `CONTEXT.md` and `docs/ARCHITECTURE.md`; update those docs in the same change if the agreed design changes.
 - Keep product behavior in code aligned with the registries and schemas defined during Stage 0. Do not quietly create an alternate source of truth.
+- Stage 0 is implemented. Import contracts from `@/lib/domain` and the source interface from `@/lib/health/data-source`. Read `docs/DOMAIN.md` for the frozen version 1 choices. Unknown values are explicit states; missing-factor context includes a date and registry-defined lag. Model extraction uses draft schemas; application code supplies accepted-event ownership/provenance fields.
 - Future stage issues should link to `CONTEXT.md` and the relevant roadmap/architecture section, state their stage and outcome, list in-scope work and acceptance criteria, and identify dependencies. Keep umbrella issues concise; put detailed implementation contracts in versioned docs when they become stable.
 - For new domain/architecture docs, add a link here or in `CONTEXT.md` so agents can find them. Prefer updating an existing canonical doc over duplicating rules.
 - State the stage, intended outcome, and affected boundaries before implementing. Identify existing work so a stage does not rebuild the starter.

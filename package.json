@@ -6,13 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint app lib"
+    "lint": "eslint app lib",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.contracts.json && node --test .contract-tests/domain/*.test.js .contract-tests/health/*.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^20",

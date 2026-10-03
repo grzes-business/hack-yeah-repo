@@ -4,7 +4,7 @@ Next.js (App Router, TypeScript) with Supabase for Postgres, Auth, and Storage, 
 
 ## Health-app project documentation
 
-This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stage -1 establishes the documentation; product implementation follows the staged roadmap.
+This starter is the foundation for a Voice-First Personal Health Evidence Engine. Stage -1 documentation and Stage 0 shared domain contracts are implemented; product pipelines follow the staged roadmap.
 
 Start with [CONTEXT.md](CONTEXT.md) for the product thesis and evidence constraints. Coding agents should enter through [AGENTS.md](AGENTS.md), which routes tasks to domain, architecture, conversation, evidence, and demo guidance. See [docs/ROADMAP.md](docs/ROADMAP.md) for Stage 0 onward and the future GitHub issue scaffold. The setup instructions below describe the existing starter.
 
@@ -32,6 +32,8 @@ Other commands:
 | `pnpm build` | Production build (run this before deploying) |
 | `pnpm start` | Serve the production build locally |
 | `pnpm lint` | Run ESLint |
+| `pnpm test` | Compile and run domain/source contract validation tests |
+| `pnpm typecheck` | TypeScript check (run build first on a fresh checkout to generate Next.js types) |
 
 ## Supabase setup
 

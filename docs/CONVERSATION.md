@@ -30,7 +30,7 @@ Stage 4 defines mixed/partial utterance behavior, replay protection, and confirm
 | “I feel brain-scrambled.” | Clarify a known dimension or mark not trackable; never invent `brain_scrambledness`. |
 | “I didn't drink yesterday.” | Explicit negative if supported; distinguish it from no report. |
 
-These describe behavior, not finalized payloads. Canonical types come from Stage 0.
+These describe behavior. Stage 0 now defines draft and canonical event payloads in [domain contracts](DOMAIN.md). Extraction candidates cannot assign application-owned IDs or conversation provenance. Version 1 uses all-or-clarify for each statement; Stage 4 must explicitly evolve the contract if mixed partial capture is needed.
 
 ## Check-in controller
 
@@ -48,7 +48,7 @@ Do not repeatedly ask about a captured dimension unless clarification is needed.
 
 Stage 8 requests deterministic `investigateOutcome({ userId, outcome, date })` and receives an `EvidenceBundle`. Explanation communicates its facts and limits; it cannot choose new edges or inspect unrestricted raw records to invent theories.
 
-Stage 9 adds missing-context detection. Deterministic `selectBestQuestion()` chooses one relevant unknown using predefined relationships and current coverage. GPT phrases it, canonical capture saves the answer, and investigation reruns. UI shows the changed input and evidence state. A negative answer reports absence; a skipped question remains unknown.
+Stage 9 adds missing-context detection. Deterministic `selectBestQuestion()` chooses one relevant unknown using predefined relationships and coverage on the factor's date. Missing context is a `{ feature, date }` reference: alcohol for today's HRV refers to yesterday. GPT phrases it, canonical capture saves the answer, and investigation reruns. UI shows the changed input and evidence state. A negative answer reports absence; a skipped question remains unknown.
 
 ## Failure behavior to define
 

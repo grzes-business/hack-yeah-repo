@@ -47,7 +47,7 @@ Unmapped speech remains an unstructured note or returns a clear `unrecognized` /
 
 ## Product and architecture boundaries
 
-The existing application is a Next.js App Router + TypeScript + Supabase starter with Vercel deployment conventions. The inspected repo contains a status page and Supabase client helper, not the product pipelines described here. Conceptually, the planned web app contains Today, Talk, Evidence, and Timeline experiences; server/backend logic handles conversation and health ingestion, validation, persistence, daily feature building, analytics, and evidence investigation. Supabase will store raw observations, conversation provenance, derived features, relationship results, and later experiment data.
+The existing application is a Next.js App Router + TypeScript + Supabase starter with Vercel deployment conventions. It contains a status page, Supabase client helper, and Stage 0 domain contracts, not the product pipelines described here. Conceptually, the planned web app contains Today, Talk, Evidence, and Timeline experiences; server/backend logic handles conversation and health ingestion, validation, persistence, daily feature building, analytics, and evidence investigation. Supabase will store raw observations, conversation provenance, derived features, relationship results, and later experiment data.
 
 GPT-Live handles real-time conversation. Canonical event extraction is a separate backend pipeline: transcript/turn → extraction into predefined types → schema validation → persistence. The application selects *what* to ask; GPT can choose *how* to phrase it. For investigation, the model requests a deterministic outcome investigation and receives a structured `EvidenceBundle`; it does not inspect raw data to invent a theory.
 
@@ -80,6 +80,8 @@ Hackathon demo: show an unusual metric (for example, low HRV) alongside personal
 - Keep domain contracts independent of Next.js, Supabase, GPT, and HealthKit where practical; their definitions belong in Stage 0.
 
 ## Current scope
+
+Stage 0 is implemented: the nine metrics, ten event types, four allowed relationships, lowercase agent modes, reusable Zod schemas, and health-source contract are defined. [DOMAIN.md](docs/DOMAIN.md) records canonical units, 0–10 scales, wake-date sleep, temporal lags, missingness, provenance, and schema usage. This is a contract foundation; feature building, statistics, voice, storage, and native adapters remain later stages.
 
 Stage -1 establishes shared understanding and agent routing only. It does not implement registries, schemas, database migrations, voice features, analytics, or native integrations. Follow [`docs/ROADMAP.md`](docs/ROADMAP.md) for later stage boundaries and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the intended data flow.
 

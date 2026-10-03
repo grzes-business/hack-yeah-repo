@@ -6,7 +6,7 @@ This is a target architecture for staged implementation, not a claim that these 
 
 The inspected repository uses Next.js 16.3.8, React 19, TypeScript, pnpm, and `@supabase/supabase-js`. `app/page.tsx` displays local/preview/production status and whether public Supabase credentials are present. `lib/supabase.ts` creates a client or returns `null`; `lib/deployment.ts` reads Vercel environment status. Configuration presence is not a connectivity or database-health check.
 
-No product migrations, registry implementations, ingestion pipelines, voice sessions, analytical modules, or native project are checked into this starter. External Supabase schema and deployment state were not inspected. Stage 1 should extend the existing foundation rather than recreate it. Setup remains documented in [README](../README.md).
+Stage 0 now provides the shared registries and Zod contracts under `lib/domain/`, and the health-source interface/validation under `lib/health/`. No product migrations, ingestion pipelines, voice sessions, analytical algorithms, or native project are implemented. External Supabase schema and deployment state were not inspected. Stage 1 should extend the existing foundation rather than recreate it. Setup remains documented in [README](../README.md).
 
 ## Data and trust flow
 
@@ -88,7 +88,7 @@ The following decisions are settled by the project context: preserve Next.js/Sup
 
 | Open choice | Owner stage | Record the result in |
 | --- | --- | --- |
-| Initial registry entries, units/scales, timestamps, range semantics, lag alignment | 0 | Domain docs and implemented contracts |
+| Initial registry entries, units/scales, timestamps, range semantics, lag alignment — resolved in version 1 | 0 complete | [Domain contracts](DOMAIN.md) and `lib/domain/` |
 | Auth/demo user, user isolation, migrations, query ownership | 1 | Architecture and persistence guidance |
 | Mock objective/subjective fixtures, planted patterns, seed/reset behavior | 2 | Fixture documentation |
 | Concrete voice API, session authorization and persistence | 3 | Conversation and integration guidance |

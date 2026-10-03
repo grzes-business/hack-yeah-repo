@@ -51,7 +51,7 @@ Conceptual `investigateOutcome({ userId, outcome, date })`:
 5. Identify known, unknown, and unavailable context.
 6. Return structured facts for explanation and UI.
 
-The bundle should contain current value/date, anomalies/baselines, relationship identity/method/lag, effect, eligible counts, label, competing factors, missing potential factors, and provenance/limits. These are content requirements, not a final schema. Absent outcomes remain absent.
+Stage 0 freezes the bundle representation in [domain contracts](DOMAIN.md): current value/date come from its `dailyFeatures`, earlier dates from `contextDays`, and method/lag/competing-factor definitions from the registered relationship ID. Results carry effects, eligible counts, labels, and limits. Missing context includes a feature and its date, validated against registry lags and unknown states. Absent outcomes remain unknown. These schemas define representation; Stage 8 implements investigation.
 
 Stage 9 selects a question from relevant unknowns. One answer can change today's context without changing a historical relationship's strength. Show that distinction; recomputation does not guarantee stronger evidence.
 
