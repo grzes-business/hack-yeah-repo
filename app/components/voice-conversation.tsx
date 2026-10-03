@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useHealthSession } from "./session";
+import { TurnCapture } from "./turn-capture";
+import { CaptureRecordSchema, type CaptureRecord } from "@/lib/capture/contracts";
 import { VoiceTransport } from "@/lib/conversation/transport";
 import { readTranscriptEvent } from "@/lib/conversation/events";
 import { ConversationSchema, ConversationTurnSchema, type Conversation, type ConversationTurn } from "@/lib/db/records";
@@ -23,6 +25,9 @@ function VoiceSession() {
  const [muted, setMuted] = useState(false);
  const [conversations, setConversations] = useState<Conversation[]>([]);
  const [selected, setSelected] = useState<string | null>(null);
+ const [captures, setCaptures] = useState<Record<string,CaptureRecord>>({});
+ const [captureHistoryFor, setCaptureHistoryFor] = useState<string | null>(null);
+ const [captureHistoryError, setCaptureHistoryError] = useState<string | null>(null);
  const [turns, setTurns] = useState<ConversationTurn[]>([]);
  const [drafts, setDrafts] = useState<Record<string, { role: string; text: string }>>({});
  const [pendingSnapshot, setPendingSnapshot] = useState<Pending[]>([]);
@@ -119,6 +124,22 @@ function VoiceSession() {
   return () => { active = false; };
  }, [selected, repository, owner, historyRevision]);
 
+
+ useEffect(() => {
+  if (!selected || !session) return;
+  let active = true;
+  fetch(`/api/capture?conversationId=${encodeURIComponent(selected)}`, { headers: { Authorization: `Bearer ${session.access_token}` } }).then(async response => {
+   const body = await response.json();
+   if (!response.ok) throw new Error(body.error || "Capture history could not load.");
+   const records: CaptureRecord[] = body.records.map((value: unknown) => CaptureRecordSchema.parse(value));
+   if (active) {
+    setCaptures(previous => { const next = { ...previous }; for (const value of records) if (!next[value.rootTurnId] || next[value.rootTurnId].revision <= value.revision) next[value.rootTurnId] = value; return next; });
+    setCaptureHistoryFor(selected); setCaptureHistoryError(null);
+   }
+  }).catch(error => { if (active) { setCaptureHistoryError(error instanceof Error ? error.message : "Capture history could not load."); } });
+  return () => { active = false; };
+ }, [selected, session, historyRevision]);
+
  async function start() {
   if (!session || !repository || !audio.current || transport.current || pending.current.size) return;
   const run = ++generation.current;
@@ -167,7 +188,7 @@ function VoiceSession() {
   <section className="card" aria-label="Voice conversation">
    <h2>Tell us about your day</h2>
    <p>Speak naturally. Your audio is sent to OpenAI for this conversation. Finalized transcripts are saved to your private demo history; audio recordings are not stored by this app.</p>
-   <p className="small">This stage records conversation only. Structured observations and evidence investigation come later.</p>
+   <p className="small">Your saved words are sent to OpenAI to extract predefined observations. Capture status appears below each turn; evidence investigation comes later.</p>
    <p role="status">{labels[phase]}{muted && phase === "active" ? " · microphone muted" : ""}</p>
    <div className="voice-actions">
     <button onClick={() => void start()} disabled={!session || !repository || busy || pendingSnapshot.length > 0 || saving}>Start voice</button>
@@ -185,10 +206,11 @@ function VoiceSession() {
    <h2>Conversation history</h2>
    <label>Choose a conversation<select value={selected ?? ""} disabled={busy} onChange={event => { setTurns([]); setSelected(event.target.value || null); }}><option value="">Select history</option>{conversations.map(c => <option key={c.id} value={c.id}>{new Date(c.startedAt).toLocaleString()} {c.endedAt ? "" : "· end not recorded"}</option>)}</select></label>
    {historyError && <p role="alert">{historyError}</p>}
+   {captureHistoryError && <p role="alert">{captureHistoryError}</p>}
    <button onClick={() => setHistoryRevision(v => v + 1)} disabled={busy}>Retry history</button>
    <p className="small">History shows up to 100 conversations and 500 turns per conversation. Unsaved recovery copies stay in this tab’s session storage when available; closing the tab can lose them.</p>
    {!displayed.length && <p>No finalized transcript to show yet.</p>}
-   <ol className="voice-transcript">{displayed.map(turn => <li key={turn.id}><strong>{turn.role === "user" ? "You" : "Assistant"}</strong><p>{turn.transcript}</p><span className="small">{new Date(turn.occurredAt).toLocaleTimeString()} · {pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id) ? "Not saved" : "Saved"}</span></li>)}</ol>
+   <ol className="voice-transcript">{displayed.map(turn => <li key={turn.id}><strong>{turn.role === "user" ? "You" : "Assistant"}</strong><p>{turn.transcript}</p><span className="small">{new Date(turn.occurredAt).toLocaleTimeString()} · {pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id) ? "Not saved" : "Saved"}</span>{turn.role === "user" && <TurnCapture turn={turn} saved={!pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id)} autoReady={captureHistoryFor === selected} record={captures[turn.id] ?? null} onRecord={record => setCaptures(previous => ({ ...previous, [record.rootTurnId]: record }))} />}</li>)}</ol>
    {Object.entries(drafts).map(([key, draft]) => <p key={key} className="voice-draft"><strong>{draft.role === "user" ? "You" : "Assistant"} · live, not saved:</strong> {draft.text}</p>)}
   </section>
  </>;

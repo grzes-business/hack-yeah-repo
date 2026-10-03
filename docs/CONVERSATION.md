@@ -1,6 +1,6 @@
 # Conversation and active sensing
 
-Stage 3 now implements capture-only live voice using OpenAI Realtime over browser WebRTC. See [voice implementation](VOICE.md) for configuration, transport, transcript finalization, ownership, retry/cleanup, and pending live acceptance. Canonical event extraction remains Stage 4. GPT-Live remains the project's product label; this implementation uses the Realtime API.
+Stage 3 now implements capture-only live voice using OpenAI Realtime over browser WebRTC. See [voice implementation](VOICE.md) for configuration, transport, transcript finalization, ownership, retry/cleanup, and pending live acceptance. Stage 4 structured extraction is now implemented separately; see [CAPTURE](CAPTURE.md) for pending acceptance and runtime decisions. GPT-Live remains the project's product label; this implementation uses the Realtime API.
 
 ## Canonical capture pipeline
 
@@ -18,7 +18,7 @@ The live model handles turn-taking and natural responses. Canonical health-event
 | `nothing_trackable` | No statement maps safely to a registered type | Do not manufacture a variable; optional notes follow the chosen contract. |
 | `needs_clarification` | A supported observation has unresolved meaning | Ask about the unresolved detail; do not persist a guessed complete event. |
 
-Stage 4 defines mixed/partial utterance behavior, replay protection, and confirmations after successful persistence. A model saying “saved” is not proof of a database write.
+Stage 4 preserves all-or-clarify and now implements leased replay, atomic event persistence, and explicit correction; see [CAPTURE](CAPTURE.md). A model saying “saved” is not proof of a database write.
 
 ## Capture examples
 

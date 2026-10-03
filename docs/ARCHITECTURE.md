@@ -106,3 +106,7 @@ When a choice is implemented, update its owning document rather than leaving an 
 ## Stage 3 voice boundary
 
 Capture-only WebRTC now runs through `lib/conversation/`, the Talk component, and authenticated `/api/voice/session`. The server verifies the Supabase JWT and forwards SDP with server-selected provider configuration; the browser receives no provider key. Final transcript turns use existing raw persistence, with expected-owner checks and a same-tab recovery queue. No new migration, health-event tool, or analytics exists in this stage. See [VOICE](VOICE.md) for finalization, cleanup, limitations, and pending live acceptance.
+
+## Stage 4 extraction boundary
+
+Finalized owned user turns feed authenticated `/api/capture`, separate from voice transport. `lib/capture/` uses Structured Outputs candidates and deterministic canonicalization; leased SQL RPCs atomically persist canonical events and extraction revisions. Typed clarification/correction creates a traceable new source turn and replaces only the root’s accepted event set on complete success. The original registry/contracts and derived permissions are unchanged. Read [CAPTURE](CAPTURE.md) for time policy, ownership, replay, audit, and pending acceptance; Stage 6 must invalidate derived data on raw replacements.

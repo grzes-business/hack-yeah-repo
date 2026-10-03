@@ -51,6 +51,10 @@ Shell reads are bounded (100 conversations/derived records, 500 turns per conver
 
 One-click anonymous Auth is the agreed hackathon flow. The session is retained in that browser; clearing its storage loses access to the anonymous account. The UI states this before sign-in. Use sample information for demos; account linking/recovery, reset/deletion, production abuse protection, and retention policies need explicit later work before production use.
 
-Today persists profile settings. Talk and Evidence honestly describe capabilities that are not connected yet. Timeline loads validated saved raw observations and distinguishes demo samples from Apple Health and conversation inputs. Stage 2 adds clearly labeled sample history and owner-scoped removal; see [Fixtures](FIXTURES.md). Voice recording, scores, analytical results, and native adapters remain later work.
+Today persists profile settings. Talk now implements live voice and structured capture; Evidence remains a future capability. Timeline loads validated saved raw observations and distinguishes demo samples from Apple Health and conversation inputs. Stage 2 adds clearly labeled sample history and owner-scoped removal; see [Fixtures](FIXTURES.md). The app stores voice transcripts rather than audio recordings; analytical results and native adapters remain later work.
 
 Hosted setup is complete only after migration application, anonymous sign-in, profile read/write, and user isolation have been checked against the actual project. Record the result here and in the roadmap when that happens.
+
+## Stage 4 extraction persistence
+
+`202610030003_turn_extractions.sql` was applied successfully to hosted Supabase via SQL Editor on 2026-10-03. Do not reapply it; the manual migration ledger still needs reconciliation before CLI pushes. This adds the eighth table, owner-readable `turn_extractions`, and authenticated owner-scoped claim/finish/release RPCs for atomic capture/replacement and replay. Direct table writes are denied; RPCs explicitly derive `auth.uid()`. Existing raw/derived permissions remain unchanged. Read [CAPTURE](CAPTURE.md) for leases, immutable-root expectations, audit snapshots, correction semantics, the direct-RPC trust limit, and pending behavioral acceptance. The hand-maintained database type snapshot includes all three migrations.

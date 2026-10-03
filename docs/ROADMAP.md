@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 voice/transcript implementation is in place with live acceptance pending; Stage 4 follows acceptance.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
+This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 voice/transcript implementation is in place with live acceptance pending; The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 5 follows.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
 
 | Stage | Umbrella scope | Outcome |
 |---|---|---|
@@ -85,6 +85,8 @@ Create `/talk`, session/microphone controls, transcript display, and conversatio
 Done when speech produces persisted turns and session/microphone failures are understandable. No analytical explanations or canonical event extraction required yet. Depends on Stages 0–1.
 
 ### Stage 4 — Canonical event extraction
+
+Status: implemented; hosted extraction migration applied, types/lint/build passed. Live/integration acceptance remains pending. See [CAPTURE](CAPTURE.md).
 
 Detailed guide: [Stage 4 — Canonical structured observations](stages/stage-04-structured-observations.md).
 

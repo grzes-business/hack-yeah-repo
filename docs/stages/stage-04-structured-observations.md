@@ -2,7 +2,9 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented on 2026-10-03; live/integration acceptance pending.**
+
+See [capture implementation](../CAPTURE.md). The hosted extraction migration was applied successfully. Types, lint, and build passed; no automated tests or live extraction acceptance checks ran in this turn. All S04 AC behavioral checks remain pending.
 
 Finalized user speech creates only validated predefined observations, with auditable turn provenance and accurate capture/clarification feedback.
 
@@ -16,7 +18,7 @@ Start with [agent instructions](../../AGENTS.md), [product context](../../CONTEX
 
 ## Starting point
 
-Final user turns will exist after Stage 3. `lib/domain/events.ts` already defines draft and canonical extraction schemas. Subjective event persistence and turn references already exist. Stage 2 subjective fixtures are reference inputs, not a replacement for live extraction.
+Final user turns exist from Stage 3, whose live voice was confirmed by the user. `lib/domain/events.ts` already defines draft and canonical extraction schemas. Subjective event persistence and turn references already exist. Stage 2 subjective fixtures are reference inputs, not a replacement for live extraction.
 
 ## Implementation work
 
@@ -30,7 +32,7 @@ Final user turns will exist after Stage 3. `lib/domain/events.ts` already define
 
 ## Decisions and constraints
 
-Settled: 0–10 scales; model drafts omit canonical provenance; all-or-clarify. Resolve event timestamp defaults, ambiguous relative dates, extractor versioning, retry ledger, and correction semantics. “My knee hurts” can express pain with unknown intensity; it does not authorize a diagnosis. Do not infer caffeine mg or alcohol standard drinks from unspecified language.
+Settled: 0–10 scales; model drafts omit canonical provenance; all-or-clarify. Implemented decisions are documented in CAPTURE: frozen original-day/time-zone anchors, representative noon for past date-only reports, explicit DST clarification, capture-v1 leased replay bookkeeping, atomic saves, and explicit typed correction with revision history. “My knee hurts” can express pain with unknown intensity; it does not authorize a diagnosis. Do not infer caffeine mg or alcohol standard drinks from unspecified language.
 
 ## Acceptance criteria
 

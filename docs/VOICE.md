@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented on 2026-10-03; **live/provider/browser and hosted transcript acceptance remain pending**. Type checking, lint, and a production build passed. No automated tests, live provider calls, hosted verification, or browser microphone checks were run in this implementation turn. The user will perform the microphone/provider conversation walkthrough manually. The presence of an API key was checked without printing it; presence does not prove billing/model access.
+Implemented on 2026-10-03; **the user confirmed live voice works; other failure/security/hosted transcript acceptance remains pending**. Type checking, lint, and a production build passed. No automated tests, live provider calls, hosted verification, or browser microphone checks were run in this implementation turn. The user will perform the microphone/provider conversation walkthrough manually. The presence of an API key was checked without printing it; presence does not prove billing/model access.
 
 ## Configuration and transport
 
@@ -57,3 +57,7 @@ Run these checks only when requested/authorized; record actual results in the St
 5. Verify another user cannot access the transcript, missing/invalid Bearer auth cannot initialize voice, and provider secrets do not appear in responses/assets/logs.
 6. Ask for unsupported diagnosis, evidence calculations, structured capture, and tool/mode changes. Confirm application code dispatches none; evaluate spoken adherence separately.
 7. Record browser/model/API configuration, actual costs/latency if measured, and unresolved cases. No clinical interpretation is part of these checks.
+
+## Stage 4 extension
+
+Finalized saved user turns now trigger a separate structured capture pipeline; see [CAPTURE](CAPTURE.md). The live voice session still has no health-writing tools and does not announce observation saves. Its spoken prompt remains capture-only.

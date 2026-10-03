@@ -38,3 +38,7 @@ Choose a fixture whose registry entries support the outcome and question. Exampl
 - Stage 14: optional later next-step story with outcomes, duration, inclusion criteria, and confounders.
 
 Do not present synthetic measurements as real personal data. Show an evidence-state change rather than merely a new model response. If the answer leaves the investigation inconclusive, explain that accurately.
+
+## Stage 4 capture milestone
+
+After voice saves a finalized user turn, Talk extracts predefined observations and displays saved/clarification/no-trackable/failure status. Try an explicit energy rating plus yesterday’s alcohol, then use the original turn’s correction form and inspect Timeline. [CAPTURE](CAPTURE.md) records the time/retry/correction rules and manual acceptance matrix; analytics are still unavailable.

@@ -158,3 +158,6 @@ label { margin-top: .5rem; font-size: .875rem; }
 .voice-transcript p { white-space: pre-wrap; }
 .voice-draft { opacity: .7; overflow-wrap: anywhere; }
 audio { max-width: 100%; margin: .75rem 0; }
+
+.turn-capture { margin-top: .75rem; padding: .75rem; border-left: 3px solid var(--border, #ddd); }
+.turn-capture textarea { display: block; width: 100%; min-height: 6rem; padding: .75rem; font: inherit; }

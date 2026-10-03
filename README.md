@@ -101,3 +101,7 @@ Add new routes under `app/`, shared helpers under `lib/`. See `AGENTS.md` for co
 ## Live voice (Stage 3)
 
 Add the server-only `OPENAI_API_KEY` to `.env.local`, restart the app, start a private demo session, and open `/talk`. Optional `OPENAI_REALTIME_MODEL` defaults to `gpt-realtime-2.1`. The provider account needs API billing and model access; ChatGPT subscription usage does not configure this API key. Never expose the key through `NEXT_PUBLIC_`. See [VOICE](docs/VOICE.md) for transcript/retry policies and pending acceptance checks.
+
+## Structured capture (Stage 4)
+
+Saved user turns on Talk now produce validated observations with visible save or clarification status. Explicit correction/clarification is available under the original turn. The same server API key is reused; optional `OPENAI_EXTRACTION_MODEL` defaults to `gpt-4.1-mini`. The third hosted migration is applied. See [CAPTURE](docs/CAPTURE.md) for replay, time, correction, and pending acceptance checks.

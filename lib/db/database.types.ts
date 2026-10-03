@@ -1,4 +1,4 @@
-// Schema snapshot for migrations 202610030001 and 202610030002. Regenerate from hosted Supabase
+// Schema snapshot for migrations 202610030001 and 202610030002, and 202610030003. Regenerate from hosted Supabase
 // after applying migrations; review changes rather than overwriting blindly.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 type Table<Row, Insert, Update = Partial<Insert>> = {
@@ -12,9 +12,11 @@ type Turn = Owned & { conversation_id: string; role: string; transcript: string;
 type Profile = { user_id: string; display_name: string; time_zone: string; created_at: string };
 type Daily = { user_id: string; date: string; time_zone: string; builder_version: string; payload: Json };
 type Result = { user_id: string; relationship_id: string; period_from: string; period_to: string; analysis_version: string; payload: Json };
+type TurnExtraction = { user_id: string; root_turn_id: string; extractor_version: string; source_turn_id: string; root_transcript: string; anchor_at: string; time_zone: string; captured_at: string; revision: number; result: Json | null; accepted_result: Json | null; history: Json; lease_token: string | null; lease_until: string | null };
 export type Database = {
  public: {
   Tables: {
+   turn_extractions: Table<TurnExtraction, TurnExtraction>;
    profiles: Table<Profile, Omit<Profile, "created_at" | "display_name" | "time_zone"> & Partial<Profile>>;
    conversations: Table<Conversation, Conversation>;
    conversation_turns: Table<Turn, Turn>;
@@ -23,7 +25,11 @@ export type Database = {
    daily_features: Table<Daily, Daily>;
    relationship_results: Table<Result, Result>;
   };
-  Views: { [_ in never]: never }; Functions: { [_ in never]: never };
+  Views: { [_ in never]: never }; Functions: {
+   claim_turn_extraction: { Args: { p_root: string; p_token: string; p_revision?: number | null; p_followup_id?: string | null; p_followup?: string | null }; Returns: Json };
+   finish_turn_extraction: { Args: { p_root: string; p_token: string; p_result: Json }; Returns: Json };
+   release_turn_extraction: { Args: { p_root: string; p_token: string }; Returns: undefined };
+  };
   Enums: { [_ in never]: never }; CompositeTypes: { [_ in never]: never };
  };
 };
