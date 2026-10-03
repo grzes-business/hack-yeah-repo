@@ -10,7 +10,7 @@ Speech → live conversation → transcript/turn
        → registry/schema validation → subjective event persistence
 ```
 
-The live model handles turn-taking and natural responses. Canonical health-event extraction is a separate backend responsibility, even if both ultimately use a model. The conversational model cannot write arbitrary database objects. Preserve turn provenance and distinguish candidates from accepted, persisted observations.
+Stage 4.5 makes response timing application-controlled: saved transcript → allow-listed intent → capture/follow-up/retrieval → confirmed application text → spoken rendering. Canonical health-event extraction is a separate backend responsibility, even if both ultimately use a model. The conversational model cannot write arbitrary database objects. Preserve turn provenance and distinguish candidates from accepted, persisted observations.
 
 | Outcome | Meaning | User-visible behavior |
 | --- | --- | --- |
@@ -55,3 +55,5 @@ Stage 9 adds missing-context detection. Deterministic `selectBestQuestion()` cho
 Stage 3 owns denied microphone access, disconnected/expired sessions, and transcript persistence state. Stage 4 owns invalid extraction, unclear dates, repeated capture, and persistence failure. Stage 5 owns incomplete/resumed interviews. Stages 8–9 own insufficient evidence and unanswered follow-ups. Failures must not become fabricated observations or health conclusions. Enforce mode/tool permissions in application code, not only prompts.
 
 Read [domain](DOMAIN.md) for contracts and [evidence](EVIDENCE.md) for explanation rules.
+
+Stage 4.5 selection, replay, response ordering and retrieval bounds are implemented in [VOICE](VOICE.md). Model interpretation remains an open acceptance risk; [Stage 4.5](stages/stage-04a-voice-reliability.md) records failed live cases. No Stage 5 question selector is implemented.

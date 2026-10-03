@@ -1,4 +1,4 @@
-// Schema snapshot for migrations 202610030001 and 202610030002, and 202610030003. Regenerate from hosted Supabase
+// Schema snapshot for migrations 202610030001 through 202610030005. Regenerate from hosted Supabase
 // after applying migrations; review changes rather than overwriting blindly.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 type Table<Row, Insert, Update = Partial<Insert>> = {
@@ -16,6 +16,7 @@ type TurnExtraction = { user_id: string; root_turn_id: string; extractor_version
 export type Database = {
  public: {
   Tables: {
+   voice_turn_runs: Table<{user_id:string;turn_id:string;transcript:string;target_root_id:string|null;target_revision:number|null;plan:Json|null;result:Json|null;lease_token:string|null;lease_until:string|null}, {user_id:string;turn_id:string;transcript:string;target_root_id?:string|null;target_revision?:number|null;plan?:Json|null;result?:Json|null;lease_token?:string|null;lease_until?:string|null}>;
    turn_extractions: Table<TurnExtraction, TurnExtraction>;
    profiles: Table<Profile, Omit<Profile, "created_at" | "display_name" | "time_zone"> & Partial<Profile>>;
    conversations: Table<Conversation, Conversation>;
@@ -23,9 +24,14 @@ export type Database = {
    metric_samples: Table<MetricPayload & { metric: string; source_type: string; external_id: string }, MetricPayload>;
    subjective_events: Table<Payload & { conversation_turn_id: string; event_type: string }, Payload & { conversation_turn_id: string }>;
    daily_features: Table<Daily, Daily>;
+   morning_checkins: Table<{ user_id: string; local_date: string; skipped: string[]; ended_at: string | null; updated_at: string }, { user_id: string; local_date: string; skipped?: string[]; ended_at?: string | null; updated_at?: string }>;
    relationship_results: Table<Result, Result>;
   };
   Views: { [_ in never]: never }; Functions: {
+   claim_voice_turn: {Args:{p_turn:string;p_token:string;p_target?:string|null};Returns:Json};
+   plan_voice_turn: {Args:{p_turn:string;p_token:string;p_plan:Json};Returns:Json};
+   finish_voice_turn: {Args:{p_turn:string;p_token:string;p_result:Json};Returns:Json};
+   release_voice_turn: {Args:{p_turn:string;p_token:string};Returns:undefined};
    claim_turn_extraction: { Args: { p_root: string; p_token: string; p_revision?: number | null; p_followup_id?: string | null; p_followup?: string | null }; Returns: Json };
    finish_turn_extraction: { Args: { p_root: string; p_token: string; p_result: Json }; Returns: Json };
    release_turn_extraction: { Args: { p_root: string; p_token: string }; Returns: undefined };

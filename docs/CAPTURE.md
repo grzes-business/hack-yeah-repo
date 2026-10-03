@@ -14,7 +14,7 @@ The existing server `OPENAI_API_KEY` is reused. Optional `OPENAI_EXTRACTION_MODE
 - `lib/capture/provider.ts` requests structured candidates with registry anchors, all-or-clarify, unknown-dose, temporal, and correction rules. It provides no tools and requires a completed response.
 - `lib/capture/canonicalize.ts` validates value semantics with existing draft schemas, resolves local dates/clocks, supplies canonical IDs/provenance, sets confidence null, and validates the complete result. It does not attach a workout session without an established verified link.
 - `lib/db/server.ts` verifies a Bearer Supabase JWT and derives the owner. The capture endpoint reads stored owned turns; client-supplied transcript, owner, event, timestamp, or provenance fields are not accepted.
-- `app/components/turn-capture.tsx` runs once after a user turn is confirmed saved and capture history is loaded, with explicit retries. Assistant turns, synthetic fixture turns, and correction transcript rows do not auto-extract as independent roots.
+- `app/components/turn-capture.tsx` retains typed clarification/correction and explicit retries. In Talk, the Stage 4.5 controller classifies saved turns before extraction; managed cards do not independently auto-extract. Assistant turns, synthetic fixture turns, and correction transcript rows do not auto-extract as independent roots.
 
 Provider output and transcript text remain untrusted. Structural validation rejects unsupported fields/values; prompt adherence and semantic extraction accuracy still need the utterance acceptance matrix. There is no claim that a JSON schema proves the report is true.
 
@@ -52,7 +52,7 @@ Original transcripts and result revisions remain traceable. Superseded canonical
 
 Talk displays pending, captured, nothing trackable, needs clarification, interrupted/processing, and failed states per root turn. Successful cards show readable accepted values and local dates. The prior accepted result remains visible while a correction needs clarification. Timeline reads the same canonical event table and labels them conversational observations.
 
-Loading saved history restores outcomes. A missing result can be automatically extracted once history is loaded; an interrupted/failed lease uses explicit Retry capture. Transcript-save recovery remains independent: unsaved turns cannot be extracted. Typed unsent follow-up text is not durably stored; losing it requires re-entry. A follow-up already prepared in the ledger can be retried from the original turn after reload.
+Loading saved history restores outcomes. A saved unprocessed turn can be explicitly processed from history; an interrupted/failed lease uses explicit Retry capture. Transcript-save recovery remains independent: unsaved turns cannot be extracted. Typed unsent follow-up text is not durably stored; losing it requires re-entry. A follow-up already prepared in the ledger can be retried from the original turn after reload.
 
 Capture history follows the existing 500-turn conversation browsing limit. Leases bound duplicate work, not global abuse/cost. Anonymous users and owner-editable raw records retain the previously documented demo security limits. Production retention, hard usage limits, stronger SQL value validation, and deletion workflows require deliberate later scope.
 
@@ -78,3 +78,17 @@ Additive migration `202610030004_capture_timestamp_precision.sql` was applied th
 Focused diagnosis verified the original database failure, then one synthetic saved turn through the actual localhost `/api/capture` route and live provider: HTTP 200, captured result, revision 1, one persisted event. Replay returned HTTP 200 with the same revision and one event. Synthetic database records were removed; two disposable anonymous Auth accounts remain. This does not verify all event types, correction, concurrency, or cross-user capture acceptance.
 
 The route now logs only failed database operation names and error codes, plus a validation/internal category for unexpected failures. It does not log transcripts, observation payloads, or credentials.
+
+## Coffee/soreness extraction incident — 2026-10-03
+
+Synthetic live-provider reproduction showed the flat candidate schema allowed caffeine to carry `beverage: "coffee"` (an alcohol-only field) and soreness to carry pain fields with no rating. The canonicalizer rejected these candidates, producing the generic capture 503.
+
+The provider candidate schema now uses type-specific alternatives: irrelevant value fields must be null, and timing alternatives require exactly the fields appropriate to their kind. These are JSON Schema `anyOf` alternatives (Zod unions); OpenAI rejects generated `oneOf` alternatives. The canonical domain contracts, ten event keys, and all-or-clarify policy are unchanged. Missing/inconsistent required values in otherwise structurally valid candidates now produce a persisted clarification outcome rather than an uncaught validation error. Invalid candidate structure still fails without a write and returns a specific 502 message. The prompt explicitly distinguishes soreness ratings from pain fields and coffee consumption from an inferred caffeine dose.
+
+Coffee alone should capture consumed caffeine with unknown mg. Qualitative soreness requires a reported 0–10 rating. Coffee and unrated soreness in one turn wait for clarification together; use the original card's clarification form to resolve the rating and retain the coffee report. Existing failed claims can retry; previously completed results remain cached. No database migration is required.
+
+Focused live checks after the fix: the actual localhost endpoint returned HTTP 200/captured for coffee alone; HTTP 200/needs_clarification for unrated soreness and the combined report; a typed rating clarification returned HTTP 200/captured with soreness 6 and caffeine consumed with null mg. Synthetic records were removed; two disposable anonymous Auth accounts remain from the initial rejected-schema attempt and successful rerun. These checks do not replace the full Stage 4 acceptance matrix.
+
+## Stage 4.5 follow-ups
+
+Spoken follow-ups select an owned completed root and its revision, then use the same atomic capture transaction with a stable request ID derived from the saved speech turn. The original speech and linked `capture:` source copy retain provenance. Confirmed feedback comes from the transaction response. Live negative corrections and mixed ambiguous reports remain inconsistent despite stricter prompting; do not mark correction/extraction ACs complete. See [VOICE](VOICE.md) and the Stage 4.5 verification record.

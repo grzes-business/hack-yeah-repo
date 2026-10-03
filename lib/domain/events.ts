@@ -88,21 +88,32 @@ export const SubjectiveEventDraftSchema = z.discriminatedUnion("type", [
 ]);
 export type SubjectiveEventDraft = z.infer<typeof SubjectiveEventDraftSchema>;
 
+// Every open item in one clarification, in the order the speaker mentioned them.
+export const OpenEventTypesSchema = z.array(SubjectiveEventTypeSchema).min(1).max(4);
 export const ExtractionDraftResultSchema = z.discriminatedUnion("status", [
   z.strictObject({ status: z.literal("captured"), events: z.array(SubjectiveEventDraftSchema).min(1) }),
   z.strictObject({ status: z.literal("nothing_trackable"), reason: z.string().min(1).max(500) }),
-  z.strictObject({ status: z.literal("needs_clarification"), eventType: SubjectiveEventTypeSchema, reason: z.string().min(1).max(500) }),
+  z.strictObject({ status: z.literal("needs_clarification"), eventTypes: OpenEventTypesSchema, reason: z.string().min(1).max(500) }),
 ]);
 export type ExtractionDraftResult = z.infer<typeof ExtractionDraftResultSchema>;
 
+// Results stored before multi-item clarification carried a single `eventType`; read them as one open item.
+function upgradeLegacyClarification(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  const record = value as Record<string, unknown>;
+  if (record.status !== "needs_clarification" || "eventTypes" in record || typeof record.eventType !== "string") return value;
+  const { eventType, ...rest } = record;
+  return { ...rest, eventTypes: [eventType] };
+}
+
 // Canonical pipeline outcome. `captured` is confirmed only after successful storage.
-export const ExtractionResultSchema = z.discriminatedUnion("status", [
+export const ExtractionResultSchema = z.preprocess(upgradeLegacyClarification, z.discriminatedUnion("status", [
   z.strictObject({ status: z.literal("captured"), events: z.array(SubjectiveEventSchema).min(1) }),
   z.strictObject({ status: z.literal("nothing_trackable"), reason: z.string().min(1).max(500) }),
   z.strictObject({
     status: z.literal("needs_clarification"),
-    eventType: SubjectiveEventTypeSchema,
+    eventTypes: OpenEventTypesSchema,
     reason: z.string().min(1).max(500),
   }),
-]);
+]));
 export type ExtractionResult = z.infer<typeof ExtractionResultSchema>;

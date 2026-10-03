@@ -105,3 +105,7 @@ Add the server-only `OPENAI_API_KEY` to `.env.local`, restart the app, start a p
 ## Structured capture (Stage 4)
 
 Saved user turns on Talk now produce validated observations with visible save or clarification status. Explicit correction/clarification is available under the original turn. The same server API key is reused; optional `OPENAI_EXTRACTION_MODEL` defaults to `gpt-4.1-mini`. The third hosted migration is applied. See [CAPTURE](docs/CAPTURE.md) for replay, time, correction, and pending acceptance checks.
+
+## Voice reliability (Stage 4.5)
+
+Talk defaults to press-to-speak; hold with pointer or Space/Enter, release to submit. Continuous listening remains optional. Saved reports receive application-confirmed feedback, selected voice clarification/correction and bounded date/type retrieval. Migration 005 is already applied to the current hosted project; do not replay existing migrations. See [VOICE](docs/VOICE.md) for controls/recovery and [Stage 4.5](docs/stages/stage-04a-voice-reliability.md) for unresolved live interpretation failures and manual ACs. `pnpm verify:voice` deliberately uses hosted Supabase and paid provider calls; removes synthetic records but leaves anonymous Auth accounts.

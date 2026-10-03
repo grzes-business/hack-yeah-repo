@@ -161,3 +161,6 @@ audio { max-width: 100%; margin: .75rem 0; }
 
 .turn-capture { margin-top: .75rem; padding: .75rem; border-left: 3px solid var(--border, #ddd); }
 .turn-capture textarea { display: block; width: 100%; min-height: 6rem; padding: .75rem; font: inherit; }
+
+.speak-button { touch-action: none; user-select: none; min-height: 3rem; }
+.speak-button[aria-pressed="true"] { outline: 3px solid currentColor; outline-offset: 2px; }

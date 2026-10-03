@@ -62,6 +62,8 @@ See [`README.md`](README.md) for startup, environment variables, and deployment 
 
 ## Working and documentation conventions
 
+- The current acceptance gate is [Stage 4.5 — Voice reliability](docs/stages/stage-04a-voice-reliability.md), before Stage 5. It owns deliberate turn-taking, capture-result feedback, spoken clarification/correction, grounded saved-report retrieval, communication, and live acceptance. Its controller is implemented; live interpretation failures and physical acceptance remain unresolved. Future tools must be explicitly authorized and server-validated; the current live session still has no tools.
+
 - Stage 3 capture-only WebRTC and transcript persistence are implemented, with live acceptance pending. Read [VOICE](docs/VOICE.md) before changes. Preserve server-verified ownership, final-turn IDs, save-status/recovery semantics, resource cleanup, and the absence of health/tool dispatch in the live model. Stage 4 adds a separate app-owned extraction pipeline; read [CAPTURE](docs/CAPTURE.md) before capture/storage changes. Preserve all-or-clarify, application-owned dates/provenance, lease/revision replay, atomic correction, and the documented RPC trust boundary.
 
 - Before changing an architectural boundary, check `CONTEXT.md` and `docs/ARCHITECTURE.md`; update those docs in the same change if the agreed design changes.

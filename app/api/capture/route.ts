@@ -4,7 +4,8 @@ import { authenticatedDatabase, boundedJson, RequestFailure } from "@/lib/db/ser
 import { CaptureInputSchema, CaptureRecordSchema } from "@/lib/capture/contracts";
 import { canonicalizeExtraction } from "@/lib/capture/canonicalize";
 import { extractCandidates } from "@/lib/capture/provider";
-import { ExtractionResultSchema, getLocalDate, RecordIdSchema, TimeZoneSchema } from "@/lib/domain";
+import { guardCorrection } from "@/lib/capture/correction-guard";
+import { ExtractionResultSchema, getLocalDate, RecordIdSchema, TimeZoneSchema, type ExtractionResult } from "@/lib/domain";
 import type { Json, Row } from "@/lib/db/database.types";
 
 export const runtime="nodejs";
@@ -19,7 +20,7 @@ function databaseFailure(operation: string, error: {code: string}) {
  console.error("[capture] Database operation failed", {operation, code:error.code});
 }
 function failed(error: unknown) {
- if(!(error instanceof RequestFailure)) console.error("[capture] Unexpected processing failure", {kind:error instanceof z.ZodError ? "validation" : "internal"});
+ if(!(error instanceof RequestFailure)) console.error("[capture] Unexpected processing failure", JSON.stringify({kind:error instanceof z.ZodError ? "validation" : "internal"}));
  return Response.json({error:error instanceof RequestFailure ? error.message : "Extraction could not complete. No new observations were confirmed. Retry the capture."},{status:error instanceof RequestFailure ? error.status:503,headers});
 }
 export async function GET(request: Request) {
@@ -54,10 +55,21 @@ export async function POST(request: Request) {
   if(root.user_id!==owner || source.user_id!==owner || root.id!==turnId || source.id!==job.source_turn_id || source.conversation_id!==root.conversation_id || source.role!=="user") throw new Error("Capture provenance mismatch.");
   TimeZoneSchema.parse(job.time_zone);
   const anchorAt=new Date(job.anchor_at).toISOString(); const capturedAt=new Date(job.captured_at).toISOString();
-  let candidates;
-  try { candidates=await extractCandidates({transcript:root.transcript,followup:source.id===root.id?null:source.transcript,previousResult:{ latest:job.result, accepted:job.accepted_result },anchorDate:getLocalDate(anchorAt,job.time_zone),timeZone:job.time_zone}); }
-  catch { throw new RequestFailure("The extraction service could not return a complete observation. Check connection, API billing/model access, then retry.",502); }
-  const result=ExtractionResultSchema.parse(canonicalizeExtraction(candidates,{rootTurnId:turnId,sourceTurnId:source.id,anchorAt,capturedAt,timeZone:job.time_zone}));
+  // One bounded retry when the model's structured output is internally inconsistent; nothing is saved from an invalid attempt.
+  let result: ExtractionResult | null = null;
+  for (let attempt = 1; attempt <= 2 && !result; attempt++) {
+   let candidates;
+   try { candidates=await extractCandidates({transcript:root.transcript,followup:source.id===root.id?null:source.transcript,previousResult:{ latest:job.result, accepted:job.accepted_result },anchorDate:getLocalDate(anchorAt,job.time_zone),timeZone:job.time_zone}); }
+   catch { throw new RequestFailure("The extraction service could not return a complete observation. Check connection, API billing/model access, then retry.",502); }
+   try { result=ExtractionResultSchema.parse(canonicalizeExtraction(candidates,{rootTurnId:turnId,sourceTurnId:source.id,anchorAt,capturedAt,timeZone:job.time_zone})); }
+   catch { console.error("[capture] Candidate validation failed", JSON.stringify({attempt})); }
+  }
+  if (!result) throw new RequestFailure("The extraction service returned an invalid observation. No new observations were saved. Retry capture.",502);
+  if(source.id!==root.id){
+   const latest=job.result?ExtractionResultSchema.parse(job.result):null;
+   const open=latest?.status==="needs_clarification"?latest.eventTypes:[];
+   result=guardCorrection(result,{original:root.transcript,followup:source.transcript},{accepted:job.accepted_result?ExtractionResultSchema.parse(job.accepted_result):null,open});
+  }
   const saved=await client.rpc("finish_turn_extraction",{p_root:turnId,p_token:token,p_result:result as unknown as Json});
   if(saved.error) { databaseFailure("finish",saved.error); throw new RequestFailure("Observations were not confirmed. Retry to recover the transaction result.",503); }
   release=null;

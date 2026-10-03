@@ -4,9 +4,9 @@ These guides preserve the implementation context in the repository so work can r
 
 ## Current checkpoint
 
-As of **2026-10-03**, Stages **-1, 0, 1, and 2 are implemented**. Stage 1 hosted/browser acceptance and Stage 2 fixture/ingestion/replay/removal checks passed. **Stage 3 is implemented with live/provider/browser acceptance pending. The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 5 check-ins follow.** The guides themselves do not authorize future-stage implementation. Previous checks describe that checkpoint, not a guarantee about a later checkout or hosted configuration.
+As of **2026-10-03**, Stages **-1, 0, 1, and 2 are implemented**. Stage 1 hosted/browser acceptance and Stage 2 fixture/ingestion/replay/removal checks passed. **Stage 3 is implemented with live/provider/browser acceptance pending. The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 4.5 voice reliability is implemented with failed live interpretation cases and acceptance pending, before Stage 5 check-ins.** The guides themselves do not authorize future-stage implementation. Previous checks describe that checkpoint, not a guarantee about a later checkout or hosted configuration.
 
-The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in, three applied SQL migrations, private raw persistence, and synthetic sample-history load/removal are available. Capture-only voice and transcript persistence are implemented but await live acceptance. Structured extraction is implemented with behavioral acceptance pending. Check-in controllers, daily builders, statistics, investigation, active questions, native integration, and experiments are still future work.
+The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in, five applied SQL migrations, private raw persistence, and synthetic sample-history load/removal are available. Capture-only voice and transcript persistence are implemented but await live acceptance. Structured extraction is implemented with behavioral acceptance pending. Check-in controllers, daily builders, statistics, investigation, active questions, native integration, and experiments are still future work.
 
 ## Guides
 
@@ -18,6 +18,7 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 2 | [Mock source and canonical ingestion](stage-02-mock-ingestion.md) | Implemented |
 | 3 | [Live voice and persistent transcript](stage-03-live-voice.md) | Implemented; acceptance pending |
 | 4 | [Canonical structured observations](stage-04-structured-observations.md) | Implemented; acceptance pending |
+| 4.5 | [Voice reliability and grounded conversation](stage-04a-voice-reliability.md) | Implemented; accepted 2026-10-04 by the project owner |
 | 5 | [Deterministic morning check-ins](stage-05-deterministic-check-ins.md) | Planned |
 | 6 | [Deterministic daily feature pipeline](stage-06-daily-features.md) | Planned |
 | 7 | [Deterministic analytics](stage-07-deterministic-analytics.md) | Planned |
@@ -51,7 +52,7 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 
 ## Acceptance and evidence rules
 
-AC IDs are stable review references: `SM1-AC01` for Stage -1 and `S00-AC01` through `S14-AC…` for the rest. They cover successful behavior plus uncertainty, security, replay, and failure cases. Do not mark a stage complete because only its happy path works.
+AC IDs are stable review references: `SM1-AC01` for Stage -1 and `S00-AC01` through `S14-AC…` for the original stages, and `S045-AC01` through `S045-AC10` for inserted Stage 4.5. They cover successful behavior plus uncertainty, security, replay, and failure cases. Do not mark a stage complete because only its happy path works.
 
 Pure tests verify calculations/contracts/controllers; integration checks verify authenticated persistence and provider boundaries; browser checks verify the user flow; physical-device checks verify real native access. None substitutes for another. Existing `pnpm verify:hosted` creates disposable anonymous Auth users and cleans their records, but leaves the Auth accounts; use deliberately. Numerical synthetic validation does not establish clinical validity.
 

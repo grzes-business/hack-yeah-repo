@@ -2,9 +2,9 @@
 
 ## Status and intended outcome
 
-**Implemented on 2026-10-03; live/integration acceptance pending.**
+**Implemented on 2026-10-03; partial verification recorded below, full acceptance pending.**
 
-See [capture implementation](../CAPTURE.md). The hosted extraction migration was applied successfully. Types, lint, and build passed; no automated tests or live extraction acceptance checks ran in this turn. All S04 AC behavioral checks remain pending.
+See [capture implementation](../CAPTURE.md). Hosted migrations 003 and 004 are applied. Initial types/lint/build checks passed. Subsequent capture diagnosis and the audit below verified selected deterministic, hosted, and live-provider paths. No criterion is certified in full until its remaining live/UI cases are checked.
 
 Finalized user speech creates only validated predefined observations, with auditable turn provenance and accurate capture/clarification feedback.
 
@@ -59,3 +59,40 @@ Autonomous question selection, analytical conclusions, custom event types, medic
 ## Documentation handoff
 
 Update CONVERSATION with extraction/replay/correction decisions, DOMAIN if a deliberate contract evolution is required, PERSISTENCE for processing metadata, and DEMO with the capture milestone.
+
+## Acceptance audit — 2026-10-03
+
+All seven criteria have supporting implementation; all seven remain **partially verified**, rather than fully accepted. Code inspection is not proof of model interpretation or browser behavior.
+
+| Criterion | Observed checks | Remaining checks |
+| --- | --- | --- |
+| S04-AC01 | Canonicalizer accepts all ten event types and multiple supplied candidates. Earlier actual endpoint/provider check saved one energy event. | Spoken single/multiple observations across all ten types; transcript accuracy and Timeline walkthrough. |
+| S04-AC02 | Strict vocabulary rejects unknown keys; inconsistent clarification plus events is rejected; temporal ambiguity discards the whole candidate set. | Provider must recognize unsupported speech and mixed semantic ambiguity without silently omitting it. This depends on interpretation/prompt adherence. |
+| S04-AC03 | Rating 0/10 endpoints, invalid 11, null quantities/intensity, and explicit negatives checked directly. | Live extraction must preserve those meanings rather than inventing ratings or doses. |
+| S04-AC04 | Local-midnight yesterday, Warsaw DST gap/fold, and future-date clarification checked directly. Existing domain tests cover calendar lags/year boundaries. | Live temporal interpretation, explicit date/time input, and delayed clarification anchored to the original day. |
+| S04-AC05 | Stable canonical IDs/duplicate coalescing; hosted busy claim, cached replay, cross-user claim/read rejection, unauthenticated GET 401, forged event provenance rejection. Earlier live endpoint retry retained one event. | Concurrent HTTP/provider requests, lost HTTP success response/reload, broader forged-input matrix. Owner-accessible RPCs are not a private server-only validation boundary; see CAPTURE. |
+| S04-AC06 | Route returns success only after finish; hosted invalid replacement retained the old event, released lease recovered; actual capture/replay HTTP 200. | Browser pending/failure/reload UX, provider timeout/malformed output, actual storage outage, and process death/90-second lease expiry. |
+| S04-AC07 | Hosted correction replaced one active event; clarification retained prior accepted value; stale revision rejected; four history revisions preserved. | Provider complete multi-event corrections, repeated corrections, typed-form UX and replay after reload. |
+
+Checks performed: `pnpm test` (30 existing tests passed); temporary in-memory checks of actual capture schemas/canonicalizer; hosted two-user RPC/GET audit using synthetic records. Hosted audit used constructed canonical results, so it does not verify the extractor model. Synthetic records were removed; two disposable anonymous Auth accounts remain from this audit. No permanent capture test suite was added.
+
+### Retrieval and conversation limits
+
+Talk restores saved transcripts and capture outcomes through owned repository reads and GET `/api/capture`. Timeline reads canonical observations, capped at 500 records per source. Talk lists up to 100 conversations and 500 turns per conversation. These are UI browsing limits, not complete history exports.
+
+The live voice session has `tools: []` and receives no saved-history or capture-result feedback. It cannot answer questions about stored observations, confirm a save, or resume prior voice context. The extractor receives only the original turn, latest explicit follow-up, and previous interpretations for that root. Clarification/correction currently uses the typed form under the original turn; a new spoken answer is a separate root and is not automatically linked.
+
+### Manual acceptance checklist
+
+Use a private demo session and inspect **capture cards and Timeline**, not spoken acknowledgments:
+
+1. Say “My energy is four out of ten, and I had two beers yesterday.” Expect two observations; energy today, alcohol yesterday. Reload and select the same conversation: same values, no duplicates.
+2. In separate turns cover stress, mood, soreness, workout effort, late meal, illness symptoms, and knee pain without intensity. Expect registered types, exact reported ratings, and unknown pain intensity. Check 0 and 10 endpoints.
+3. Say “I drank coffee” and “I drank alcohol, but I do not know how much.” Expect unknown mg/count. Separately report no caffeine, no alcohol, and no pain: expect explicit absence, not missing data.
+4. Say “My energy is four, and I am stressed” without a stress rating. Expect clarification and **no newly accepted subset** for that turn. Use its typed clarification form to supply the missing rating; expect a complete result.
+5. Ask a question, discuss a future plan, quote another person's symptoms, and mention an unsupported concept. Expect no invented self-report. “Energy eleven out of ten” must not save a clipped/guessed rating.
+6. Correct the original two-event turn using its form: “Actually I had no alcohol yesterday; my energy is still four.” Expect the negative alcohol event and retained energy, no old consumption event in Timeline. Submit another ambiguous correction: the previously accepted set must remain visible. Reload and check again.
+7. Report an explicit past date and “recently.” Expect the supplied date and clarification for vague timing. If testing yesterday around midnight, compare with the profile time zone. Date-only UI deliberately does not claim an exact clock.
+8. In browser DevTools, block `/api/capture` for one attempt. Expect failure with no saved confirmation; unblock and retry once, then reload: one accepted set. This checks network/UI recovery, not a real provider timeout or database outage.
+
+Provider failure injection, exact DST fixtures, concurrent/lost-response scenarios, and security matrices remain developer checks; users need not alter secrets or database permissions to perform this checklist. Voice capability explanations and spoken retrieval require additional implementation and are not delivered by Stage 4's storage ACs.

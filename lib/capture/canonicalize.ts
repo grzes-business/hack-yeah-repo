@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { addCalendarDays, getLocalDate, LocalDateSchema, ExtractionDraftResultSchema, ExtractionResultSchema, SubjectiveEventDraftSchema, SubjectiveEventSchema, type ExtractionResult } from "../domain";
+import { addCalendarDays, getLocalDate, LocalDateSchema, ExtractionDraftResultSchema, ExtractionResultSchema, SubjectiveEventDraftSchema, SubjectiveEventSchema, SubjectiveEventRegistry, type ExtractionResult } from "../domain";
 import { ProviderExtractionSchema, type CandidateSchema } from "./contracts";
 import type { z } from "zod";
 
@@ -42,19 +42,26 @@ export function canonicalizeExtraction(input: unknown, context: CaptureContext):
  const response = ProviderExtractionSchema.parse(input);
  if (response.status !== "captured") {
   if (response.events.length || !response.reason?.trim()) throw new Error("Invalid empty/clarification outcome.");
-  if (response.status === "needs_clarification") return ExtractionResultSchema.parse({ status: response.status, eventType: response.eventType, reason: response.reason });
-  if (response.eventType !== null) throw new Error("Unexpected event type.");
+  if (response.status === "needs_clarification") return ExtractionResultSchema.parse({ status: response.status, eventTypes: response.eventTypes, reason: response.reason });
+  if (response.eventTypes.length) throw new Error("Unexpected event type.");
   return ExtractionResultSchema.parse({ status: response.status, reason: response.reason });
  }
- if (response.reason !== null || response.eventType !== null || !response.events.length) throw new Error("Invalid captured outcome.");
+ if (response.reason !== null || response.eventTypes.length || !response.events.length) throw new Error("Invalid captured outcome.");
  const drafts = [];
  for (const event of response.events) {
   const value = valueFor(event);
   // Validate value semantics before handling temporal clarification.
-  SubjectiveEventDraftSchema.parse({ type:event.type, value, occurredAt:context.anchorAt, extractionConfidence:null });
+  const validatedValue = SubjectiveEventDraftSchema.safeParse({ type:event.type, value, occurredAt:context.anchorAt, extractionConfidence:null });
+  if (!validatedValue.success) {
+   const entry = SubjectiveEventRegistry[event.type];
+   const reason = "anchors" in entry && ["energy","stress","mood","soreness","workout_rpe"].includes(event.type)
+    ? `What was your ${entry.label.toLowerCase()} on a scale from 0 (${entry.anchors.low.toLowerCase()}) to 10 (${entry.anchors.high.toLowerCase()})?`
+    : `Please clarify your ${entry.label.toLowerCase()} report; its values are incomplete or inconsistent.`;
+   return ExtractionResultSchema.parse({ status:"needs_clarification", eventTypes:[event.type], reason });
+  }
   let time;
   try { time = occurredAt(event.timing, context); }
-  catch (error) { return ExtractionResultSchema.parse({ status:"needs_clarification", eventType:event.type, reason:error instanceof Error ? error.message.slice(0,500) : "Please clarify the date and time." }); }
+  catch (error) { return ExtractionResultSchema.parse({ status:"needs_clarification", eventTypes:[event.type], reason:error instanceof Error ? error.message.slice(0,500) : "Please clarify the date and time." }); }
   drafts.push({ type:event.type, value, occurredAt:time, extractionConfidence:null });
  }
  const parsed = ExtractionDraftResultSchema.parse({ status:"captured", events:drafts });

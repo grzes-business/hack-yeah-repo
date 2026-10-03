@@ -6,7 +6,7 @@ import { formatObservation } from "@/lib/capture/display";
 import { SubjectiveEventRegistry } from "@/lib/domain";
 import type { ConversationTurn } from "@/lib/db/records";
 
-export function TurnCapture({ turn, saved, autoReady, record, onRecord }: { turn:ConversationTurn; saved:boolean; autoReady:boolean; record:CaptureRecord|null; onRecord:(record:CaptureRecord)=>void }) {
+export function TurnCapture({ turn, saved, autoReady, record, onRecord, managed=false }: { managed?:boolean; turn:ConversationTurn; saved:boolean; autoReady:boolean; record:CaptureRecord|null; onRecord:(record:CaptureRecord)=>void }) {
  const {session,refreshHistory}=useHealthSession();
  const [busy,setBusy]=useState(false); const [error,setError]=useState<string|null>(null); const [text,setText]=useState("");
  const [editing,setEditing]=useState(false);
@@ -31,10 +31,11 @@ export function TurnCapture({ turn, saved, autoReady, record, onRecord }: { turn
   finally {if(active.current)setBusy(false);}
  }
  useEffect(()=>{
-  if(autoReady && saved && !record && !started.current && !turn.id.startsWith("capture:") && !turn.id.startsWith("demo:")) {started.current=true;void capture();}
+  if(!managed && autoReady && saved && !record && !started.current && !turn.id.startsWith("capture:") && !turn.id.startsWith("demo:")) {started.current=true;void capture();}
   // Start once when a finalized turn is confirmed saved. Retries are explicit.
   // eslint-disable-next-line react-hooks/exhaustive-deps
- },[saved,record,autoReady]);
+ },[saved,record,autoReady,managed]);
+ if(managed && !record) return null;
  if(turn.id.startsWith("capture:")) return <p className="small">Clarification/correction transcript. Its observations are shown under the original turn.</p>;
  if(turn.id.startsWith("demo:")) return null;
  return <div className="turn-capture" aria-label="Observation capture">

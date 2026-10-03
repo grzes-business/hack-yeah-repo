@@ -2,11 +2,11 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04; acceptance pending.** Hosted migration 006 must be applied and the live walkthrough recorded before acceptance.
 
 The app runs a resumable, predictable morning interview; AI phrases the question selected by code.
 
-**Dependencies:** [Stage 4](stage-04-structured-observations.md); voice UI from Stage 3.
+**Dependencies:** [Stage 4](stage-04-structured-observations.md) and [Stage 4.5 voice reliability](stage-04a-voice-reliability.md); voice UI from Stage 3. Reuse the confirmed-outcome and clarification controller from Stage 4.5 rather than rebuilding that loop.
 
 ## Context to read
 
@@ -57,3 +57,19 @@ Investigation-driven question ranking, post-workout implementation, evidence cal
 ## Documentation handoff
 
 Update CONVERSATION with controller state and timing rules; DOMAIN/PERSISTENCE if interview state needs a new validated record; DEMO with repeatable check-in steps.
+
+## Implementation record — 2026-10-04
+
+Decisions made in code (document changes here if they change):
+
+- **Window:** starting, answering and skipping are open only from 05:00 to 12:00 in the user's profile time zone (`lib/checkin/controller.ts`, `CHECKIN_WINDOW`). Outside it the card reports closed; an ended check-in stays ended for that local date.
+- **Priority:** energy, soreness, mood, illness. Fixed in code; the model cannot reorder them.
+- **Which reports count:** accepted subjective events whose local date equals the check-in date, from one day before to one day after in UTC terms, excluding `demo:` fixtures. Corrections count through the accepted set. Illness counts an explicit yes or no.
+- **Skips:** stored per user and local date in `morning_checkins` (migration `202610040006`). A skipped dimension stays unknown; it is never recorded as zero or false. A skip applies only to the question currently due.
+- **Completion:** all four answered, or every dimension answered or skipped (reported separately). Explicit end is terminal for the local date.
+- **Phrasing:** deterministic questions built from registry anchors. The seam for model phrasing is `questionFor`; the model may not change the selected dimension.
+- **Answers:** given in the existing voice conversation and saved through Stage 4.5; the card reads back accepted observations after refresh. Reading the question aloud through the voice session is not implemented.
+
+Checks performed: typecheck, lint, production build, 60/60 Node tests (including `lib/checkin/controller.test.ts`: order, skips, completion, window edges, midnight in the user's zone, determinism, question anchors), and unauthenticated/bad-token rejection on `/api/checkin`.
+
+Not yet performed: applying migration `202610040006` to hosted Supabase; a live check of GET/POST `/api/checkin` with a real session (answer → counted, skip persisted, end persisted, cross-user denial); a morning-window run in the user's local time; and the spoken check-in walkthrough.

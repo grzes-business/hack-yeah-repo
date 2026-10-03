@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 voice/transcript implementation is in place with live acceptance pending; The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 5 follows.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
+This roadmap records stage boundaries and outcomes. The order is intentional: prove product and analytics with mock data before native HealthKit access. **Stages -1 through 2 are implemented. Stage 1 acceptance checks passed; Stage 2 fixtures, hosted ingestion/replay/range reads/removal, and the sample UI are verified. Stage 3 voice/transcript implementation is in place with live acceptance pending; The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 4.5 voice reliability is implemented with acceptance gaps before Stage 5.** Future GitHub issues should link to this roadmap and [`CONTEXT.md`](../CONTEXT.md), then define stage-specific scope, acceptance criteria, and dependencies. A roadmap entry alone does not authorize implementation.
 
 | Stage | Umbrella scope | Outcome |
 |---|---|---|
@@ -10,6 +10,7 @@ This roadmap records stage boundaries and outcomes. The order is intentional: pr
 | **2 — Mock ingestion** | Implement `MockHealthDataSource`, roughly 45–60 days of realistic synthetic history with known relationships, canonical ingestion into `metric_samples`, deterministic fixtures. | Wearable-like data exercises the real pipeline before HealthKit. |
 | **3 — GPT-Live conversation** | `/talk` microphone/session controls and transcript; low-latency voice; persistence boundaries; begin with `CAPTURE` mode only, with no health reasoning. Keep event extraction separate. | Natural conversation with persistent transcript. |
 | **4 — Structured observations** | Canonical transcript → extraction → validation → persistence; predefined event types; `captured`, `nothing_trackable`, and `needs_clarification` outcomes; turn provenance and UI visibility. | Speech reliably creates validated observations. |
+| **4.5 — Voice reliability** | Control audio/response turns, confirmed capture feedback, spoken clarification/correction, bounded owned retrieval, communication rules, and live regression acceptance. | Usable, grounded voice interaction before adding interviews. |
 | **5 — Deterministic check-ins** | Application-controlled `getNextQuestion()` for energy, soreness, mood, illness; track known/missing/clarification state; model only phrases the selected question. Leave room for later interview modes. | Repeatable active sensing. |
 | **6 — Daily features** | `buildDailyFeatures()` and range rebuilding; aggregation, missing values, date boundaries, provenance; raw/derived separation; identical behavior for mock and Apple sources. | Stable analytical daily dataset independent of source. |
 | **7 — Deterministic analytics** | Personal robust baselines and anomaly detection; Spearman and exposure comparisons; registry-defined lags; sample sizes, effect sizes, conservative evidence classifications; validate against planted mock relationships. | Factual personal patterns without LLM inference. |
@@ -94,13 +95,19 @@ Implement [capture flow](CONVERSATION.md), validation, accepted event persistenc
 
 Done when known speech yields validated events, ambiguous speech triggers clarification, unknown speech creates no invented variable, and confirmation matches persistence. Excludes autonomous question choice and analytics. Depends on Stages 0–1 and 3.
 
+### Stage 4.5 — Voice reliability and grounded conversation
+
+Detailed guide: [Stage 4.5](stages/stage-04a-voice-reliability.md).
+
+Depends on implemented Stages 3–4. Done when deliberate turn-taking, truthful save feedback, spoken clarification/correction, and owned saved-report retrieval pass documented controller/provider/hosted/microphone checks (`S045-AC01`–`S045-AC10`). Preserve existing stage numbers and distinguish prior fixes from full acceptance. This is the next priority before Stage 5.
+
 ### Stage 5 — Deterministic morning check-in
 
 Detailed guide: [Stage 5 — Deterministic morning check-ins](stages/stage-05-deterministic-check-ins.md).
 
 Application logic selects energy, soreness, mood, or illness questions; the model phrases them. Track known/missing/clarification state and interview completion/resumption.
 
-Done when multi-dimension answers update state, known dimensions are not repeatedly requested, and completion follows application rules. Post-workout is an extension seam, not required scope. Depends on Stage 4.
+Done when multi-dimension answers update state, known dimensions are not repeatedly requested, and completion follows application rules. Post-workout is an extension seam, not required scope. Depends on Stage 4 and the Stage 4.5 voice reliability gate.
 
 ### Stage 6 — Daily feature pipeline
 

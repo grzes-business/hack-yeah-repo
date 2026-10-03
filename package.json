@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "eslint app lib",
     "typecheck": "tsc --noEmit",
-    "test": "tsc -p tsconfig.contracts.json && node --test .contract-tests/domain/*.test.js .contract-tests/health/*.test.js .contract-tests/db/*.test.js .contract-tests/demo/*.test.js",
-    "verify:hosted": "pnpm test && node --env-file=.env.local scripts/verify-hosted.mjs"
+    "test": "tsc -p tsconfig.contracts.json && node --test .contract-tests/domain/*.test.js .contract-tests/health/*.test.js .contract-tests/db/*.test.js .contract-tests/demo/*.test.js .contract-tests/conversation/*.test.js .contract-tests/checkin/*.test.js",
+    "verify:hosted": "pnpm test && node --env-file=.env.local scripts/verify-hosted.mjs",
+    "verify:voice": "pnpm test && node --env-file=.env.local scripts/verify-voice.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

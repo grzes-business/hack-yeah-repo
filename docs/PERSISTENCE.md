@@ -4,7 +4,7 @@ Stage 1 adds a browser-session application shell, a seven-table migration, and t
 
 ## Hosted setup
 
-For the current project both SQL migrations are applied; do not run the creation migration again. Anonymous Auth is enabled. The steps below also document fresh-project setup.
+For the current project migrations 001–005 are applied; do not run the creation migration again. Anonymous Auth is enabled. The steps below also document fresh-project setup.
 
 1. Keep the existing public URL/publishable key in `.env.local`; restart development after changes. Never commit credentials.
 2. In the hosted project's SQL Editor, inspect existing `public` tables, then apply migrations under `supabase/migrations/` in filename order once. Stage 1 creates all seven tables in one transaction and deliberately fails on conflicting table names. Stage 2 adds checked/indexed metric interval starts. Reconcile conflicts with a new migration; do not drop existing user data.
@@ -57,4 +57,8 @@ Hosted setup is complete only after migration application, anonymous sign-in, pr
 
 ## Stage 4 extraction persistence
 
-`202610030003_turn_extractions.sql` was applied successfully to hosted Supabase via SQL Editor on 2026-10-03. Do not reapply it; the manual migration ledger still needs reconciliation before CLI pushes. This adds the eighth table, owner-readable `turn_extractions`, and authenticated owner-scoped claim/finish/release RPCs for atomic capture/replacement and replay. Direct table writes are denied; RPCs explicitly derive `auth.uid()`. Existing raw/derived permissions remain unchanged. Read [CAPTURE](CAPTURE.md) for leases, immutable-root expectations, audit snapshots, correction semantics, the direct-RPC trust limit, and pending behavioral acceptance. The hand-maintained database type snapshot includes all three migrations.
+`202610030003_turn_extractions.sql` was applied successfully to hosted Supabase via SQL Editor on 2026-10-03. Do not reapply it; the manual migration ledger still needs reconciliation before CLI pushes. This adds the eighth table, owner-readable `turn_extractions`, and authenticated owner-scoped claim/finish/release RPCs for atomic capture/replacement and replay. Direct table writes are denied; RPCs explicitly derive `auth.uid()`. Existing raw/derived permissions remain unchanged. Read [CAPTURE](CAPTURE.md) for leases, immutable-root expectations, audit snapshots, correction semantics, the direct-RPC trust limit, and pending behavioral acceptance. The hand-maintained database type snapshot includes migrations 001–005.
+
+## Stage 4.5 processing receipts
+
+`202610030005_voice_turn_runs.sql` was applied successfully in hosted SQL Editor on 2026-10-03. Do not reapply it. The ninth table, `voice_turn_runs`, stores an owned saved-turn transcript, selected root/revision, immutable structured intent, final result, and 120-second processing lease. Owner SELECT only; claim/plan/finish/release RPCs verify `auth.uid()`, owned capture turns, target ownership and lease tokens. A plan is persisted before capture side effects; cached receipts recover lost HTTP responses. Superseded feedback stays a historical snapshot. As with capture RPCs, these are owner-callable functions rather than a private server channel; app schemas enforce accepted semantics. CLI migration history still requires reconciliation.
