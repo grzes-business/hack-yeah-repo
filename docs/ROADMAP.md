@@ -17,6 +17,8 @@ This roadmap records stage boundaries and outcomes. The order is intentional: pr
 | **8 — Evidence-backed investigation** | `investigateOutcome()` orchestration; structured `EvidenceBundle` with anomalies, relationships, strength, and context; `INVESTIGATE` mode; explain uncertainty and association/non-causality. | Voice explanations grounded in calculated evidence. |
 | **9 — Missing evidence and active sensing** | Detect relevant unknown context; deterministic `selectBestQuestion()` from predefined knowledge; ask one high-value question; persist answer and rerun; show before/after evidence. | Demonstrate detect → identify missing context → ask → capture → recompute. |
 | **10 — Evidence-first UI** | Polish Today around anomalies and open questions; Evidence relationships/effects/sample sizes/confounders; Timeline for wearable and voice observations; clear provenance and uncertainty; support demo narrative. | UI expresses investigation rather than a generic wearable dashboard. |
+| **10A — Mobile product design** | Specify Today/Talk/Evidence/Timeline hierarchy, phone navigation, state/action mapping, wireframes and visual/accessibility rules. May start before backend evidence stages finish. | Reviewed design ready for implementation. |
+| **10B — Mobile UI implementation** | Implement the accepted design in Next.js, connect real controllers/evidence, and verify phone layouts, accessibility, failure recovery and the complete demo. | Usable mobile web app before Capacitor. |
 | **11 — Capacitor shell** | Wrap the stable web application; establish native/web communication and iOS project/permissions groundwork; keep analytics out of native layer. | Existing application runs in an iOS-capable shell. |
 | **12 — HealthKit adapter** | Implement `AppleHealthDataSource`; request appropriate permissions; query only registered metrics; normalize to `MetricSample[]` with timestamps, units, source/device, and external IDs; use existing ingestion. | Real Apple data replaces mock input without changing product logic. |
 | **13 — Real-data hardening** | Validate against team member history; handle duplicates, multiple sources, gaps, time zones, partial sessions, device changes, and units; settle aggregation/deduplication; keep fixes in adapter/normalization. | Reliable demo on real history. |
@@ -145,6 +147,8 @@ Done when the [demo loop](DEMO.md) shows a persisted input and genuine evidence-
 
 Detailed guide: [Stage 10 — Evidence-first product UI](stages/stage-10-evidence-ui.md).
 
+Split into [Stage 10A — Mobile product design](stages/stage-10a-mobile-product-design.md) and [Stage 10B — Mobile UI implementation](stages/stage-10b-mobile-ui-implementation.md). Design may begin earlier using stage contracts and labeled illustrative states; full UI acceptance depends on Stages 5–9. Complete the mobile browser experience before Capacitor. Preserve the Stage 10 umbrella ACs and use sub-stage IDs for detailed review.
+
 Polish Today, Talk, Evidence, and Timeline around investigation. Render provenance, effects/counts, confounders, unknowns, and insufficient-data states. Optimize the demo narrative.
 
 Done when a user can follow unusual observation → question → accepted answer → updated evidence and inspect its origin. UI polish must use the existing evidence contracts. Depends on Stage 9; shell work already belongs to Stage 1.
@@ -155,7 +159,7 @@ Detailed guide: [Stage 11 — Capacitor shell](stages/stage-11-capacitor-shell.m
 
 Wrap the stable web experience, establish iOS project/runtime permission groundwork, and document shell loading plus hosted backend/native communication. Preserve web health logic.
 
-Done when the existing experience runs in the shell and the source boundary can exchange canonical data. Excludes native analytical implementations and real HealthKit querying. Depends on stable web/backend stages and Stage 0 source semantics.
+Done when the existing experience runs in the shell and the source boundary can exchange canonical data. Excludes native analytical implementations and real HealthKit querying. Depends on accepted Stage 10A/10B mobile design and browser implementation, stable web/backend stages and Stage 0 source semantics.
 
 ### Stage 12 — Apple Health source
 

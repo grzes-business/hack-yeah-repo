@@ -24,7 +24,9 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 7 | [Deterministic analytics](stage-07-deterministic-analytics.md) | Planned |
 | 8 | [Evidence-backed investigation and explanation](stage-08-evidence-investigation.md) | Planned |
 | 9 | [Missing evidence and active sensing](stage-09-missing-evidence-loop.md) | Planned |
-| 10 | [Evidence-first product UI](stage-10-evidence-ui.md) | Planned |
+| 10 | [Evidence-first product UI](stage-10-evidence-ui.md) | Planned; umbrella for 10A/10B |
+| 10A | [Mobile product design](stage-10a-mobile-product-design.md) | Planned; design may start before Stages 5–9 finish |
+| 10B | [Mobile UI implementation](stage-10b-mobile-ui-implementation.md) | Planned; complete before Capacitor |
 | 11 | [Capacitor shell](stage-11-capacitor-shell.md) | Planned |
 | 12 | [Apple Health source adapter](stage-12-healthkit-adapter.md) | Planned |
 | 13 | [Real-data hardening](stage-13-real-data-hardening.md) | Planned |
@@ -52,7 +54,7 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 
 ## Acceptance and evidence rules
 
-AC IDs are stable review references: `SM1-AC01` for Stage -1 and `S00-AC01` through `S14-AC…` for the original stages, and `S045-AC01` through `S045-AC10` for inserted Stage 4.5. They cover successful behavior plus uncertainty, security, replay, and failure cases. Do not mark a stage complete because only its happy path works.
+AC IDs are stable review references: `SM1-AC01` for Stage -1 and `S00-AC01` through `S14-AC…` for the original stages, and `S045-AC01` through `S045-AC10` for inserted Stage 4.5. Stage 10 retains its umbrella IDs; mobile sub-stages add `S10A-AC01`–`S10A-AC08` and `S10B-AC01`–`S10B-AC10`. They cover successful behavior plus uncertainty, security, replay, and failure cases. Do not mark a stage complete because only its happy path works.
 
 Pure tests verify calculations/contracts/controllers; integration checks verify authenticated persistence and provider boundaries; browser checks verify the user flow; physical-device checks verify real native access. None substitutes for another. Existing `pnpm verify:hosted` creates disposable anonymous Auth users and cleans their records, but leaves the Auth accounts; use deliberately. Numerical synthetic validation does not establish clinical validity.
 

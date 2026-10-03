@@ -6,7 +6,15 @@
 
 A user can follow an unusual observation through a question and accepted answer to updated evidence, and inspect its origin and uncertainty.
 
-**Dependencies:** [Stage 9](stage-09-missing-evidence-loop.md); existing shell from Stage 1.
+**Dependencies:** [Stage 9](stage-09-missing-evidence-loop.md) for the complete functional journey; existing shell from Stage 1. Design can start earlier under Stage 10A.
+
+## Sub-stages and sequence
+
+- [Stage 10A — Mobile product design](stage-10a-mobile-product-design.md): screen hierarchy, navigation, annotated layouts, state/action specification and design review. Produces `docs/MOBILE-UI.md` when executed.
+- [Stage 10B — Implement the mobile product UI](stage-10b-mobile-ui-implementation.md): shared mobile shell/components, actual controller integration, accessibility and phone browser acceptance.
+- Complete the mobile web experience before [Stage 11 — Capacitor](stage-11-capacitor-shell.md). Native runtime behavior remains Stage 11 work.
+
+This guide retains umbrella scope and stable `S10-AC` IDs. Sub-stage guides own detailed work and `S10A-AC`/`S10B-AC` criteria. Stage 10 completion requires the reviewed design, Stage 10B acceptance and the umbrella criteria below. Early design or fixture-backed scaffolding does not certify the evidence loop.
 
 ## Context to read
 
@@ -16,7 +24,7 @@ Start with [agent instructions](../../AGENTS.md), [product context](../../CONTEX
 
 ## Starting point
 
-Today/Talk/Evidence/Timeline already have navigation and basic sample history/transcript foundations. Earlier stages supply validated features, calculations, investigation, and questions. This stage completes how those facts are displayed, rather than calculating a second version in components.
+Today/Talk/Evidence/Timeline already have navigation and basic sample history/transcript foundations. For full integration, earlier stages must supply validated features, calculations, investigation, and questions. This stage completes how those facts are displayed, rather than calculating a second version in components.
 
 ## Implementation work
 

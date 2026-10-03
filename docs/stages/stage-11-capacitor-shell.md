@@ -6,7 +6,7 @@
 
 The existing experience runs in an iOS-capable shell with secure web/backend communication and a typed native adapter seam.
 
-**Dependencies:** [Stage 10](stage-10-evidence-ui.md) stable browser/backend experience; Stage 0 source contract.
+**Dependencies:** [Stage 10](stage-10-evidence-ui.md), including reviewed [Stage 10A design](stage-10a-mobile-product-design.md) and accepted [Stage 10B mobile UI](stage-10b-mobile-ui-implementation.md); Stage 0 source contract. Package the usable mobile web experience; product layout and navigation design belong to Stage 10.
 
 ## Context to read
 
@@ -16,7 +16,7 @@ Start with [agent instructions](../../AGENTS.md), [product context](../../CONTEX
 
 ## Starting point
 
-There is no native project or Capacitor dependency yet. The web application uses Next.js with server/backend behavior added in earlier stages. Shared domain/source logic must remain usable independently of native APIs.
+There is no native project or Capacitor dependency yet. The web application uses Next.js with server/backend behavior added in earlier stages. Use `docs/MOBILE-UI.md` from Stage 10A/10B as the interaction reference; resolve actual native safe-area, keyboard, back and audio differences here. Shared domain/source logic must remain usable independently of native APIs.
 
 ## Implementation work
 
