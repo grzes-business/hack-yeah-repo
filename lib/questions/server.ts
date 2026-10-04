@@ -113,7 +113,8 @@ export async function questionAction(client:SupabaseClient<Database>,owner:strin
   const saved=view.loop!;
   if(saved.needsRefresh||action.action==="refresh"){
    const current=await investigateOwnedOutcome(client,owner,saved.input);
-   await commit({...saved,current,needsRefresh:false,question:saved.stopped?null:selectBestQuestion(current.bundle,[...saved.skipped,...saved.resolved]),feedback:saved.feedback==="Answer recorded. Evidence refresh is pending."?"Answer recorded and evidence refreshed.":saved.feedback});
+   await commit({...saved,current,needsRefresh:false,// One question per investigation: once it is answered, recap instead of asking the next factor.
+   question:saved.stopped||saved.resolved.length>0?null:selectBestQuestion(current.bundle,[...saved.skipped,...saved.resolved]),feedback:saved.feedback==="Answer recorded. Evidence refresh is pending."?"Answer recorded and evidence refreshed.":saved.feedback});
   }
  }
  return readQuestionLoop(client,owner);

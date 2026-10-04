@@ -18,7 +18,7 @@ import { captureOwnedTurn as captureTurn } from "@/lib/capture/server";
 import { loadCheckin, updateCheckin } from "@/lib/checkin/server";
 import { questionFor } from "@/lib/checkin/controller";
 import { uncertainAnswer } from "@/lib/questions/answer";
-import { answerSpeech } from "@/lib/investigation/speech";
+import { answerSpeech, answerSummary } from "@/lib/investigation/speech";
 import type { Json, Row } from "@/lib/db/database.types";
 export const runtime="nodejs";
 export const maxDuration=120;
@@ -138,7 +138,9 @@ export async function POST(request:Request){
    outcome.questions=state;outcome.targetRootId=null;
    if(state.fresh&&state.loop)outcome.investigation=state.loop.current;
    const comparison=state.fresh&&state.loop?compareEvidence(state.loop.before.bundle,state.loop.current.bundle):null;
-   outcome.reply=(state.loop?.feedback??"The question remains unanswered.")
+   const answered=state.fresh&&state.loop&&state.loop.resolved.includes(activeQuestion?.key??"")&&!state.loop.pending;
+   if(answered)outcome.reply=`Saved. ${answerSummary([state.loop!.current])}`;
+   else outcome.reply=(state.loop?.feedback??"The question remains unanswered.")
     +(comparison?comparison.historicalChanged?" Historical calculations changed; see Insights.":" Historical associations are unchanged.":"")
     +(state.loop?.pending?" Retry the pending answer in Insights.":state.fresh&&state.loop?.question?` ${state.loop.question.key===activeQuestion?.key?"Question still open":"Next question"}: ${state.loop.question.text}`:state.fresh?" No further answerable question remains.":" Refresh evidence to recover the confirmed state.");
   }
