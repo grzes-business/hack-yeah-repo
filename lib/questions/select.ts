@@ -1,18 +1,21 @@
-import { addCalendarDays, EvidenceBundleSchema, RelationshipRegistry, SubjectiveEventRegistry, type EvidenceBundle, type Feature } from "../domain";
+import { addCalendarDays, EvidenceBundleSchema, RelationshipRegistry, type EvidenceBundle, type Feature } from "../domain";
 import { QuestionSchema, type Question } from "./contracts";
 // Deliberately excludes objective measurements, and never asks a user to estimate wearable values.
 const answerable=["alcohol","stress","illness","workout_rpe","caffeine","late_meal"] as const;
 export const questionKey=(feature:Feature,date:string)=>`${feature}:${date}`;
+/** "Saturday, 3 Oct" for a local calendar date (UTC formatting avoids zone shifts). */
+export function spokenDate(date:string){
+ return new Intl.DateTimeFormat("en-GB",{weekday:"long",day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(`${date}T00:00:00Z`));
+}
 export function questionText(feature:typeof answerable[number],date:string){
+ const day=spokenDate(date);
  switch(feature){
-  case "alcohol":return `On ${date}, did you drink alcohol? Yes or no; the amount may remain unknown.`;
-  case "illness":return `On ${date}, did you have illness symptoms? Yes or no; this is a self-report, not a diagnosis.`;
-  case "late_meal":return `On ${date}, did you eat a late meal? Yes or no.`;
-  case "caffeine":return `On ${date}, how much caffeine did you have in mg? Say no caffeine, or report consumption with an unknown dose. Do not estimate coffee strength.`;
-  case "stress":case "workout_rpe":{
-   const entry=SubjectiveEventRegistry[feature];
-   return `On ${date}, what was your ${entry.label.toLowerCase()} from 0 (${entry.anchors.low}) to 10 (${entry.anchors.high})?${feature==="workout_rpe"?" If you did not train or cannot recall the effort, skip; rest is not an RPE of zero.":""}`;
-  }
+  case "alcohol":return `Did you drink any alcohol on ${day}? Yes or no is enough.`;
+  case "illness":return `Did you feel ill on ${day}?`;
+  case "late_meal":return `Did you eat a late meal on ${day}?`;
+  case "caffeine":return `How much caffeine did you have on ${day}, in milligrams? Say none if you had none.`;
+  case "stress":return `How stressful was ${day}, from 0 to 10?`;
+  case "workout_rpe":return `How hard was your workout on ${day}, from 0 to 10? Say skip if you didn't train.`;
  }
 }
 export function selectBestQuestion(raw:EvidenceBundle,excluded:readonly string[]=[]):Question|null{

@@ -6,26 +6,41 @@ Prepared 2026-10-04 for the hackathon pitch. The demo runs on a real iPhone laun
 
 Your watch knows your HRV dropped. It doesn't know you had two beers and a deadline. Personal Evidence joins what your body measures with what you tell it, and only says what the data can actually support: **AI can communicate evidence; AI cannot create evidence.**
 
-## Demo plan (≈ 4 minutes)
+## Submission (HackYeah — SPORT & HEALTHCARE)
 
-| Time | Screen | What you do | What you say |
-| --- | --- | --- | --- |
-| 0:00 | Title slide | — | The hook above. Wearables give numbers without context; chatbots give context without evidence. |
-| 0:30 | **Today** (iPhone) | Show the Apple Health card: "Last synced …", then History with "Apple Health" entries | "This is my real Apple Health data, synced into a private, owner-only history. Nothing is guessed: missing days stay unknown." |
-| 1:00 | **Talk** | Hold the green mic: *"I slept badly, had two beers last night and my energy is about four."* Release. | "I just talk. The app extracts only registered observations, shows what it saved, and confirms before anything counts." |
-| 1:45 | **Insights**, data source **Synthetic demo** | Scroll the relationship cards | "With eight weeks of history, deterministic code, not the model, tests four predefined relationships, with sample sizes and an explicit 'association ≠ cause'." |
-| 2:30 | **Insights → Personal experiment** (Synthetic demo) | Tap **Run the demo experiment** | "From an uncertain pattern we propose a personal experiment: sleep ≥ 7.5 h for two weeks. The comparison is predeclared, counts every missing day, and lists what else could explain it." |
-| 3:15 | Architecture slide | — | Voice → structured extraction into a fixed registry → deterministic evidence engine → AI explains only validated facts. Next.js + Supabase + OpenAI Realtime + Capacitor/HealthKit. |
-| 3:45 | Close | — | What's next: smoother morning check-in in one sentence, recovery questions answered from your evidence, more experiment templates. |
+Deadline **4 Oct, 23:00**. Required: project title, team name, members, description, **PDF ≤ 10 slides**. Optional: video/demo link, repo, screenshots. Judging: Idea 30 · Relation to category 20 · Practical use 20 · Design 20 · Completeness 10. The brief asks for a specific user group, a clear journey, low effort for regular use, accessibility, and an achievable next step. Disclose AI tools/APIs used (OpenAI Realtime/Responses, Supabase, Capacitor, daisyUI) and separate any pre-event work.
 
-### Before you go on stage
+**Target user:** recreational athletes with a smartwatch who train around work and want to know why some days feel bad — without becoming data analysts.
 
-1. Vercel deployment of this branch is live and **Deployment Protection is off**; the app on the phone was built with `CAP_SERVER_URL=<vercel url>` and Run from Xcode.
-2. Migration 011 applied (otherwise the experiment card shows the migration message).
-3. In the demo session: **Today → Sample history and settings → Load sample history** (synthetic scope for Insights/experiment), then **Connect and sync Apple Health** (personal scope).
-4. Rehearse the spoken report once; voice is the riskiest step. **Fallback:** if voice misbehaves, say "the extraction is deliberately strict; here is what it saved" and go straight to Insights.
-5. Phone: Do Not Disturb, brightness up, charged; mirror via QuickTime (File → New Movie Recording → choose the iPhone) over a cable. Prefer a phone hotspot over venue Wi-Fi.
-6. Light theme reads best on projectors (moon/sun toggle in the header).
+## Video (≈ 3½ min)
+
+| Time | Beat | What is shown |
+| --- | --- | --- |
+| 0:00–0:20 | Problem + user | “My watch says HRV is low. It doesn't know I had beers and a deadline.” Wearables measure; context lives in your head. |
+| 0:20–0:45 | Effortless habit | Morning check-in: one spoken sentence (“Energy three, a bit sore, mood five, not sick”) → four chips tick. Apple Health synced automatically. |
+| 0:45–1:00 | Today | Energy 3/10, HRV unusually low, sleep typical, “How today compares”. |
+| 1:00–1:50 | Why am I so tired? | Answer first from the relationship graph: what is unusual today, which registered relationships could explain it and what is known/unknown for each; then **one** question about the strongest unknown factor (“Did you drink anything yesterday?”). |
+| 1:50–2:20 | Answer → recap | “Yes, three beers.” Saved, then a concise grounded recap with counts; association, not cause. |
+| 2:20–2:50 | Achievable next step | Personal experiment: sleep ≥ 7.5 h for two weeks, predeclared comparison, honest limits. |
+| 2:50–3:30 | Trust + build | AI explains, code decides (registry, deterministic evidence, provenance, unknown ≠ zero); iPhone + HealthKit + voice; Grove design. |
+
+## 10-slide PDF
+
+1. Title + one-liner (“Personal evidence from your watch and your words”). 2. Problem (data without context). 3. User + journey. 4. Morning check-in + Apple Health (low effort, voice = accessible). 5. “Why am I tired?” answer-first screenshot. 6. Relationship graph → question → recap. 7. Experiment = next step. 8. Trust: AI communicates evidence, never creates it. 9. Architecture + what was built during HackYeah (+ AI/API disclosure). 10. Impact, roadmap (clinician prep, more relationships), team.
+
+## Reasoning rule for “why” questions (item 3)
+
+Start from the asked outcome (or energy for tiredness/recovery) **and every metric flagged unusual today**. Walk the registered relationship graph backwards into those outcomes (sleep → energy, workout effort → energy, alcohol → HRV, stress → sleep). For each edge: evidence label from history, factor value on its lagged date (known / unknown), and whether it is notable. Speak the known facts and the strongest evaluated edges in one or two sentences, then ask about the highest-ranked **unknown** factor. Never assert an edge that is not registered (energy and HRV are stated as separate facts).
+
+## What's left (agreed order)
+
+1. **Morning check-in:** show saved values (“Energy 3 ✓”) and a production *Reset today's check-in* button.
+2. **Model:** intent and extraction on `gpt-5-mini` (verify availability), replacing `gpt-4.1-mini`.
+3. **Routing:** “why am I tired”, recovery and similar questions start the graph-based investigation automatically.
+4. **Reasoning:** relationship-graph rule above (all registered edges).
+5. **Answer first, then one question** in one or two plain sentences; natural question wording, no ISO dates or rubric text.
+6. **Concise recap** after the answer.
+7. **Demo day = today (4 Oct):** synthetic history shaped so today has low energy, unusually low HRV, typical sleep and yesterday's alcohol unreported; independent of real HRV.
 
 ## Visual identity — "Grove"
 

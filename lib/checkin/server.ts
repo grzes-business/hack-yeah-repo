@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { authenticatedDatabase, boundedJson, RequestFailure } from "@/lib/db/server";
 import { parseEventRow } from "@/lib/db/ingestion";
+import { formatObservation } from "@/lib/capture/display";
 import { addCalendarDays, getLocalDate, TimeZoneSchema, type LocalDate } from "@/lib/domain";
 import { CHECKIN_DIMENSIONS, getNextStep, isWindowOpen, localClock, questionFor, type CheckinDimension, type CheckinProgress } from "@/lib/checkin/controller";
 import { parseDevWindow } from "@/lib/checkin/dev-window"; // TEMPORARY test override: remove with lib/checkin/dev-window.ts
@@ -29,8 +30,11 @@ async function answeredOn(client: Client, owner: string, localDate: LocalDate, t
   .gte("observed_at", `${from}T00:00:00Z`).lt("observed_at", `${to}T00:00:00Z`)
   .not("id", "like", "demo:%").order("observed_at").order("id").limit(1000);
  if (rows.error) throw new RequestFailure("Saved reports could not load. Try again.", 503);
- const types = (rows.data ?? []).map(row => parseEventRow(row, owner)).filter(event => getLocalDate(event.occurredAt, timeZone) === localDate).map(event => event.type);
- return CHECKIN_DIMENSIONS.filter(dimension => types.includes(dimension));
+ const events = (rows.data ?? []).map(row => parseEventRow(row, owner)).filter(event => getLocalDate(event.occurredAt, timeZone) === localDate);
+ // Latest accepted value per dimension, formatted for display ("6 / 10", "Reported absent").
+ const values: Partial<Record<CheckinDimension, string>> = {};
+ for (const event of events) if ((CHECKIN_DIMENSIONS as readonly string[]).includes(event.type)) values[event.type as CheckinDimension] = formatObservation(event);
+ return { answered: CHECKIN_DIMENSIONS.filter(dimension => dimension in values), values };
 }
 
 async function stateOn(client: Client, owner: string, localDate: LocalDate) {
@@ -42,7 +46,7 @@ async function stateOn(client: Client, owner: string, localDate: LocalDate) {
 
 export async function loadCheckin(client: Client, owner: string, devWindow: string | null, now = new Date()) {
  const clock = await currentClock(client, owner, now);
- const answered = await answeredOn(client, owner, clock.localDate, clock.timeZone);
+ const { answered, values } = await answeredOn(client, owner, clock.localDate, clock.timeZone);
  const { skipped, ended } = await stateOn(client, owner, clock.localDate);
  const progress: CheckinProgress = { localDate: clock.localDate, answered, skipped, ended };
  const window = parseDevWindow(devWindow ?? process.env.CHECKIN_DEV_WINDOW); // TEMPORARY test override (header from the test panel)
@@ -52,6 +56,7 @@ export async function loadCheckin(client: Client, owner: string, devWindow: stri
   timeZone: clock.timeZone,
   window: { opensAt: window.opensAt, closesAt: window.closesAt, open: isWindowOpen(clock.minute, window) },
   answered,
+  values,
   skipped,
   ended,
   step: step.kind === "ask" ? { ...step, question: questionFor(step.dimension) } : step,
@@ -103,11 +108,10 @@ async function checkinEventIdsOn(client: Client, owner: string, localDate: Local
   .map(event => event.id);
 }
 
-// Dev-only reset: clears today's skips and end marker, and deletes today's check-in observations, so the walkthrough can be rehearsed.
+// Owner reset (also in production): clears today's skips and end marker, and deletes today's check-in observations, so the walkthrough can be rehearsed.
 // Capture records (turn extractions) are read-only for the browser user and stay; they show as history but no longer count.
 export async function resetCheckin(request: Request) {
  try {
-  if (process.env.NODE_ENV === "production") throw new RequestFailure("Not found.", 404);
   const { client, owner } = await authenticatedDatabase(request);
   const clock = await currentClock(client, owner, new Date());
   const removed = await client.from("morning_checkins").delete().eq("user_id", owner).eq("local_date", clock.localDate);

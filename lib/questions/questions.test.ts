@@ -6,7 +6,7 @@ import { calculateAnalytics } from "../analytics/engine";
 import { AnalyticsReportSchema } from "../analytics/contracts";
 import { buildEvidenceBundle } from "../investigation/bundle";
 import { canonicalizeExtraction } from "../capture/canonicalize";
-import { selectBestQuestion, compareEvidence } from "./select";
+import { selectBestQuestion, compareEvidence , spokenDate} from "./select";
 import { QuestionActionSchema } from "./contracts";
 function bundle(outcome:"hrv"|"energy"|"sleep_duration"="hrv"){
  const rows=emptyHistory(),calculated=calculateAnalytics(rows,date,computedAt,version);
@@ -17,7 +17,7 @@ test("deterministic direct factors precede confounders with registered lags and 
   const value=bundle(outcome),first=selectBestQuestion(value)!;
   assert.equal(first.date,addCalendarDays(date,-1));
   assert.equal(first.feature,outcome==="hrv"?"alcohol":outcome==="energy"?"workout_rpe":"stress");
-  assert.deepEqual(selectBestQuestion(value),first);assert.match(first.text,new RegExp(first.date));
+  assert.deepEqual(selectBestQuestion(value),first);assert.ok(first.text.includes(spokenDate(first.date)));
   assert.ok(!selectBestQuestion(value,[first.key])||selectBestQuestion(value,[first.key])!.key!==first.key);
  }
 });

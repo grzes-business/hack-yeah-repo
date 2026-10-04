@@ -290,3 +290,4 @@ details > :not(summary) + :not(summary) { margin-top: .6rem; }
 .sample-reports.compact { display: grid; gap: .5rem; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--color-base-300); }
 .nowrap { white-space: nowrap; }
 .page { grid-template-columns: minmax(0, 1fr); } .page p { overflow-wrap: anywhere; }
+.checkin-reset { align-self: flex-start; }

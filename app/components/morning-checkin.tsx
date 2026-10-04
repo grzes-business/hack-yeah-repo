@@ -16,6 +16,7 @@ type Checkin = {
  localDate: string;
  window: { opensAt: string; closesAt: string; open: boolean };
  answered: CheckinDimension[];
+ values?: Partial<Record<CheckinDimension, string>>;
  skipped: CheckinDimension[];
  ended: boolean;
  step: Step;
@@ -122,7 +123,7 @@ export function MorningCheckin() {
    {checkin ? <>
     <ul className="checkin-chips" aria-label="Check-in progress">{DIMENSIONS.map(d => {
      const state = checkin.answered.includes(d) ? "answered" : checkin.skipped.includes(d) ? "skipped" : "pending";
-     return <li key={d} className={`badge badge-soft ${state === "answered" ? "badge-success" : state === "skipped" ? "badge-ghost" : "badge-warning"}`}>{state === "answered" ? <CheckIcon size={14} aria-hidden="true" /> : null}{labels[d]}<span className="sr-only"> {state}</span>{state === "skipped" ? " · skipped" : ""}</li>;
+     return <li key={d} className={`badge badge-soft ${state === "answered" ? "badge-success" : state === "skipped" ? "badge-ghost" : "badge-warning"}`}>{state === "answered" ? <CheckIcon size={14} aria-hidden="true" /> : null}{labels[d]}{state === "answered" && checkin.values?.[d] ? `: ${checkin.values[d]}` : ""}<span className="sr-only"> {state}</span>{state === "skipped" ? " · skipped" : ""}</li>;
     })}</ul>
     {open ? <>
      <p className="checkin-prompt">“{prompt}”</p>
@@ -133,6 +134,7 @@ export function MorningCheckin() {
      </div>
     </> : <p role="status">{statusText(checkin.step, checkin.window)}</p>}
    </> : <p role="status">{busy ? "Loading check-in…" : "Loading today’s check-in…"}</p>}
+   {checkin && (checkin.answered.length > 0 || checkin.skipped.length > 0 || checkin.ended) && <button className="btn btn-ghost checkin-reset" disabled={busy} onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }}>Reset today&apos;s check-in</button>}
    {error && <p role="alert">{error}</p>}
    {isDevBuild && (
     <details className="small">
@@ -141,8 +143,6 @@ export function MorningCheckin() {
      <label>To <input className="input w-full" type="time" value={devTo} onChange={event => setDevTo(event.target.value)} /></label>{" "}
      <button className="btn btn-soft" onClick={applyDevWindow} disabled={!devFrom || !devTo || devFrom >= devTo}>Apply window</button>{" "}
      <button className="btn btn-soft" onClick={clearDevWindow} disabled={!devWindow}>Use real window</button>
-     <p className="small">Dev only. Reset clears today&apos;s skips and end marker and deletes today&apos;s energy, soreness, mood and illness answers. Capture history stays.</p>
-     <button className="btn btn-soft" onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }} disabled={busy}>Reset today&apos;s check-in and answers</button>
     </details>
    )}
   </section>

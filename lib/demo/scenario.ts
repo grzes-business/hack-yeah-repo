@@ -34,8 +34,9 @@ function random(seed: number, date: string, channel: string): number {
 }
 const round = (value: number) => Math.round(value * 10) / 10;
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
-export type ScenarioDay = ReturnType<typeof scenarioDay>;
-export function scenarioDay(date: string, seed: number) {
+export type ScenarioDay = ReturnType<typeof baseScenarioDay>;
+export function scenarioDay(date: string, seed: number): ScenarioDay { return withDemoDay(baseScenarioDay(date, seed)); }
+function baseScenarioDay(date: string, seed: number) {
   LocalDateSchema.parse(date);
   const ordinal = Math.floor(Date.parse(`${date}T00:00:00Z`) / 86400000);
   const yesterday = addCalendarDays(date, -1);
@@ -69,6 +70,18 @@ export function scenarioDay(date: string, seed: number) {
     omitAlcohol: ordinal % 15 === 0,
     unknownCaffeineDose: ordinal % 11 === 0,
   };
+}
+/**
+ * Presentation day (fictional): ~30 minutes of sleep (a hackathon night), low
+ * energy, and the previous day's stress never reported. Everything else on the
+ * previous day is known, so the evidence loop's open question is that stress.
+ * Applies only to synthetic fixture generation.
+ */
+export const DEMO_DAY = "2026-10-04";
+function withDemoDay(day: ReturnType<typeof baseScenarioDay>): ReturnType<typeof baseScenarioDay> {
+  if (day.date === DEMO_DAY) return { ...day, previousAlcohol: false, illness: false, sleepMinutes: 30, hrv: 47, restingHr: 59, energy: 2, workoutRpe: null, workoutMinutes: null, omitHrv: false, omitSleep: false, omitEnergy: false };
+  if (day.date === addCalendarDays(DEMO_DAY, -1)) return { ...day, alcohol: false, omitAlcohol: false, omitStress: true, illness: false, unknownCaffeineDose: false };
+  return day;
 }
 export function scenarioDays(options: ResolvedDemoOptions): ScenarioDay[] {
   return Array.from({ length: options.days }, (_, index) =>

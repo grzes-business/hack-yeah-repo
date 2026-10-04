@@ -77,7 +77,7 @@ test("spoken investigations select validated facts and keep the question within 
  const {report,context}=fixture(false),bundle=buildEvidenceBundle(report,"hrv",context);
  const explanation=await explainEvidence(bundle,"personal","en",async()=>{throw new Error("offline");});
  const reply=investigationSpeech({mode:"investigate",scope:"personal",inputGeneration:"4",bundle,explanation},"Did you drink alcohol yesterday?");
- assert.ok(reply.length<900);assert.ok(reply.endsWith("Did you drink alcohol yesterday?"));assert.match(reply,/do not establish a cause/);
- assert.ok(reply.includes(explanation.facts.find(f=>f.id==="current")!.text));
+ assert.ok(reply.length<600);assert.ok(reply.endsWith("Did you drink alcohol yesterday?"));
+ assert.ok(!/\d{4}-\d{2}-\d{2}/.test(reply),"no ISO dates in speech");
  assert.ok(!reply.includes(explanation.facts.find(f=>f.id.startsWith("context:"))!.text));
 });

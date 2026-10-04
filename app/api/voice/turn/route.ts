@@ -18,7 +18,7 @@ import { captureOwnedTurn as captureTurn } from "@/lib/capture/server";
 import { loadCheckin, updateCheckin } from "@/lib/checkin/server";
 import { questionFor } from "@/lib/checkin/controller";
 import { uncertainAnswer } from "@/lib/questions/answer";
-import { investigationSpeech } from "@/lib/investigation/speech";
+import { answerSpeech } from "@/lib/investigation/speech";
 import type { Json, Row } from "@/lib/db/database.types";
 export const runtime="nodejs";
 export const maxDuration=120;
@@ -174,10 +174,17 @@ export async function POST(request:Request){
    if(!intent.investigationOutcome||!date||q.kind==="range"){
     outcome.reply=pl?"Wybierz energie, HRV albo dlugosc snu oraz jeden dzien.":"Choose energy, HRV or sleep duration and a single day to investigate.";
    }else{
-    const questionState=await questionAction(client,owner,{action:"start",revision:questions.revision,input:{mode:"investigate",outcome:intent.investigationOutcome,date,scope:q.includeDemo?"demo":"personal",language:intent.language}});
-    const result=questionState.loop!.current;outcome.questions=questionState;
-    outcome.disposition="conversation";outcome.investigation=result;outcome.targetRootId=null;
-    outcome.reply=investigationSpeech(result,questionState.loop?.question?.text);
+    const scope=q.includeDemo?"demo":"personal";
+    let questionState=await questionAction(client,owner,{action:"start",revision:questions.revision,input:{mode:"investigate",outcome:intent.investigationOutcome,date,scope,language:intent.language}});
+    const results=[questionState.loop!.current];
+    // Follow the graph: if tiredness is asked and sleep is flagged unusual today, continue into sleep's registered factors.
+    if(intent.investigationOutcome==="energy"&&results[0].bundle.currentAnomalies.some(a=>a.metric==="sleep_duration")){
+     questionState=await questionAction(client,owner,{action:"start",revision:questionState.revision,input:{mode:"investigate",outcome:"sleep_duration",date,scope,language:intent.language}});
+     results.push(questionState.loop!.current);
+    }
+    outcome.questions=questionState;
+    outcome.disposition="conversation";outcome.investigation=results[results.length-1];outcome.targetRootId=null;
+    outcome.reply=answerSpeech(results,questionState.loop?.question?.text);
    }
   } else if(intent.kind==="retrieve"){
    const q=intent.query;

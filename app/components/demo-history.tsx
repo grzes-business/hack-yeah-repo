@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { addCalendarDays, getLocalDate } from "@/lib/domain";
+import { getLocalDate } from "@/lib/domain";
 import { seedDemoHistory } from "@/lib/demo/seed";
 import { useHealthSession } from "./session";
 
@@ -11,7 +11,7 @@ export function DemoHistory() {
 }
 function Controls({ timeZone }: { timeZone: string }) {
   const { repository, refreshHistory } = useHealthSession();
-  const latestDate = addCalendarDays(getLocalDate(new Date().toISOString(), timeZone), -1);
+  const latestDate = getLocalDate(new Date().toISOString(), timeZone);
   const [endDate, setEndDate] = useState(latestDate);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
