@@ -9,7 +9,7 @@ export const VoiceContextSchema = z.discriminatedUnion("mode", [
  z.strictObject({mode:z.literal("investigate"),loopId:z.uuid(),key:z.string().min(1)}),
 ]);
 export type VoiceContext = z.infer<typeof VoiceContextSchema>;
-export const VoiceTurnInputSchema = z.strictObject({ turnId:RecordIdSchema, targetRootId:RecordIdSchema.nullable().default(null), context:VoiceContextSchema.default({mode:"report"}) });
+export const VoiceTurnInputSchema = z.strictObject({ turnId:RecordIdSchema, targetRootId:RecordIdSchema.nullable().default(null), context:VoiceContextSchema.default({mode:"report"}), scope:z.enum(["personal","demo"]).default("personal") });
 export const VoiceIntentSchema = z.strictObject({
  kind:z.enum(["report","followup","retrieve","capabilities","cancel","greeting","noise","unsupported","unclear","investigate","question_answer"]),
  language:z.enum(["en","pl"]),

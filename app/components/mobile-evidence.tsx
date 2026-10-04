@@ -62,7 +62,8 @@ export function MobileEvidence({insights=false}:{insights?:boolean}){
 function EvidenceView({zone,insights}:{zone:string;insights:boolean}){
  const {session,historyRevision}=useHealthSession(),talk=useTalkContext(),router=useRouter();
  const today=getLocalDate(new Date().toISOString(),zone);
- const [date,setDate]=useState(today),[scope,setScope]=useState<FeatureScope>("personal"),[retry,setRetry]=useState(0);
+ const [date,setDate]=useState(today),[retry,setRetry]=useState(0);
+ const {scope,setScope}=talk;
  const [loaded,setLoaded]=useState<{key:string;report:AnalyticsReport}|null>(null),[error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false);
  const [days,setDays]=useState<DailyFeatures[]>([]),[view,setView]=useState<LoopView|null>(null),[questionBusy,setQuestionBusy]=useState(false);
  const [outcome,setOutcome]=useState<Outcome>("hrv");

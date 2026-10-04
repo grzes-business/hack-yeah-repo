@@ -7,7 +7,7 @@ import { CandidateSchema } from "../capture/contracts";
 const now="2026-10-03T08:00:00.000Z";
 const candidate={type:"soreness",rating:null,consumed:null,quantity:null,beverage:null,amountMg:null,present:null,location:null,intensity:null,booleanValue:null,timing:{kind:"now",date:null,daysAgo:null,clock:null}};
 test("voice contracts reject caller-selected owners and unsupported actions",()=>{
- assert.deepEqual(VoiceTurnInputSchema.parse({turnId:"turn"}),{turnId:"turn",targetRootId:null,context:{mode:"report"}});
+ assert.deepEqual(VoiceTurnInputSchema.parse({turnId:"turn"}),{turnId:"turn",targetRootId:null,context:{mode:"report"},scope:"personal"});
  assert.throws(()=>VoiceTurnInputSchema.parse({turnId:"turn",userId:"other"}));
  assert.throws(()=>VoiceIntentSchema.parse({kind:"diagnose",language:"en",query:{kind:"today",from:null,to:null,type:null,includeDemo:false}}));
  assert.throws(()=>VoiceOutcomeSchema.parse({turnId:"turn",disposition:"capture",reply:"Saved",capture:{},targetRootId:null,retrieval:null}));

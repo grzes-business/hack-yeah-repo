@@ -176,7 +176,7 @@ export async function POST(request:Request){
    if(!intent.investigationOutcome||!date||q.kind==="range"){
     outcome.reply=pl?"Wybierz energie, HRV albo dlugosc snu oraz jeden dzien.":"Choose energy, HRV or sleep duration and a single day to investigate.";
    }else{
-    const scope=q.includeDemo?"demo":"personal";
+    const scope=q.includeDemo||input.scope==="demo"?"demo":"personal";
     let questionState=await questionAction(client,owner,{action:"start",revision:questions.revision,input:{mode:"investigate",outcome:intent.investigationOutcome,date,scope,language:intent.language}});
     const results=[questionState.loop!.current];
     // Follow the graph: if tiredness is asked and sleep is flagged unusual today, continue into sleep's registered factors.

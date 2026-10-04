@@ -94,7 +94,7 @@ function VoiceSession() {
     voiceQueue.current.shift();
     const abort=new AbortController();controllerAbort.current=abort;
     try{
-     const response=await fetch("/api/voice/turn",{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`,"Content-Type":"application/json",...devWindowHeaders()},body:JSON.stringify({turnId:entry.turn.id,targetRootId:entry.target,context:entry.context}),signal:abort.signal});
+     const response=await fetch("/api/voice/turn",{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`,"Content-Type":"application/json",...devWindowHeaders()},body:JSON.stringify({turnId:entry.turn.id,targetRootId:entry.target,context:entry.context,scope:talk.scope}),signal:abort.signal});
      const body=await response.json();if(!response.ok)throw new Error(body.error||"Voice processing failed. Retry this turn.");
      const outcome=VoiceOutcomeSchema.parse(body.outcome);if(outcome.turnId!==entry.turn.id)throw new Error("Voice result mismatch.");
      if(!alive.current||uid.current!==owner)return;
@@ -313,7 +313,7 @@ function VoiceSession() {
 
  return <>
   <section id="voice-controls" className="card card-body bg-base-100 border border-base-300 voice-hub" aria-label="Voice conversation">
-   <div className="mode-row"><span className="badge badge-soft badge-primary">{talk.context.mode==="report"?"Personal reporting":talk.context.mode==="morning_checkin"?"Morning check-in":"Investigation answer"}</span>{talk.context.mode!=="report"&&<button className="btn btn-soft" disabled={processing} onClick={()=>{chooseTarget(null);talk.select({mode:"report"});}}>Return to reporting</button>}</div>
+   <div className="mode-row">{talk.scope==="demo"&&<span className="badge badge-soft badge-info">Synthetic demo data</span>}<span className="badge badge-soft badge-primary">{talk.context.mode==="report"?"Personal reporting":talk.context.mode==="morning_checkin"?"Morning check-in":"Investigation answer"}</span>{talk.context.mode!=="report"&&<button className="btn btn-soft" disabled={processing} onClick={()=>{chooseTarget(null);talk.select({mode:"report"});}}>Return to reporting</button>}</div>
    {talk.prompt&&<p className="current-question"><strong>{talk.prompt}</strong></p>}
 <p className="voice-status" role="status">{labels[phase]}{phase==="active"?` · ${processing?"Processing saved speech…":activity==="recording"?"Listening…":activity==="transcribing"?"Transcribing…":activity==="replying"?"Speaking…":voiceInput.mode==="press_to_speak"?"Hold the button to speak":"Listening for speech"}`:""}{muted && phase === "active" ? " · microphone muted" : ""}</p>
    {<button className="btn btn-primary btn-circle speak-button" disabled={!session||!repository||phase==="requesting"||phase==="connecting"||muted||saving||pendingSnapshot.length>0} onClick={()=>{if(!busy)void start();}} aria-label={!busy?"Start voice":activity==="recording"?"Release to send":"Hold to speak"} aria-pressed={activity==="recording"}
