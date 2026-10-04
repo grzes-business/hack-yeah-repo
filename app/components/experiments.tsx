@@ -5,11 +5,13 @@ import type { ExperimentResult } from "@/lib/experiments/compare";
 import type { ExperimentEvent, ExperimentPlan, ExperimentStatus } from "@/lib/experiments/contracts";
 import { formatDate, formatPeriod } from "@/lib/format";
 import { useHealthSession } from "./session";
+import { useTalkContext } from "./talk-context";
 
 type View = { plan: ExperimentPlan; status: ExperimentStatus; events: ExperimentEvent[]; result: ExperimentResult | null; resultError?: string };
 type Scope = "personal" | "demo";
 const TARGET_HOURS = 7.5, PERIOD_DAYS = 14;
 const fmt = (v: number | null | undefined, digits = 1) => v === null || v === undefined ? "unknown" : Number(v.toFixed(digits)).toString();
+const stat = (v: number | null) => v === null ? "—" : fmt(v);
 const signed = (v: number) => `${v > 0 ? "+" : ""}${fmt(v)}`;
 
 async function request(token: string, body?: object): Promise<{ experiments: View[] } | { error: string }> {
@@ -26,8 +28,9 @@ async function request(token: string, body?: object): Promise<{ experiments: Vie
 
 export function Experiments() {
   const { session, historyRevision } = useHealthSession();
+  // Follows the app-wide data source chosen on Today/Insights.
+  const { scope } = useTalkContext();
   const [views, setViews] = useState<View[] | null>(null);
-  const [scope, setScope] = useState<Scope>("personal");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +56,7 @@ export function Experiments() {
 
   return <section className="card card-body bg-base-100 border border-base-300 experiment-card" aria-labelledby="experiment-heading">
     <div className="section-heading"><h2 id="experiment-heading"><FlaskIcon size={20} aria-hidden="true" /> Personal experiment</h2><span>Observation, not treatment</span></div>
-    <label>Data source<select className="select w-full" value={scope} disabled={busy} onChange={e => setScope(e.target.value as Scope)}><option value="personal">Personal history</option><option value="demo">Synthetic demo history</option></select></label>
+    <p className="small">Using {scope === "demo" ? "synthetic demo history" : "your personal history"} (change the data source at the top of Insights).</p>
     {error && <p role="alert">{error}</p>}
     {!views && !error && <p role="status">Loading experiments…</p>}
     {views && !open && <Proposal scope={scope} busy={busy} onAccept={() => void act({ action: "accept", templateId: "sleep_target__energy", scope })} />}
@@ -108,8 +111,8 @@ function ResultSummary({ result }: { result: ExperimentResult }) {
   return <div className="experiment-result">
     <div className="experiment-stats">
       <div><span className="small">Nights ≥ {TARGET_HOURS} h</span><strong>{i.adherentNights}<small> / {i.sleepKnown} recorded</small></strong></div>
-      <div><span className="small">Energy before</span><strong>{fmt(b.energyMedian)}<small> median · {b.energyDays} d</small></strong></div>
-      <div><span className="small">Energy on target nights</span><strong>{fmt(i.energyMedian)}<small> median · {i.energyDays} d</small></strong></div>
+      <div><span className="small">Energy before</span><strong>{stat(b.energyMedian)}<small> median · {b.energyDays} d</small></strong></div>
+      <div><span className="small">Energy on target nights</span><strong>{stat(i.energyMedian)}<small> median · {i.energyDays} d</small></strong></div>
     </div>
     <p><strong>{headline}:</strong> {result.energyDifference === null
       ? `not enough days yet to compare (${b.energyDays} before, ${i.energyDays} on target).`

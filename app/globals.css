@@ -295,3 +295,5 @@ details > :not(summary) + :not(summary) { margin-top: .6rem; }
 /* Never let card content (code boxes, long lists) widen the page on phones. */
 .card-body > *, .card details, .card details > * { min-width: 0; max-width: 100%; }
 pre { width: 100%; }
+.experiment-stats > div { min-width: 0; overflow-wrap: anywhere; }
+.experiment-stats .small { line-height: 1.3; }
