@@ -52,6 +52,8 @@ const SLEEP_SESSION_GAP_MS = 90 * 60000;
 const SLEEP_READ_MARGIN_MS = 18 * HOUR;
 const ASLEEP_STATES = new Set(["asleep", "light", "deep", "rem"]);
 const READ_LIMIT = 20000;
+/** A HealthKit read that has not answered by then is reported as failed, not left spinning. */
+export const APPLE_READ_TIMEOUT_MS = 45000;
 const WORKOUT_PAGE = 200;
 
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -160,10 +162,22 @@ export function normalizeWorkouts(raw: AppleWorkout[]): MetricSample[] {
   });
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`${label} did not answer within ${Math.round(ms / 1000)} s`)), ms); });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export class AppleHealthDataSource implements HealthDataSource {
   /** Status of the most recent `getSamples` call, for honest UI reporting. */
   lastReport: AppleMetricStatus[] = [];
-  constructor(private readonly client: AppleHealthClient, private readonly now: () => number = Date.now) {}
+  constructor(
+    private readonly client: AppleHealthClient,
+    private readonly now: () => number = Date.now,
+    /** Called before each metric group is read, so the UI can show progress. */
+    private readonly onProgress: (label: string) => void = () => {},
+    private readonly timeoutMs = APPLE_READ_TIMEOUT_MS,
+  ) {}
 
   async getSamples(request: HealthDataSourceRequest): Promise<MetricSample[]> {
     const args = HealthDataSourceRequestSchema.parse(request);
@@ -172,8 +186,10 @@ export class AppleHealthDataSource implements HealthDataSource {
     const record = async (metrics: Metric[], read: () => Promise<MetricSample[]>) => {
       const wanted = metrics.filter(m => args.metrics.includes(m));
       if (!wanted.length) return;
+      const label = MetricRegistry[wanted[0]].label.replace(/^Sleep duration$/, "Sleep");
+      this.onProgress(label);
       try {
-        const got = (await read()).filter(s => overlaps(Date.parse(s.startedAt), Date.parse(s.endedAt), from, to));
+        const got = (await withTimeout(read(), this.timeoutMs, label)).filter(s => overlaps(Date.parse(s.startedAt), Date.parse(s.endedAt), from, to));
         samples.push(...got);
         for (const metric of wanted) {
           const count = got.filter(s => s.metric === metric).length;

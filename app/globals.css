@@ -221,3 +221,4 @@ p[role="alert"], div[role="alert"] { border-radius: var(--radius-box); padding: 
 @media (max-width: 360px) { .app-shell { padding-inline: .75rem; } .metric-value { font-size: 1.6rem; } }
 @media (prefers-reduced-motion: no-preference) { .speak-button[aria-pressed="true"] .mic-symbol { animation: recording 1.2s ease-in-out infinite; } @keyframes recording { 50% { opacity: .72; transform: scale(.95); } } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+.sync-step { display: flex; align-items: center; gap: .5rem; }

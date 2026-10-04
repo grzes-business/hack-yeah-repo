@@ -92,3 +92,15 @@ test("re-syncing the same range writes the same IDs (idempotent upsert)", async 
   await ingestHealthData(new AppleHealthDataSource(fakeClient(), now), request, writer);
   assert.deepEqual(saved[0], saved[1]);
 });
+
+test("a HealthKit read that never answers is reported as failed instead of hanging the sync", async () => {
+  const steps: string[] = [];
+  const hanging = fakeClient({ readSamples: ({ dataType }) => dataType === "heartRateVariability" ? new Promise(() => {}) : fakeClient().readSamples({ dataType, startDate: "", endDate: "", limit: 1, ascending: true }) });
+  const source = new AppleHealthDataSource(hanging, now, label => steps.push(label), 20);
+  const samples = await source.getSamples(request);
+  assert.equal(samples.some(s => s.metric === "hrv"), false);
+  const failed = source.lastReport.find(r => r.metric === "hrv");
+  assert.ok(failed?.status === "failed" && /did not answer/.test(failed.reason));
+  assert.ok(samples.some(s => s.metric === "steps"));
+  assert.deepEqual(steps, ["HRV (SDNN)", "Resting heart rate", "Sleep", "Steps", "Active energy", "Workout duration"]);
+});

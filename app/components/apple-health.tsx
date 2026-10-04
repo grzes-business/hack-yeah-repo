@@ -2,14 +2,16 @@
 import { Capacitor } from "@capacitor/core";
 import { HeartbeatIcon } from "@phosphor-icons/react";
 import { useState, useSyncExternalStore } from "react";
-import { Metrics, MetricRegistry } from "@/lib/domain";
+import { Metrics, MetricRegistry, type MetricSample } from "@/lib/domain";
 import { APPLE_READ_TYPES, AppleHealthDataSource, type AppleHealthClient, type AppleMetricStatus } from "@/lib/health/apple-health";
 import { ingestHealthData } from "@/lib/health/ingestion";
 import { useHealthSession } from "./session";
 
 /** History window read on each sync; re-syncing the same days is idempotent. */
-const SYNC_DAYS = 56;
+const SYNC_DAYS = 30;
 const DAY_MS = 24 * 3600000;
+/** HRV, resting HR, sleep, steps, active energy, workouts. */
+const READ_GROUPS = 6;
 
 const noop = () => () => {};
 /** True only inside the iOS shell with the Health plugin compiled in. */
@@ -33,6 +35,7 @@ export function AppleHealthSync() {
   const native = useNativeHealth();
   const { repository, session, refreshHistory } = useHealthSession();
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ stored: number; report: AppleMetricStatus[] } | null>(null);
   if (!native) return null;
@@ -41,17 +44,24 @@ export function AppleHealthSync() {
     if (!repository || busy) return;
     setBusy(true); setError(null); setResult(null);
     try {
+      setStep("Checking Apple Health on this iPhone…");
       const client = await loadClient();
       const availability = await client.isAvailable();
       if (!availability.available) throw new Error(availability.reason ?? "Apple Health is not available on this device.");
+      setStep("Waiting for your permission in the Health sheet…");
       await client.requestAuthorization({ read: [...APPLE_READ_TYPES] });
-      const source = new AppleHealthDataSource(client);
+      let done = 0;
+      const source = new AppleHealthDataSource(client, Date.now, label => setStep(`Reading ${label} (${++done} of ${READ_GROUPS})…`));
+      const writer = { saveMetrics: (samples: MetricSample[]) => {
+        setStep(`Saving ${samples.length} measurements to your private history…`);
+        return repository.saveMetrics(samples);
+      } };
       const to = new Date(), from = new Date(to.getTime() - SYNC_DAYS * DAY_MS);
-      const { stored } = await ingestHealthData(source, { from, to, metrics: Object.values(Metrics) }, repository);
+      const { stored } = await ingestHealthData(source, { from, to, metrics: Object.values(Metrics) }, writer);
       setResult({ stored, report: source.lastReport });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Apple Health sync failed.");
-    } finally { refreshHistory(); setBusy(false); }
+    } finally { setStep(null); refreshHistory(); setBusy(false); }
   }
 
   return <section className="card card-body bg-base-100 border border-base-300" aria-labelledby="apple-health-heading">
@@ -59,6 +69,7 @@ export function AppleHealthSync() {
     <h2 id="apple-health-heading">Apple Health</h2>
     <p>Read HRV, resting heart rate, sleep, steps, active energy and workouts from the last {SYNC_DAYS} days. Nothing is written back to Apple Health. Syncing again updates the same records.</p>
     <button className="btn btn-primary" onClick={() => void sync()} disabled={!session || !repository || busy}>{busy ? "Syncing…" : "Connect and sync Apple Health"}</button>
+    {step && <p role="status" className="sync-step"><span className="loading loading-spinner loading-sm" aria-hidden="true" /> {step}</p>}
     {!session && <p className="small">Start a private session first.</p>}
     {error && <p role="alert">{error}</p>}
     {result && <div role="status">
