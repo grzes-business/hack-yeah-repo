@@ -19,9 +19,14 @@ function useNativeHealth() {
   return useSyncExternalStore(noop, () => Capacitor.getPlatform() === "ios" && Capacitor.isPluginAvailable("Health"), () => false);
 }
 
-async function loadClient(): Promise<AppleHealthClient> {
+/**
+ * The Capacitor plugin proxy answers every property, including `then`, so it
+ * must never be returned from an async function or awaited directly: the
+ * promise machinery would call `Health.then` and hang forever. Wrap it.
+ */
+async function loadClient(): Promise<{ client: AppleHealthClient }> {
   const { Health } = await import("@capgo/capacitor-health");
-  return Health as unknown as AppleHealthClient;
+  return { client: Health as unknown as AppleHealthClient };
 }
 
 const describe: Record<AppleMetricStatus["status"], string> = {
@@ -45,7 +50,7 @@ export function AppleHealthSync() {
     setBusy(true); setError(null); setResult(null);
     try {
       setStep("Checking Apple Health on this iPhone…");
-      const client = await loadClient();
+      const { client } = await loadClient();
       const availability = await client.isAvailable();
       if (!availability.available) throw new Error(availability.reason ?? "Apple Health is not available on this device.");
       setStep("Waiting for your permission in the Health sheet…");
