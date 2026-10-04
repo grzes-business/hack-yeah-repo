@@ -114,3 +114,7 @@ Finalized owned user turns feed authenticated `/api/capture`, separate from voic
 ## Stage 4.5 response boundary
 
 Authenticated `/api/voice/turn` loads owned saved speech, freezes an allow-listed model intent before side effects, invokes capture or bounded canonical retrieval, and persists the resulting receipt. The browser requests speech only for application-selected text, with no Realtime tools or arbitrary database dispatcher. `lib/conversation/` owns contracts, intent, feedback and transport. `voice_turn_runs` belongs to processing bookkeeping, not evidence. See [VOICE](VOICE.md) for limits and [PERSISTENCE](PERSISTENCE.md) for migration 005.
+
+## Stage 6 builder boundary
+
+`lib/features/builder.ts` projects validated raw input into the unchanged daily schema. Authenticated `/api/features` uses complete owner-scoped paginated reads; `lib/features/server.ts` separately holds the server-only writer. SQL mutation generations and a locked generation-checked commit prevent mixed/stale output; owner RLS hides old daily/results rows. All raw changes conservatively invalidate all downstream dates, covering lagged dependencies. See [DAILY-FEATURES](DAILY-FEATURES.md) for manifest, scope/version identity and explicit rebuild policy. No analytics or evidence cache exists yet.

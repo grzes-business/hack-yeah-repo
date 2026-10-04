@@ -20,6 +20,9 @@ function claimRefusalMessage(reason: string) {
  if(reason.includes("Invalid follow-up root"))return "The selected report cannot be its own follow-up target. Clear the target and try again.";
  return "This turn or selected report changed. Reload history and select the report again.";
 }
+// Completed reports can only be replaced by an explicit correction. Model intent
+// alone must not turn another intake or negative report into a destructive replacement.
+const correctionPhrase=/\b(actually|correct|correction|correcting|change|replace|amend|update|i meant|instead|rather than|that was wrong|i was wrong)\b|\b(popraw\p{L}*|sprost\p{L}*|korekt\p{L}*|właściwie|jednak|miałem na myśli|miałam na myśli)\b/iu;
 const cancelPhrase=/^\W*(cancel|skip|never ?mind|forget it|stop|anuluj|pomi[nń])(\s+(this|that|it|the clarification|that report))?\W*$/iu;
 function followupId(turnId:string){const h=createHash("sha256").update("voice-followup-v1:"+turnId).digest("hex");return `${h.slice(0,8)}-${h.slice(8,12)}-5${h.slice(13,16)}-8${h.slice(17,20)}-${h.slice(20,32)}`;}
 export async function POST(request:Request){
@@ -58,6 +61,10 @@ export async function POST(request:Request){
   let intent:z.infer<typeof VoiceIntentSchema>;
   try {intent=job.plan?VoiceIntentSchema.parse({unsupportedMetric:null,...(job.plan as object)}):await identifyVoiceIntent({transcript:job.transcript,anchorDate:today,target:target?{transcript:targetTranscript,latest:target.result,accepted:target.accepted_result}:null});}
   catch{throw new RequestFailure("I could not understand this turn reliably. No new observations were confirmed. Retry processing.",502);}
+  const targetStatus=(target?.result as {status?:string}|null)?.status;
+  if(intent.kind==="followup"&&target&&targetStatus!=="needs_clarification"&&!correctionPhrase.test(job.transcript)){
+   intent={...intent,kind:"report"};
+  }
   if(!job.plan){
    const planned=await client.rpc("plan_voice_turn",{p_turn:input.turnId,p_token:token,p_plan:intent as unknown as Json});
    if(planned.error)throw new RequestFailure("Processing could not be prepared. No new observations were confirmed. Retry.",503);

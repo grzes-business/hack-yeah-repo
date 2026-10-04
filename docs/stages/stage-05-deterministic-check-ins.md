@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Implemented 2026-10-04; acceptance pending.** Hosted migration 006 must be applied and the live walkthrough recorded before acceptance.
+**Implemented 2026-10-04; acceptance pending.** The live walkthrough must be recorded before acceptance. Hosted inventory on 2026-10-04 confirmed `morning_checkins` exists; migration 006 was not reapplied.
 
 The app runs a resumable, predictable morning interview; AI phrases the question selected by code.
 
@@ -72,4 +72,6 @@ Decisions made in code (document changes here if they change):
 
 Checks performed: typecheck, lint, production build, 60/60 Node tests (including `lib/checkin/controller.test.ts`: order, skips, completion, window edges, midnight in the user's zone, determinism, question anchors), and unauthenticated/bad-token rejection on `/api/checkin`.
 
-Not yet performed: applying migration `202610040006` to hosted Supabase; a live check of GET/POST `/api/checkin` with a real session (answer → counted, skip persisted, end persisted, cross-user denial); a morning-window run in the user's local time; and the spoken check-in walkthrough.
+Hosted schema inventory on 2026-10-04 confirmed the migration 006 table is present. No reapplication was performed.
+
+Not yet performed: a live check of GET/POST `/api/checkin` with a real session (answer → counted, skip persisted, end persisted, cross-user denial); a morning-window run in the user's local time; and the spoken check-in walkthrough.

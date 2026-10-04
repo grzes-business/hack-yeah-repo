@@ -92,7 +92,7 @@ Confounder references have their own `feature` and `lagDays`, relative to the sa
 
 A known feature needs source IDs of the appropriate kind. Unknown states cannot carry values. Objective features retain metric types/units; ratings retain event scales. Daily alcohol is a reported boolean exposure, caffeine is known mg, and pain retains its structured value. Unknown caffeine dose cannot become a known daily 0 mg. Explicit negative intake can. Sleep boundaries cannot be reversed.
 
-This freezes representation, not the Stage 6 feature-building algorithm. Domain code does not aggregate samples, choose the latest energy report, or resolve conflicting sources yet.
+This freezes representation, not the Stage 6 feature-building algorithm. Domain contracts remain independent of aggregation. Stage 6 implements the projection under [DAILY-FEATURES](DAILY-FEATURES.md), which owns the manifest, conflicts and minimum eligibility rules without changing the 19-key schema.
 
 ## Evidence contracts
 

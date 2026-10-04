@@ -87,7 +87,12 @@ function VoiceSession() {
      if(outcome.capture)setCaptures(v=>{const previous=v[outcome.capture!.rootTurnId];return previous&&previous.revision>outcome.capture!.revision?v:{...v,[outcome.capture!.rootTurnId]:outcome.capture!};});
      if(entry.run===generation.current&&entry.epoch===voiceEpoch.current){
       if(outcome.disposition==="cancel")chooseTarget(null);
-      else if(outcome.capture&&outcome.targetRootId)chooseTarget(outcome.targetRootId);
+      else if(outcome.capture){
+       // Only unresolved questions become automatic follow-up targets. A saved report
+       // must not make the next independent intake/negative report a replacement.
+       const needsAnswer=outcome.capture.result?.status==="needs_clarification";
+       chooseTarget(needsAnswer?outcome.targetRootId:null);
+      }
       if(outcome.reply&&entry.epoch===voiceEpoch.current)transport.current?.say(outcome.reply,entry.turn.id);
      }
      refreshHistory();setHistoryRevision(v=>v+1);window.dispatchEvent(new Event(HEALTH_HISTORY_CHANGED));

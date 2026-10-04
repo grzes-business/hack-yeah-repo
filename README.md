@@ -109,3 +109,11 @@ Saved user turns on Talk now produce validated observations with visible save or
 ## Voice reliability (Stage 4.5)
 
 Talk defaults to press-to-speak; hold with pointer or Space/Enter, release to submit. Continuous listening remains optional. Saved reports receive application-confirmed feedback, selected voice clarification/correction and bounded date/type retrieval. Migration 005 is already applied to the current hosted project; do not replay existing migrations. See [VOICE](docs/VOICE.md) for controls/recovery and [Stage 4.5](docs/stages/stage-04a-voice-reliability.md) for unresolved live interpretation failures and manual ACs. `pnpm verify:voice` deliberately uses hosted Supabase and paid provider calls; removes synthetic records but leaves anonymous Auth accounts.
+
+## Daily observations (Stage 6)
+
+Add `SUPABASE_SERVICE_ROLE_KEY` to server secrets only (never `NEXT_PUBLIC_`); `.env.example` supplies an empty placeholder. The current hosted project has migration 007 applied; do not replay prior migrations. Restart the dev server after env changes and redeploy hosted env changes. Today provides an explicit personal/demo daily inspector and range rebuild. Read [DAILY-FEATURES](docs/DAILY-FEATURES.md) for the aggregation manifest, authenticated API, unknown/conflict semantics and freshness. Stage 6 behavioral acceptance remains pending.
+
+## Clear your history
+
+On Timeline choose **Clear all history…**, read the deletion scope and type `CLEAR MY HISTORY` to confirm. This permanently clears your personal/demo history, transcripts, check-in progress and derived rows, while preserving your account/profile and signed-in session. Stop voice and imports in other tabs first. The feature uses server-only migration 008; read [PERSISTENCE](docs/PERSISTENCE.md) for reset/recovery semantics.

@@ -91,3 +91,5 @@ Stage 0 is implemented: the nine metrics, ten event types, four allowed relation
 Stage -1 establishes shared understanding and agent routing only. It does not implement registries, schemas, database migrations, voice features, analytics, or native integrations. Follow [`docs/ROADMAP.md`](docs/ROADMAP.md) for later stage boundaries and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the intended data flow.
 
 Stage -1 is complete when a new agent can explain the thesis and evidence boundary, locate domain/integration rules, distinguish current code from intended features, find each later stage's scope, and turn that stage into an issue without reinventing the architecture. The documentation is versioned project knowledge and should evolve with explicit decisions.
+
+Stage 5 morning check-in and Stage 6 daily-feature implementations are now in place with live/behavioral acceptance pending (2026-10-04). [DAILY-FEATURES](docs/DAILY-FEATURES.md) owns the aggregation manifest, provenance and generation freshness rules; analytics/evidence generation remain later work.

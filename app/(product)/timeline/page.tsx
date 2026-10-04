@@ -1,4 +1,5 @@
 "use client";
+import { HistoryReset } from "../../components/history-reset";
 import { useEffect, useState } from "react";
 import { MetricRegistry, SubjectiveEventRegistry, type SubjectiveEvent } from "@/lib/domain";
 import { DEMO_PREFIX } from "@/lib/demo/scenario";
@@ -30,5 +31,5 @@ export default function Timeline() {
  const current = state?.owner === id ? state : null;
  return <><header className="header"><p className="eyebrow">Your observations</p><h1>Timeline</h1><p className="lede">Wearable measurements and conversational context, with their origins preserved.</p></header><section className="card">
  {!id ? <><h2>No session yet</h2><p>Start a demo session to open your private timeline.</p></> : !current ? <p role="status">Loading observations…</p> : current.error ? <><p role="alert">Could not load observations. Check the database setup and retry.</p><button onClick={() => setRevision(v => v+1)}>Retry</button></> : current.items.length === 0 ? <><h2>Your timeline is empty</h2><p>There are no saved observations in this session yet. Load sample history from Today to explore this view.</p></> : <><p>Showing up to 500 records from each source.</p><ul className="observations">{current.items.map(item => <li key={item.key}><strong>{item.label}</strong><span>{item.value}</span><small>{new Date(item.at).toLocaleString(undefined, { timeZone: item.timeZone ?? profile?.time_zone ?? "UTC", ...(item.dateOnly ? {dateStyle:"medium" as const} : {}) })} · {item.source}</small></li>)}</ul></>}
- </section></>;
+ </section><HistoryReset /></>;
 }

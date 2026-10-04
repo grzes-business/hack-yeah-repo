@@ -3,6 +3,7 @@ import { createIngestionRepository, parseMetricRow, parseEventRow } from "./inge
 import { z } from "zod";
 import { DailyFeaturesSchema, MetricSampleSchema, RelationshipResultSchema, SubjectiveEventSchema } from "../domain";
 import { ConversationSchema, ConversationTurnSchema, ProfileInputSchema, type Conversation, type ConversationTurn } from "./records";
+import { builderVersion, type FeatureScope } from "../features/contracts";
 import type { Database, Json, Row } from "./database.types";
 
 const json = (value: unknown): Json => z.json().parse(value);
@@ -72,8 +73,8 @@ export function createHealthRepository(client: SupabaseClient<Database>) {
     events: (events.data ?? []).map(row => parseEventRow(row, id)),
    };
   },
-  async listDailyFeatures() {
-   const id = await userId(); const { data, error } = await client.from("daily_features").select("*").eq("user_id", id).order("date", { ascending: false }).limit(100); fail(error);
+  async listDailyFeatures(scope: FeatureScope = "personal") {
+   const id = await userId(); const { data, error } = await client.from("daily_features").select("*").eq("user_id", id).eq("builder_version", builderVersion(scope)).order("date", { ascending: false }).limit(100); fail(error);
    return (data ?? []).map(row => { owner(row, id); const v = DailyFeaturesSchema.parse(row.payload); if (v.userId !== id || v.date !== row.date || v.timeZone !== row.time_zone || v.builderVersion !== row.builder_version) throw new Error("Daily feature metadata mismatch."); return v; });
   },
   async listRelationshipResults() {

@@ -4,7 +4,7 @@ Stage 1 adds a browser-session application shell, a seven-table migration, and t
 
 ## Hosted setup
 
-For the current project migrations 001–005 are applied; do not run the creation migration again. Anonymous Auth is enabled. The steps below also document fresh-project setup.
+For the current project migrations 001–007 are applied; do not run the creation migration again. Anonymous Auth is enabled. The steps below also document fresh-project setup.
 
 1. Keep the existing public URL/publishable key in `.env.local`; restart development after changes. Never commit credentials.
 2. In the hosted project's SQL Editor, inspect existing `public` tables, then apply migrations under `supabase/migrations/` in filename order once. Stage 1 creates all seven tables in one transaction and deliberately fails on conflicting table names. Stage 2 adds checked/indexed metric interval starts. Reconcile conflicts with a new migration; do not drop existing user data.
@@ -62,3 +62,17 @@ Hosted setup is complete only after migration application, anonymous sign-in, pr
 ## Stage 4.5 processing receipts
 
 `202610030005_voice_turn_runs.sql` was applied successfully in hosted SQL Editor on 2026-10-03. Do not reapply it. The ninth table, `voice_turn_runs`, stores an owned saved-turn transcript, selected root/revision, immutable structured intent, final result, and 120-second processing lease. Owner SELECT only; claim/plan/finish/release RPCs verify `auth.uid()`, owned capture turns, target ownership and lease tokens. A plan is persisted before capture side effects; cached receipts recover lost HTTP responses. Superseded feedback stays a historical snapshot. As with capture RPCs, these are owner-callable functions rather than a private server channel; app schemas enforce accepted semantics. CLI migration history still requires reconciliation.
+
+## Stage 6 derived generations
+
+Migration 007 applied successfully via hosted SQL Editor on 2026-10-04; migration 006 table was already present and was not reapplied. The hand-maintained snapshot includes 001–007. `feature_input_generations` is owner-readable, not browser-writable. Metric/event mutation and profile-zone changes dirty all derived rows for that owner. Daily/results now carry nullable bigint `input_generation`; null/outdated rows are hidden by owner read policies. Browser derived writes remain denied; server-only read/commit RPCs are granted exclusively to service role. Configure `SUPABASE_SERVICE_ROLE_KEY` privately on the server. Read [DAILY-FEATURES](DAILY-FEATURES.md) for consistent reads, atomic generation-checked commits, replay and freshness requirements for later analytics. Hosted numerical/concurrency/ownership acceptance remains pending.
+
+## Clean-slate history reset — 2026-10-04
+
+Timeline now offers **Clear all history…** with an explicit scope warning and typed `CLEAR MY HISTORY` confirmation. It clears all owned personal/synthetic observations, metrics, conversations/turns, capture revisions, voice receipts, morning check-in state, daily features and relationship results. The account, profile/time zone and sign-in are preserved. This is permanent; UI confirmation is required before requesting it. Only server-verified ownership reaches the trusted reset RPC; callers cannot choose an owner.
+
+Migration 008 was applied successfully in hosted SQL Editor on 2026-10-04; do not reapply it. It defines `reset_owned_history(uuid)` for service role only and a private conversation-ID tombstone table. The reset uses the existing generation lock and one transaction: a failure rolls back the reset, and the generation counter is retained/advanced so an old rebuild cannot become current. Cleared conversation IDs cannot be recreated by old recovery copies. Tombstones retain opaque IDs only, not transcripts/health payloads; deleting the Auth user removes them. Direct browser derived writes remain denied.
+
+After confirmed success, the current tab clears its owner-specific voice pending/target recovery copies and reloads to remove cached history. Stop voice and demo imports in other tabs before resetting: new or already-running writes can create history after the reset. Old queues in another tab may encounter the cleared-conversation rejection; reload/discard those copies before a new call. The reset is not a global block on future recording or an account/provider data-deletion feature.
+
+Implementation checks: build/lint/type checks. Actual destructive reset and behavioral ownership/replay checks have not been run against user data. The button adds a way to reset; implementing it does not itself clear any history.

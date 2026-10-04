@@ -68,3 +68,7 @@ Illustrative wording: “On recorded alcohol nights, next-day HRV was lower. Sle
 ## Later validation
 
 Stage 2 supplies seeded histories and documented planted patterns. Stage 7 should recover expected direction and handle unrelated factors, sparse pairs, missing days, explicit lags, constant inputs, and zero spread. Synthetic patterns validate implementation, not clinical validity. Stage 13 checks the same pipeline against real-source quirks. Stage 14 compares baseline/intervention periods with tracked confounders and conservative conclusions.
+
+## Implemented Stage 6 foundation
+
+[DAILY-FEATURES](DAILY-FEATURES.md) owns the implemented aggregation manifest and generation protocol. Daily recorded totals are not proof of full-day coverage; unknown/conflicting dose or reports remain unknown. Stage 7 must consume complete current-generation rows for the chosen scope/zone/version, commit results against that generation and invalidate cached bundles on changes. Privileged clients bypass RLS and must enforce freshness explicitly. No baseline or evidence-label computation is implemented by Stage 6.

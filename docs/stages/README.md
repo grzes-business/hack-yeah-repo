@@ -6,7 +6,7 @@ These guides preserve the implementation context in the repository so work can r
 
 As of **2026-10-03**, Stages **-1, 0, 1, and 2 are implemented**. Stage 1 hosted/browser acceptance and Stage 2 fixture/ingestion/replay/removal checks passed. **Stage 3 is implemented with live/provider/browser acceptance pending. The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 4.5 voice reliability is implemented with failed live interpretation cases and acceptance pending, before Stage 5 check-ins.** The guides themselves do not authorize future-stage implementation. Previous checks describe that checkpoint, not a guarantee about a later checkout or hosted configuration.
 
-The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in, five applied SQL migrations, private raw persistence, and synthetic sample-history load/removal are available. Capture-only voice and transcript persistence are implemented but await live acceptance. Structured extraction is implemented with behavioral acceptance pending. Check-in controllers, daily builders, statistics, investigation, active questions, native integration, and experiments are still future work.
+The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in, seven applied SQL migrations, private raw persistence, and synthetic sample-history load/removal are available. Capture-only voice and transcript persistence are implemented but await live acceptance. Structured extraction is implemented with behavioral acceptance pending. Stage 5 check-in and Stage 6 daily-feature implementations are in place with acceptance gaps; statistics, investigation, active questions, native integration, and experiments remain future work.
 
 ## Guides
 
@@ -19,8 +19,8 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 3 | [Live voice and persistent transcript](stage-03-live-voice.md) | Implemented; acceptance pending |
 | 4 | [Canonical structured observations](stage-04-structured-observations.md) | Implemented; acceptance pending |
 | 4.5 | [Voice reliability and grounded conversation](stage-04a-voice-reliability.md) | Implemented; accepted 2026-10-04 by the project owner |
-| 5 | [Deterministic morning check-ins](stage-05-deterministic-check-ins.md) | Planned |
-| 6 | [Deterministic daily feature pipeline](stage-06-daily-features.md) | Planned |
+| 5 | [Deterministic morning check-ins](stage-05-deterministic-check-ins.md) | Implemented; live acceptance pending |
+| 6 | [Deterministic daily feature pipeline](stage-06-daily-features.md) | Implemented; behavioral acceptance pending |
 | 7 | [Deterministic analytics](stage-07-deterministic-analytics.md) | Planned |
 | 8 | [Evidence-backed investigation and explanation](stage-08-evidence-investigation.md) | Planned |
 | 9 | [Missing evidence and active sensing](stage-09-missing-evidence-loop.md) | Planned |
@@ -81,3 +81,5 @@ Handoff: [canonical docs and completion evidence to update]
 ## Ownership of documentation
 
 [ROADMAP](../ROADMAP.md) owns sequence and umbrella scope; these guides own stage work/ACs. [CONTEXT](../../CONTEXT.md) owns product intent. [DOMAIN](../DOMAIN.md), [ARCHITECTURE](../ARCHITECTURE.md), [CONVERSATION](../CONVERSATION.md), [EVIDENCE](../EVIDENCE.md), [PERSISTENCE](../PERSISTENCE.md), [FIXTURES](../FIXTURES.md), and [DEMO](../DEMO.md) own shared rules and implemented details. Update the authority for a decision, then link it from the stage; do not maintain conflicting copies.
+
+Stage 6 checkpoint (2026-10-04): see [DAILY-FEATURES](../DAILY-FEATURES.md) for manifest, trusted writer configuration and current-generation requirements before Stage 7.

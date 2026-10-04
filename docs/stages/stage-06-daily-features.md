@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04; behavioral acceptance pending.** Hosted migration 007 is applied; typecheck, lint and production build passed. No new behavioral tests or live rebuild checks were run in this implementation turn.
 
 Canonical raw observations produce reproducible, provenance-backed daily rows with explicit unknowns, regardless of source adapter.
 
@@ -16,7 +16,7 @@ Start with [agent instructions](../../AGENTS.md), [product context](../../CONTEX
 
 ## Starting point
 
-The complete 19-key `DailyFeatures` schema and derived table exist, but no builder or authorized server writer exists. Reuse full paginated raw range reads; Timeline’s display cap is unsuitable for analytics. Stage 2 raw removal currently has no derived invalidation because no derived pipeline is active.
+The complete 19-key `DailyFeatures` schema and derived table are reused. `lib/features/` now provides pure builders and trusted server orchestration; the implementation record below describes the new writer. Reuse full paginated raw range reads; Timeline’s display cap is unsuitable for analytics. Stage 2 raw removal currently has no derived invalidation because no derived pipeline is active.
 
 ## Implementation work
 
@@ -58,3 +58,19 @@ Baselines, anomaly thresholds, relationship statistics, evidence labels, model e
 ## Documentation handoff
 
 Update DOMAIN/EVIDENCE with the aggregation manifest, PERSISTENCE with writer/freshness semantics, FIXTURES with derived invalidation on removal, and ARCHITECTURE with the actual builder modules.
+
+## Implementation record — 2026-10-04
+
+Canonical implementation guidance: [DAILY-FEATURES](../DAILY-FEATURES.md), including the full 19-feature manifest, recorded-total limits, deduplication, conflicts, time semantics, scopes and generation protocol.
+
+- Pure builders: `lib/features/builder.ts`; range/scope/version contracts: `lib/features/contracts.ts`.
+- Authenticated single-day/range read/rebuild: `/api/features`; orchestration in `lib/features/server.ts`; up to 60 inclusive dates. Server writer uses the new server-only env placeholder; owner comes from verified JWT.
+- Today has a small daily-observations inspector with explicit personal versus synthetic scope, unknown reasons and supporting raw IDs. This is not Stage 10 UI implementation.
+- Hosted migration `202610040007_daily_feature_generations.sql` applied successfully. Generations, transaction locks, raw/profile triggers and stale-read RLS support consistent commit and global invalidation. Legacy derived rows are retained but stale. No background rebuild or analytics was introduced.
+- Build/lint/type checks passed; migration success recorded in SQL Editor. Behavioral AC01–AC08, including numerical/DST fixtures, correction/removal, range equality, cross-user writer denial and concurrent generation checks, remain pending actual verification. Static checks and a successful migration do not certify these behaviors.
+
+Next implementation stage is 7, but analytical consumers must honor the documented current-generation read/write contract and complete range reads. Resolve Stage 6 acceptance gaps before declaring the analytical dataset verified.
+
+### Manual acceptance follow-up — 2026-10-04
+
+The owner confirmed date assignment works in their voice walkthrough, but reported failed caffeine sums and alcohol conflict handling. Inspection showed the second utterances were corrections that replaced the first events; the remaining caffeine record retained its explicit 11:00 Warsaw clock. Voice routing was fixed to clear completed automatic targets and require explicit correction language for completed replacements. See [VOICE](../VOICE.md#independent-reports-versus-corrections--2026-10-04). Build, lint, typecheck and diff checks passed; the two live cases need a fresh rerun, and this does not certify the remaining fixture/security/concurrency ACs.

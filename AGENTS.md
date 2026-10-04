@@ -23,7 +23,7 @@ Read these in order before changing product behavior:
 | Structure, storage, native/web seam | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); storage/auth also [`docs/PERSISTENCE.md`](docs/PERSISTENCE.md) |
 | Registries, schemas, time/value semantics | [`docs/DOMAIN.md`](docs/DOMAIN.md) |
 | Voice, extraction, check-ins, question selection | [`docs/CONVERSATION.md`](docs/CONVERSATION.md) and domain |
-| Features, analytics, investigation, experiments | [`docs/EVIDENCE.md`](docs/EVIDENCE.md), domain, and architecture |
+| Features, analytics, investigation, experiments | [`docs/EVIDENCE.md`](docs/EVIDENCE.md), [`docs/DAILY-FEATURES.md`](docs/DAILY-FEATURES.md), domain, and architecture |
 | Product UI or demo fixtures | [`docs/DEMO.md`](docs/DEMO.md), [`docs/FIXTURES.md`](docs/FIXTURES.md), and relevant domain/evidence rules |
 
 For a change, read the relevant section(s) above and the code it touches. If a future domain contract document is added, link it from `CONTEXT.md` and update this reading path.
@@ -77,3 +77,7 @@ See [`README.md`](README.md) for startup, environment variables, and deployment 
 - Resolve an open decision in its owning document when implementation needs it. Do not silently treat illustrative values, schemas, or methods as finalized contracts. Ask the user when a choice changes product scope or an agreed constraint; routine implementation choices can be documented and made within the task.
 - Validate the changed behavior at its boundary. Report checks actually performed and known limitations. For documentation-only work, check links, consistency, and changed-file scope; application tests are not needed merely because docs changed.
 - Keep `CLAUDE.md` pointing to this file as the shared routing source.
+
+## Stage 6 implementation checkpoint
+
+Stage 5 and Stage 6 are implemented with behavioral/live acceptance pending; earlier acceptance notes remain dated. Before derived-data work, read [DAILY-FEATURES](docs/DAILY-FEATURES.md). Use pure builders and authenticated `/api/features` orchestration; never bypass generation freshness or mix synthetic/personal scopes. `SUPABASE_SERVICE_ROLE_KEY` is server-only and only the authenticated server writer may invoke the new derived commit. Hosted migration 007 is applied; do not reapply it. Stage 7 must verify generation on privileged reads/writes and use complete requested histories.

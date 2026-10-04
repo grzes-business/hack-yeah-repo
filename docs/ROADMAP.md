@@ -209,3 +209,7 @@ Documentation updates: [canonical documents affected]
 ```
 
 Stages 1–2 are verified. Stage 3 is implemented with live acceptance pending; see [VOICE](VOICE.md). The Stage 3 acceptance scope should still reference [conversation rules](CONVERSATION.md), [persistence](PERSISTENCE.md), and implemented domain contracts; verify the implemented voice API and secure session transport. Extraction remains Stage 4. Keep this roadmap current as stages are completed; documentation readiness is not evidence that a future feature has shipped.
+
+## Stage 5–6 checkpoint — 2026-10-04
+
+Both stages are implemented with acceptance pending. Stage 5 storage exists in hosted Supabase; Stage 6 migration 007 is applied. Daily projection/read/rebuild, personal/demo scopes and generation invalidation are documented in [DAILY-FEATURES](DAILY-FEATURES.md). Type/lint/build passed; numerical/concurrency/live acceptance is not certified. Stage 7 remains planned and must honor current-generation reads and commits.

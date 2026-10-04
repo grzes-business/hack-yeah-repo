@@ -63,3 +63,7 @@ Scenario ground truth is available only to fixture code/tests. Never fill omitte
 The interval migration is applied to the current hosted project. On a fresh project, apply migrations in filename order; it backfills only the new `started_at` column and checks agreement with canonical payloads. Do not rerun either creation/alteration migration on an already-updated project.
 
 `pnpm test` covers reproducibility, overlapping windows, registered inputs, gaps versus explicit absence, unknown doses, DST, source range boundaries, planted lag direction, whole-response validation, verified ownership, partial writes, seed replay, and provenance. `pnpm verify:hosted` adds opt-in live Stage 1/2 acceptance checks. It uses only the public configuration, creates two anonymous Auth users, and deletes their test records on completion/failure; their disposable Auth accounts remain because no privileged cleanup key is used. It never deletes another user's records. Browser checks cover sign-in/profile restore, sample loading, and Timeline labeling.
+
+## Stage 6 derived rows
+
+Demo daily building is an explicit `demo` scope (`daily-v1:demo`), separate from personal observations. Fixture upsert/removal and cascaded event removal advance input generation through database triggers; previous derived rows become stale and disappear from current reads. Rebuild the chosen date range after changing samples; there is no automatic background rebuild. Removed observations produce unknown states, not zeros. See [DAILY-FEATURES](DAILY-FEATURES.md).
