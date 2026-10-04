@@ -223,3 +223,5 @@ Stage 8 checkpoint (2026-10-04): owned investigation, validated bundles, approve
 Stage 9 is implemented; [ACTIVE-SENSING](ACTIVE-SENSING.md) and the [Stage 9 guide](stages/stage-09-missing-evidence-loop.md) record the runtime policy and manual walkthrough. Stage 10 UI design/implementation remains the next stage.
 
 Stage 10A/B implementation checkpoint (2026-10-04): mobile Talk/Today/Insights/History and voice interview integration are implemented. The owner requested a visual overhaul using design-taste-frontend; [MOBILE-UI](MOBILE-UI.md) records the design and verification. Physical phone/audio and final visual acceptance remain separate. Stage 11 is the next implementation stage; no Capacitor/HealthKit work was added here.
+
+Stage 11–14 checkpoint (2026-10-04): the iOS shell runs on the owner's iPhone against the hosted app with Apple Health connected ([HEALTHKIT](HEALTHKIT.md)); real-data policies and a deidentified case matrix are recorded; `experiments-v1` (sleep ≥ 7.5 h → energy) is implemented with migration 011 pending ([EXPERIMENTS](EXPERIMENTS.md)). Voice-agent behaviour tuning is the next owner priority.

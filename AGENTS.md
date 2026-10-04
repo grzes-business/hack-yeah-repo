@@ -103,3 +103,7 @@ Stage 9 checks: 81 unit tests and build/lint/type checks passed. Disposable-acco
 ## Stage 10 checkpoint
 
 Read [MOBILE-UI](docs/MOBILE-UI.md) before product or voice-mode changes. Stage 10A/B were authorized together. Talk/Today/Insights/History keep the existing route URLs. Normal reporting is voice-only; diagnostics are secondary. Explicit `VoiceTurnInput.context` and persisted server question context prevent unrelated/global question interception. Capture/check-in orchestration now lives in `lib/capture/server.ts` and `lib/checkin/server.ts`; API routes wrap those helpers. No new migrations. `pnpm verify:mobile` exercises disposable accounts on a dev server; physical phone/native audio remains separate.
+
+## Stage 11–14 checkpoint
+
+Read [HEALTHKIT](docs/HEALTHKIT.md) before shell, Capacitor, Apple Health or sync changes, and [EXPERIMENTS](docs/EXPERIMENTS.md) before experiment changes. The iOS shell loads the hosted app from `CAP_SERVER_URL` (`pnpm cap:sync`, then Run in Xcode); never bundle secrets or assume a static export. Never return or await a Capacitor plugin proxy from an async function. Day assignment treats metric interval ends as exclusive. Experiment results are recomputed on read and never stored; only templates bound to registered relationships may be offered. Migration 011 is written but must be applied by the owner in the hosted SQL Editor.

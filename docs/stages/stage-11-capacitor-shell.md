@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04 (hosted-URL loading model). The app runs on the owner's iPhone from Xcode against the Vercel deployment, including Apple Health. See [HEALTHKIT](../HEALTHKIT.md).**
 
 The existing experience runs in an iOS-capable shell with secure web/backend communication and a typed native adapter seam.
 
@@ -57,3 +57,10 @@ Real HealthKit queries, source-specific analytical branches, native statistical 
 ## Documentation handoff
 
 Update ARCHITECTURE and README with build/loading/auth instructions, CONVERSATION with WebView audio limitations, and the source adapter documentation with the actual bridge interface.
+
+## Completion record — 2026-10-04
+
+- Decision: hosted-URL loading (`server.url`), no static export; secrets and API routes stay on Vercel. HealthKit bridge is `@capgo/capacitor-health` via SPM.
+- Checks performed: Simulator build/run (Xcode 26.6, iOS 26.5, iPhone 17 Pro) loading the local server; owner's iPhone run from Xcode loading the Vercel deployment with working navigation, session restoration, voice microphone over https and Apple Health. Lint/type/build/unit checks passed.
+- Found and fixed: `pnpm cap:sync` aborted on a package-store mismatch (store pinned in `pnpm-workspace.yaml`); plugin proxy awaited as a thenable hung the bridge.
+- Not checked: keyboard/landscape/background audio behaviour on device beyond normal use, App Store signing. Owner reports noisy but non-blocking Xcode console warnings.

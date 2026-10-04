@@ -57,6 +57,11 @@ export const APPLE_READ_TIMEOUT_MS = 45000;
 const WORKOUT_PAGE = 200;
 
 const iso = (ms: number) => new Date(ms).toISOString();
+/** Stage 13: the same HealthKit object can arrive twice (re-imports, overlapping pages). */
+function uniqueByPlatformId<T extends { platformId?: string }>(raw: T[]): T[] {
+  const seen = new Set<string>();
+  return raw.filter(r => !r.platformId || (seen.has(r.platformId) ? false : (seen.add(r.platformId), true)));
+}
 const overlaps = (start: number, end: number, from: number, to: number) =>
   start === end ? start >= from && start < to : start < to && end > from;
 
@@ -70,7 +75,7 @@ function sample(metric: Metric, id: string, externalId: string, value: number | 
 
 /** Point/short quantity samples (HRV SDNN in ms, resting heart rate in bpm). */
 export function normalizeQuantitySamples(metric: "hrv" | "resting_hr", raw: AppleSample[], expectedUnit: string): MetricSample[] {
-  return raw.filter(s => s.platformId).map(s => {
+  return uniqueByPlatformId(raw).filter(s => s.platformId).map(s => {
     if (s.unit !== expectedUnit) throw new Error(`Unexpected ${metric} unit: ${s.unit}`);
     return sample(metric, `apple_health:${metric}:${s.platformId}`, s.platformId!, s.value, iso(Date.parse(s.startDate)), iso(Date.parse(s.endDate)), s.sourceName);
   });
@@ -110,7 +115,7 @@ function unionMinutes(intervals: [number, number][]) {
  */
 export function buildSleepSessions(raw: AppleSample[]): SleepSession[] {
   const bySource = new Map<string, AppleSample[]>();
-  for (const s of raw) {
+  for (const s of uniqueByPlatformId(raw)) {
     if (!s.sleepState || !ASLEEP_STATES.has(s.sleepState) || !s.platformId) continue;
     const source = s.sourceId ?? s.sourceName ?? "unknown";
     bySource.set(source, [...(bySource.get(source) ?? []), s]);
@@ -154,8 +159,25 @@ export function normalizeSleep(raw: AppleSample[], metrics: Metric[], from: numb
   return out;
 }
 
+/**
+ * Stage 13 source policy: one session recorded by two apps (e.g. Watch and a
+ * running app) overlaps in time. Keep the longest recording per overlap so daily
+ * totals are not double counted; same-source back-to-back workouts are kept.
+ */
+export function dedupeWorkoutSources(raw: AppleWorkout[]): AppleWorkout[] {
+  const kept: AppleWorkout[] = [];
+  const bySize = uniqueByPlatformId(raw).filter(w => w.platformId && w.duration >= 0)
+    .sort((a, b) => b.duration - a.duration || String(a.platformId).localeCompare(String(b.platformId)));
+  for (const w of bySize) {
+    const start = Date.parse(w.startDate), end = Date.parse(w.endDate), source = w.sourceId ?? w.sourceName;
+    const clash = kept.some(k => (k.sourceId ?? k.sourceName) !== source && Date.parse(k.startDate) < end && start < Date.parse(k.endDate));
+    if (!clash) kept.push(w);
+  }
+  return kept.sort((a, b) => Date.parse(a.startDate) - Date.parse(b.startDate));
+}
+
 export function normalizeWorkouts(raw: AppleWorkout[]): MetricSample[] {
-  return raw.filter(w => w.platformId && w.duration >= 0).map(w => {
+  return dedupeWorkoutSources(raw).map(w => {
     const key = `apple_health:workout:${w.platformId}`;
     return sample("workout_duration", `${key}:duration`, w.platformId!, Math.round(w.duration / 6) / 10,
       iso(Date.parse(w.startDate)), iso(Date.parse(w.endDate)), w.sourceName, key);

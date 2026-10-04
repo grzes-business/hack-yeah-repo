@@ -58,7 +58,7 @@ Normal reporting and question answers require voice. Text answer/correction form
 
 ## Visual specification
 
-- Styling uses Tailwind CSS v4 + daisyUI 5 (`app/globals.css`, `postcss.config.mjs`). daisyUI `light` (default) and `dark` (`prefersdark`) themes own colors, controls and surfaces: `btn`, `card card-body`, `badge`, `input`/`select`/`textarea`, `navbar` header and `dock` bottom navigation. System preference selects the theme; the header toggle sets `data-theme` on `<html>`, which daisyUI honours. App-specific CSS covers only layout, the microphone, the energy chart and `<details>` disclosure. A custom daisyUI theme replacing the stock palette is the next visual step.
+- Styling uses Tailwind CSS v4 + daisyUI 5 (`app/globals.css`, `postcss.config.mjs`). daisyUI `light` (default) and `dark` (`prefersdark`) themes own colors, controls and surfaces: `btn`, `card card-body`, `badge`, `input`/`select`/`textarea`, `navbar` header and `dock` bottom navigation. System preference selects the theme; the header toggle sets `data-theme` on `<html>`, which daisyUI honours. App-specific CSS covers only layout, the microphone, the energy chart and `<details>` disclosure. The custom daisyUI “Grove” light/dark themes (forest green, beige, clay, lime; Bricolage Grotesque headings) replace the stock palette; tokens and gradients are listed in [PRESENTATION](PRESENTATION.md#visual-identity--grove).
 - Geist/system typography; compact functional headings, sentence-case labels and restrained surfaces. Unknown values use ordinary readable text, never color alone.
 - Content max 48rem; phone gutters 14–20px; two metric columns on phones/four on desktop. Four fixed bottom destinations with safe-area padding and sufficient document bottom clearance.
 - Controls and summaries at least 44px high; microphone 148px on phones / 170px desktop; visible focus and skip link; 16px input text; long IDs/payloads wrap; reduced-motion support. Portrait widths 320/375/390/430 are the review targets.
@@ -92,5 +92,5 @@ Production build (`next start`) in the Claude desktop in-app Chromium, viewport 
 - Talk/Today/Insights/History/status at 320/375/390/430px: no horizontal overflow; every control has an accessible name.
 - Touch targets: daisyUI's default 40px field size and the 32px `btn-sm` call controls broke the 44px rule; fixed via `--size-field` and removing `btn-sm`. All controls now measure ≥44px.
 - Keyboard: skip link appears on first Tab; 3px visible focus outline on header, dock and controls.
-- **Contrast fails (open):** stock dark theme primary buttons and links 4.13:1 (needs 4.5:1); light-theme soft success/info badges (“Private session”, “Synthetic demo”) about 2:1. To be resolved by the custom daisyUI theme.
+- **Contrast (resolved by the Grove theme):** with stock daisyUI, stock dark theme primary buttons and links 4.13:1 (needs 4.5:1); light-theme soft success/info badges (“Private session”, “Synthetic demo”) about 2:1. The custom Grove theme (all pairs ≥ 4.5:1) and 72% muted text resolve these.
 - Not performed: populated-account screens, the Today → Talk → Insights journey, failure/sparse rehearsal, real device, microphone.

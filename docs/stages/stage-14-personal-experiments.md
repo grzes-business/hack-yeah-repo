@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04 (`experiments-v1`, sleep ≥ 7.5 h → energy). Migration 011 must be applied in the hosted SQL Editor before use. See [EXPERIMENTS](../EXPERIMENTS.md).**
 
 A user can opt into a predefined personal observation experiment and receive a descriptive, provenance-backed comparison with honest limitations.
 
@@ -58,3 +58,7 @@ Medical treatment trials, automatic interventions, unrestricted outcome discover
 ## Documentation handoff
 
 Update DOMAIN with approved experiment models/compatibility, PERSISTENCE with tables/policies, EVIDENCE with predeclared descriptive comparisons, CONVERSATION with experiment controller permissions, and DEMO with an approved executable example.
+
+## Completion record — 2026-10-04
+
+Contract, lifecycle, storage and comparison: [EXPERIMENTS](../EXPERIMENTS.md). Deterministic reference tests (`lib/experiments/experiments.test.ts`) cover plan validation, RPE rejection, descriptive/inconclusive/in-progress states, paused-day exclusion and zero baseline. The Insights card shows proposal → explicit opt-in → progress/pause/resume → comparison with limitations. Not yet checked against the hosted database: migration 011 is pending owner application, so the synthetic proposal→comparison walkthrough (S14-AC08) and owner-isolation checks remain pending. No voice controller integration: experiments ask no questions of their own.

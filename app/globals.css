@@ -222,3 +222,18 @@ p[role="alert"], div[role="alert"] { border-radius: var(--radius-box); padding: 
 @media (prefers-reduced-motion: no-preference) { .speak-button[aria-pressed="true"] .mic-symbol { animation: recording 1.2s ease-in-out infinite; } @keyframes recording { 50% { opacity: .72; transform: scale(.95); } } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
 .sync-step { display: flex; align-items: center; gap: .5rem; }
+
+/* Personal experiment */
+.experiment-card h2 { display: flex; align-items: center; gap: .4rem; }
+.experiment-proposal, .experiment-active, .experiment-result { display: grid; gap: .6rem; }
+.experiment-proposal h3 { font-family: var(--font-display), var(--font-geist-sans), sans-serif; font-size: 1.15rem; margin: 0; }
+.experiment-rules { display: grid; gap: .35rem; font-size: .85rem; }
+.experiment-status { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.experiment-day { font-size: .9rem; }
+.experiment-day strong { font-family: var(--font-display), sans-serif; font-size: 1.6rem; }
+.experiment-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+.experiment-stats > div { display: grid; gap: .15rem; padding: .7rem; border-radius: var(--radius-field); background: color-mix(in oklab, var(--color-accent) 18%, var(--color-base-100)); }
+.experiment-stats strong { font-family: var(--font-display), sans-serif; font-size: 1.35rem; line-height: 1.1; }
+.experiment-stats strong small { display: block; font-family: var(--font-geist-sans), sans-serif; font-size: .68rem; font-weight: 500; }
+.experiment-past { border-top: 1px solid var(--color-base-300); padding-top: .5rem; }
+@media (max-width: 360px) { .experiment-stats { grid-template-columns: 1fr; } }

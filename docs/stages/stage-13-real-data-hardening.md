@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04 with a deidentified case matrix; travel, device replacement and HealthKit deletions remain untested. See [HEALTHKIT](../HEALTHKIT.md#real-data-policies-and-case-matrix-stage-13).**
 
 Documented real-source cases produce expected canonical and derived results, and the demo survives realistic history/sync limitations.
 
@@ -57,3 +57,7 @@ Arbitrary new health variables, causal model fitting, native analytics, and auto
 ## Documentation handoff
 
 Update the HealthKit/source reference and ARCHITECTURE with real reconciliation/sync policies; DOMAIN/EVIDENCE for explicit shared-policy changes; DEMO with actual device and fallback limits.
+
+## Completion record — 2026-10-04
+
+Case matrix C1–C7 passes (`lib/health/apple-health-cases.test.ts`). One shared defect found and fixed explicitly: day assignment now treats interval ends as exclusive (daily totals ending at local midnight were assigned to the next day); documented in [DAILY-FEATURES](../DAILY-FEATURES.md). Source, deletion and freshness policies are in [HEALTHKIT](../HEALTHKIT.md). No identifiable exports are committed. Untested: time-zone travel, device replacement, HealthKit deletions, comparison of synced records to a human-checked export.

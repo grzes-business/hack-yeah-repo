@@ -81,10 +81,16 @@ function subjectiveFeature(events: SubjectiveEvent[]): State {
  return known(values[0],[],events.map(e=>e.id));
 }
 export type DailyInput = { userId: string; timeZone: string; builtAt: string; scope: FeatureScope; metrics: readonly MetricSample[]; events: readonly SubjectiveEvent[] };
+function assignmentInstant(sample: MetricSample) {
+ const start=Date.parse(sample.startedAt),end=Date.parse(sample.endedAt);
+ return end>start?new Date(end-1).toISOString():sample.endedAt;
+}
 /** Pure projection. Source labels affect scope selection, never aggregation math. */
 export function buildDailyFeatures(date: string, input: DailyInput): DailyFeatures {
  const context=uniqueRecords(z.array(MetricSampleSchema).parse(input.metrics));
- const metrics=context.filter(s=>getLocalDate(s.endedAt,input.timeZone)===date);
+ // Stage 13: intervals are half-open [start,end), so a nonzero interval ending exactly at
+ // local midnight (e.g. an Apple Health daily total) belongs to the day it covers.
+ const metrics=context.filter(s=>getLocalDate(assignmentInstant(s),input.timeZone)===date);
  const events=uniqueRecords(z.array(SubjectiveEventSchema).parse(input.events)).filter(e=>getLocalDate(e.occurredAt,input.timeZone)===date);
  const features: Record<string,State>={};
  for (const key of Object.values(Features)) {

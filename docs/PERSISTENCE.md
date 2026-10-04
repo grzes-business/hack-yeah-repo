@@ -86,3 +86,5 @@ Stage 8 adds no tables/migration. Bundles are on-demand; existing voice-turn rec
 ## Stage 9 question state
 
 Hosted migration 010 is applied. One owner-readable, server-writable loop row and a private generation/revision-checked commit preserve selected context, pending/completed answers and atomic raw provenance. Its conversation foreign key cascades on full history reset. No new secret is required. See [ACTIVE-SENSING](ACTIVE-SENSING.md); do not replay SQL Editor migrations.
+
+Migration `202610040011_experiments.sql` (Stage 14) is written but **not yet applied**: paste it once into the hosted SQL Editor. It adds `experiments` with owner-only read RLS, no browser write grants, and a one-open-plan-per-scope index; writes go through `/api/experiments` with the server writer. History reset also deletes experiment plans.

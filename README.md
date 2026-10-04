@@ -129,3 +129,13 @@ Evidence now investigates energy, HRV or sleep duration for a local day and expl
 ## Active sensing (Stage 9)
 
 Evidence and Talk can ask one deterministic, dated missing-context question, record a canonical answer and refresh a before/after investigation. See [ACTIVE-SENSING](docs/ACTIVE-SENSING.md) and the [acceptance validation](docs/stages/stage-09-missing-evidence-loop.md). Hosted migration 010 is applied. `pnpm verify:questions` runs disposable-account live checks; it requires the local server and existing private environment configuration.
+
+## Running on an iPhone (Capacitor)
+
+The iOS app in `ios/` is a Capacitor shell that loads the deployed web app. Point it at a server, then build from Xcode:
+
+```bash
+CAP_SERVER_URL=https://<your-deployment>.vercel.app pnpm cap:sync && pnpm cap:open
+```
+
+Select your Team and the iPhone in Xcode and press Run. Voice needs an https URL. Details, LAN development and Apple Health: [docs/HEALTHKIT.md](docs/HEALTHKIT.md).

@@ -77,4 +77,4 @@ Acceptance is split: implemented source/contracts and automated/static checks ar
 
 ## Owner acceptance — 2026-10-04
 
-The project owner marked Stage 10 (including 10A and 10B) done so Stage 11–12 can proceed. Known open items are accepted, not passed: voice-agent reliability (owner will fix after the presentation base), real-device microphone walkthrough, populated-account journey rehearsal and two light-theme muted-label contrast values (4.44:1). The daisyUI “Grove” theme and browser measurements are recorded in [MOBILE-UI](../MOBILE-UI.md).
+The project owner marked Stage 10 (including 10A and 10B) done so Stage 11–12 can proceed. Known open items are accepted, not passed: voice-agent reliability (owner will fix after the presentation base), real-device microphone walkthrough, populated-account journey rehearsal; the light-theme muted-label contrast gap (4.44:1) was later closed by raising muted text to 72% opacity. The daisyUI “Grove” theme and browser measurements are recorded in [MOBILE-UI](../MOBILE-UI.md).

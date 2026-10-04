@@ -14,6 +14,11 @@ const DAY_MS = 24 * 3600000;
 const READ_GROUPS = 6;
 
 const noop = () => () => {};
+const lastSyncKey = (userId: string) => `apple-health-last-sync:${userId}`;
+function readLastSync(userId: string | undefined) {
+  if (!userId) return null;
+  try { return localStorage.getItem(lastSyncKey(userId)); } catch { return null; }
+}
 /** True only inside the iOS shell with the Health plugin compiled in. */
 function useNativeHealth() {
   return useSyncExternalStore(noop, () => Capacitor.getPlatform() === "ios" && Capacitor.isPluginAvailable("Health"), () => false);
@@ -43,7 +48,10 @@ export function AppleHealthSync() {
   const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ stored: number; report: AppleMetricStatus[] } | null>(null);
+  const [syncedNow, setLastSync] = useState<string | null>(null);
   if (!native) return null;
+  // Session restores asynchronously, so read the stored time at render (client-only here).
+  const lastSync = syncedNow ?? readLastSync(session?.user.id);
 
   async function sync() {
     if (!repository || busy) return;
@@ -64,6 +72,9 @@ export function AppleHealthSync() {
       const to = new Date(), from = new Date(to.getTime() - SYNC_DAYS * DAY_MS);
       const { stored } = await ingestHealthData(source, { from, to, metrics: Object.values(Metrics) }, writer);
       setResult({ stored, report: source.lastReport });
+      const at = new Date().toISOString();
+      setLastSync(at);
+      try { if (session) localStorage.setItem(lastSyncKey(session.user.id), at); } catch { /* convenience only */ }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Apple Health sync failed.");
     } finally { setStep(null); refreshHistory(); setBusy(false); }
@@ -75,6 +86,7 @@ export function AppleHealthSync() {
     <p>Read HRV, resting heart rate, sleep, steps, active energy and workouts from the last {SYNC_DAYS} days. Nothing is written back to Apple Health. Syncing again updates the same records.</p>
     <button className="btn btn-primary" onClick={() => void sync()} disabled={!session || !repository || busy}>{busy ? "Syncing…" : "Connect and sync Apple Health"}</button>
     {step && <p role="status" className="sync-step"><span className="loading loading-spinner loading-sm" aria-hidden="true" /> {step}</p>}
+    {lastSync && !busy && <p className="small">Last synced {new Date(lastSync).toLocaleString()}. Each sync re-reads the last {SYNC_DAYS} days; nothing already saved is deleted.</p>}
     {!session && <p className="small">Start a private session first.</p>}
     {error && <p role="alert">{error}</p>}
     {result && <div role="status">

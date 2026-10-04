@@ -31,10 +31,10 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 10 | [Evidence-first product UI](stage-10-evidence-ui.md) | Done — Accepted as done by the project owner 2026-10-04; voice-agent fixes deferred until the presentation base is ready |
 | 10A | [Mobile product design](stage-10a-mobile-product-design.md) | Done — accepted with Stage 10 |
 | 10B | [Mobile UI implementation](stage-10b-mobile-ui-implementation.md) | Done — accepted with Stage 10; open items in MOBILE-UI |
-| 11 | [Capacitor shell](stage-11-capacitor-shell.md) | Planned |
-| 12 | [Apple Health source adapter](stage-12-healthkit-adapter.md) | Planned |
-| 13 | [Real-data hardening](stage-13-real-data-hardening.md) | Planned |
-| 14 | [Personal experiments](stage-14-personal-experiments.md) | Planned |
+| 11 | [Capacitor shell](stage-11-capacitor-shell.md) | Implemented; running on owner's iPhone |
+| 12 | [Apple Health source adapter](stage-12-healthkit-adapter.md) | Implemented; connected on owner's iPhone |
+| 13 | [Real-data hardening](stage-13-real-data-hardening.md) | Implemented; case matrix in HEALTHKIT |
+| 14 | [Personal experiments](stage-14-personal-experiments.md) | Implemented; migration 011 and hosted walkthrough pending |
 
 ## Shared decisions every stage must preserve
 

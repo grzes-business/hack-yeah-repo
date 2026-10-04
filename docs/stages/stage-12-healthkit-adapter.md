@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04. The owner connected Apple Health on a physical iPhone; per-metric device counts were not recorded. See [HEALTHKIT](../HEALTHKIT.md).**
 
 Real registered Apple measurements enter the existing pipeline with correct units, intervals, ownership, and source provenance.
 
@@ -57,3 +57,9 @@ New metrics/relationships, diagnosing source gaps, native evidence calculations,
 ## Documentation handoff
 
 Add a focused HealthKit source reference if necessary and route it from AGENTS/ARCHITECTURE. Record metric mappings, status semantics, device checks, and known coverage limits.
+
+## Completion record — 2026-10-04
+
+- Adapter, mapping, status boundary and sync UI: [HEALTHKIT](../HEALTHKIT.md). Unit tests cover schema validity, SDNN ms, sleep sessions, idempotent IDs, unknown/unsupported/failed states and read time-outs.
+- Device: owner's iPhone, Apple Health permission granted and sync completed (2026-10-04). OS version, Watch presence and per-metric counts were not recorded.
+- Unsupported: `workout_avg_hr`. Sync window 30 days.

@@ -1,4 +1,4 @@
-// Schema snapshot for migrations 202610030001 through 202610040010. Regenerate from hosted Supabase
+// Schema snapshot for migrations 202610030001 through 202610040011. Regenerate from hosted Supabase
 // after applying migrations; review changes rather than overwriting blindly.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 type Table<Row, Insert, Update = Partial<Insert>> = {
@@ -28,6 +28,7 @@ export type Database = {
    subjective_events: Table<Payload & { conversation_turn_id: string; event_type: string }, Payload & { conversation_turn_id: string }>;
    daily_features: Table<Daily, Omit<Daily, "input_generation"> & {input_generation?:number|null}>;
    morning_checkins: Table<{ user_id: string; local_date: string; skipped: string[]; ended_at: string | null; updated_at: string }, { user_id: string; local_date: string; skipped?: string[]; ended_at?: string | null; updated_at?: string }>;
+   experiments: Table<{user_id:string;id:string;scope:string;status:string;plan:Json;events:Json;created_at:string;updated_at:string},{user_id:string;id:string;scope:string;status:string;plan:Json;events?:Json;created_at?:string;updated_at?:string}>;
    relationship_results: Table<Result, Omit<Result, "input_generation"> & {input_generation?:number|null}>;
   };
   Views: { [_ in never]: never }; Functions: {

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint app lib",
     "typecheck": "tsc --noEmit",
-    "test": "tsc -p tsconfig.contracts.json && node --test .contract-tests/domain/*.test.js .contract-tests/health/*.test.js .contract-tests/db/*.test.js .contract-tests/demo/*.test.js .contract-tests/conversation/*.test.js .contract-tests/checkin/*.test.js .contract-tests/analytics/*.test.js .contract-tests/investigation/*.test.js .contract-tests/questions/*.test.js",
+    "test": "tsc -p tsconfig.contracts.json && node --test .contract-tests/domain/*.test.js .contract-tests/health/*.test.js .contract-tests/db/*.test.js .contract-tests/demo/*.test.js .contract-tests/conversation/*.test.js .contract-tests/checkin/*.test.js .contract-tests/analytics/*.test.js .contract-tests/investigation/*.test.js .contract-tests/questions/*.test.js .contract-tests/experiments/*.test.js",
     "verify:hosted": "pnpm test && node --env-file=.env.local scripts/verify-hosted.mjs",
     "verify:voice": "pnpm test && node --env-file=.env.local scripts/verify-voice.mjs",
     "verify:investigation": "pnpm test && node --env-file=.env.local scripts/verify-investigation.mjs",
