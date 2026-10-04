@@ -3,7 +3,7 @@ import {
  type DailyFeatures, type Feature, type RelationshipResult, type RelationshipId, type Anomaly,
 } from "../domain";
 import { BaselineSchema, type Baseline } from "./contracts";
-export const POLICY=Object.freeze({baselineDays:28,baselineMinimum:14,relationshipDays:42,pairMinimum:12,groupMinimum:5});
+export const POLICY=Object.freeze({baselineDays:14,baselineMinimum:5,unusualRelative:0.2,relationshipDays:42,pairMinimum:7,groupMinimum:3});
 const numericFeatures=["energy","hrv","resting_hr","sleep_duration","steps","active_energy","workout_duration","workout_avg_hr"] as const;
 export function median(values:readonly number[]):number|null{
  if(!values.length)return null;
@@ -93,9 +93,9 @@ export function calculateAnalytics(rows:readonly DailyFeatures[],date:string,com
   if(center===0)limitations.push("Relative difference is undefined for a zero baseline.");
   if(mad===0)limitations.push("Historical MAD is zero; no robust-z anomaly is classified.");
   baselines.push(BaselineSchema.parse({feature,period,sampleSize:values.length,status:enough?"available":"insufficient_data",median:center,mad,currentValue:value,relativeDifference,robustZ,limitations}));
-  if(feature!=="energy"&&robustZ!==null&&Math.abs(robustZ)>=2.5&&relativeDifference!==null&&Math.abs(relativeDifference)>=0.15){
+  if(feature!=="energy"&&relativeDifference!==null&&Math.abs(relativeDifference)>=POLICY.unusualRelative){
    const state=current.features[feature];
-   if(state.status==="known")anomalies.push(AnomalySchema.parse({metric:feature,value,baseline:center,unit:feature==="hrv"?"ms":feature==="steps"?"count":feature==="active_energy"?"kcal":feature==="resting_hr"||feature==="workout_avg_hr"?"bpm":"min",baselinePeriod:period,baselineSampleSize:values.length,relativeDifference,classification:robustZ<0?"unusually_low":"unusually_high",provenance:state.provenance}));
+   if(state.status==="known")anomalies.push(AnomalySchema.parse({metric:feature,value,baseline:center,unit:feature==="hrv"?"ms":feature==="steps"?"count":feature==="active_energy"?"kcal":feature==="resting_hr"||feature==="workout_avg_hr"?"bpm":"min",baselinePeriod:period,baselineSampleSize:values.length,relativeDifference,classification:relativeDifference<0?"unusually_low":"unusually_high",provenance:state.provenance}));
   }
  }
  const relationships=(Object.keys(RelationshipRegistry) as RelationshipId[]).map(id=>relationship(id,days,date,current.userId,computedAt,version));

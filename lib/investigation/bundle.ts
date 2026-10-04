@@ -22,8 +22,11 @@ export function buildEvidenceBundle(input:AnalyticsReport,outcome:Outcome,contex
   if(day.features[ref.feature].status==="unknown")missing.set(`${ref.feature}:${date}`,{feature:ref.feature,date});
  }
  const currentValue=current.features[outcome];
+ // Outliers on the investigated day for registered same-day factors/confounders of this outcome
+ // (e.g. sleep for energy) are part of the evidence even when the outcome itself is not reported yet.
+ const sameDayFactors=new Set<string>(Object.values(RelationshipRegistry).filter(r=>r.outcome===outcome).flatMap(r=>[{feature:r.factor,lagDays:r.lagDays},...r.confounders]).filter(ref=>ref.lagDays===0).map(ref=>ref.feature));
  return EvidenceBundleSchema.parse({contractVersion:1,outcome,dailyFeatures:current,contextDays,generatedAt:report.computedAt,analysisVersion:report.analysisVersion,
-  currentAnomalies:currentValue.status==="known"?report.anomalies.filter(anomaly=>anomaly.metric===outcome):[],relationships,
+  currentAnomalies:report.anomalies.filter(anomaly=>anomaly.metric===outcome?currentValue.status==="known":sameDayFactors.has(anomaly.metric)),relationships,
   missingPotentialFactors:[...missing.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.feature.localeCompare(b.feature)),
   limitations:[...report.limitations,"Historical associations do not establish the cause of this day's outcome. Competing context is not statistically adjusted.",...(currentValue.status==="unknown"?["The selected day's outcome is unknown; no current value, deviation or cause can be inferred."]:[])]});
 }

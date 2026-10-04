@@ -281,7 +281,7 @@ details > :not(summary) + :not(summary) { margin-top: .6rem; }
 .comparison-values strong { font-family: var(--font-display), var(--font-geist-sans), sans-serif; font-size: 1.35rem; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .comparison-values span { font-size: .78rem; opacity: .72; font-variant-numeric: tabular-nums; }
 .comparison-track { position: relative; height: .5rem; border-radius: 999px; background: var(--color-base-200); margin-top: .15rem; }
-.comparison-band { position: absolute; left: 33.3%; width: 33.4%; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in oklab, var(--color-accent) 55%, transparent); }
+.comparison-band { position: absolute; left: 30%; width: 40%; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in oklab, var(--color-accent) 55%, transparent); }
 .comparison-dot { position: absolute; top: 50%; width: .9rem; height: .9rem; border-radius: 50%; transform: translate(-50%, -50%); background: var(--color-primary); box-shadow: 0 0 0 3px var(--color-base-100); }
 .pattern-empty { padding: 1rem; border-radius: var(--radius-box); background: var(--color-base-100); border: 1px solid var(--color-base-300); }
 .pattern-waiting { padding: 0 .25rem; }
@@ -292,3 +292,6 @@ details > :not(summary) + :not(summary) { margin-top: .6rem; }
 .page { grid-template-columns: minmax(0, 1fr); } .page p { overflow-wrap: anywhere; }
 .checkin-reset { align-self: flex-start; }
 .investigation-answer { font-size: 1rem; line-height: 1.5; }
+/* Never let card content (code boxes, long lists) widen the page on phones. */
+.card-body > *, .card details, .card details > * { min-width: 0; max-width: 100%; }
+pre { width: 100%; }

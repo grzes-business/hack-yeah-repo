@@ -56,3 +56,5 @@ Requests check generation before reading, after building and after commit/read, 
 ## Current verification
 
 Static build/type/lint checks are recorded in the stage guide. Numerical reference, controlled/null fixture, hosted writer-denial, concurrency and microphone acceptance are not certified by compilation. The owner chose to defer manual walkthroughs for delivery. This policy is versioned so later verification can reproduce every calculation and label.
+
+**Owner revision (2026-10-04): anomaly rule.** A metric is classified unusually high/low when today's value is at least **20% away from the 14-day median** (`POLICY.unusualRelative`), with at least 5 known baseline days; relationship minimums are 7 pairs and 3 days per exposure group; direction follows the sign of the relative difference. The previous combined gate (robust z ≥ 2.5 and ≥ 15%) left large deviations of highly variable metrics unflagged. Robust z and MAD are still reported. Energy is never flagged. The Insights bar shows the relative difference on a ±50% track with the ±20% band. Investigation bundles include outliers of the outcome and of its registered same-day factors.

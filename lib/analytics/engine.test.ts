@@ -15,7 +15,7 @@ test("median and average-rank Spearman match hand references, including ties and
 test("baseline excludes selected day, preserves zero MAD and classifies only eligible deviations",()=>{
  const rows=emptyHistory();rows.forEach((row,index)=>setKnown(row,"hrv",index===43?100:40+(index%3)*10));
  const report=calculateAnalytics(rows,date,computedAt,version),baseline=report.baselines.find(b=>b.feature==="hrv")!;
- assert.equal(baseline.sampleSize,28);assert.equal(baseline.median,50);assert.equal(baseline.mad,10);assert.equal(baseline.robustZ,3.3725);
+ assert.equal(baseline.sampleSize,14);assert.equal(baseline.median,50);assert.equal(baseline.mad,10);assert.equal(baseline.robustZ,3.3725);
  assert.equal(report.anomalies.find(a=>a.metric==="hrv")?.classification,"unusually_high");
  rows.forEach(row=>setKnown(row,"hrv",0));const constant=calculateAnalytics(rows,date,computedAt,version);
  assert.equal(constant.baselines.find(b=>b.feature==="hrv")?.robustZ,null);assert.equal(constant.baselines.find(b=>b.feature==="hrv")?.relativeDifference,null);assert.equal(constant.anomalies.length,0);
