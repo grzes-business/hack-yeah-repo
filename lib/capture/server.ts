@@ -1,0 +1,89 @@
+import { z } from "zod";
+import { randomUUID } from "node:crypto";
+import { authenticatedDatabase, boundedJson, RequestFailure } from "@/lib/db/server";
+import { CaptureInputSchema, CaptureRecordSchema } from "@/lib/capture/contracts";
+import { canonicalizeExtraction } from "@/lib/capture/canonicalize";
+import { extractCandidates } from "@/lib/capture/provider";
+import { guardQuestionAnswer, shortQuestionAnswer } from "@/lib/questions/answer";
+import type { Question } from "@/lib/questions/contracts";
+import { guardCorrection } from "@/lib/capture/correction-guard";
+import { ExtractionResultSchema, getLocalDate, RecordIdSchema, TimeZoneSchema, type ExtractionResult } from "@/lib/domain";
+import type { Json, Row } from "@/lib/db/database.types";
+
+
+
+const headers={"Cache-Control":"no-store"};
+function record(row: Row<"turn_extractions">, owner: string) {
+ if(row.user_id!==owner || row.extractor_version!=="capture-v1") throw new Error("Capture metadata mismatch.");
+ return CaptureRecordSchema.parse({rootTurnId:row.root_turn_id,sourceTurnId:row.source_turn_id,revision:row.revision,result:row.result,acceptedResult:row.accepted_result,pending:row.lease_token!==null});
+}
+// Log only the operation and database code, never transcripts, events, or credentials.
+function databaseFailure(operation: string, error: {code: string}) {
+ console.error("[capture] Database operation failed", {operation, code:error.code});
+}
+// Diagnostics name the failing rule only; they never include transcript text or extracted values.
+function validationReason(error: unknown) {
+ if (error instanceof z.ZodError) return error.issues.map(issue => `${issue.path.join(".") || "(root)"}:${issue.code}`).slice(0, 8);
+ return error instanceof Error ? error.message.slice(0, 120) : "unknown";
+}
+function failed(error: unknown) {
+ if(!(error instanceof RequestFailure)) console.error("[capture] Unexpected processing failure", JSON.stringify({kind:error instanceof z.ZodError ? "validation" : "internal"}));
+ return Response.json({error:error instanceof RequestFailure ? error.message : "Extraction could not complete. No new observations were confirmed. Retry the capture."},{status:error instanceof RequestFailure ? error.status:503,headers});
+}
+export async function captureHistory(request: Request) {
+ try {
+  const {client,owner}=await authenticatedDatabase(request);
+  const conversationId=RecordIdSchema.parse(new URL(request.url).searchParams.get("conversationId"));
+  const turns=await client.from("conversation_turns").select("id").eq("user_id",owner).eq("conversation_id",conversationId).eq("role","user").limit(500);
+  if(turns.error) { databaseFailure("history_turns",turns.error); throw new RequestFailure("Capture history could not load.",503); }
+  if(!turns.data?.length) return Response.json({records:[]},{headers});
+  const rows=await client.from("turn_extractions").select("*").eq("user_id",owner).eq("extractor_version","capture-v1").in("root_turn_id",turns.data.map(t=>t.id));
+  if(rows.error) { databaseFailure("history_extractions",rows.error); throw new RequestFailure("Capture storage is not ready. Apply the Stage 4 migration.",503); }
+  return Response.json({records:(rows.data??[]).map(row=>record(row,owner))},{headers});
+ } catch(error) { return failed(error instanceof z.ZodError ? new RequestFailure("Invalid conversation request.",400):error); }
+}
+export async function captureOwnedTurn(request: Request, question?: {feature:string;date:string;text:string;key:string}) {
+ let release: (()=>Promise<void>) | null=null;
+ try {
+  const {client,owner}=await authenticatedDatabase(request);
+  const parsed=CaptureInputSchema.safeParse(await boundedJson(request,10000));
+  if(!parsed.success) throw new RequestFailure("Invalid capture request.",400);
+  const {turnId,followup}=parsed.data;
+  const token=randomUUID();
+  const claimed=await client.rpc("claim_turn_extraction",{p_root:turnId,p_token:token,p_revision:followup?.revision??null,p_followup_id:followup?.id??null,p_followup:followup?.text??null});
+  if(claimed.error) { databaseFailure("claim",claimed.error); throw new RequestFailure(claimed.error.code==="P0001" ? "This turn changed or is not eligible. Reload capture history before retrying." : "Capture storage is not ready. Apply the Stage 4 migration.",claimed.error.code==="P0001"?409:503); }
+  const payload=z.object({state:z.enum(["busy","cached","ready"]),job:z.unknown().optional(),root:z.unknown().optional(),source:z.unknown().optional()}).parse(claimed.data);
+  if(payload.state==="busy") throw new RequestFailure("This observation is being captured. Wait briefly, then retry.",409);
+  const job=payload.job as Row<"turn_extractions">;
+  const view=record(job,owner);
+  if(payload.state==="cached") return Response.json({record:view},{headers});
+  release=async()=>{ await client.rpc("release_turn_extraction",{p_root:turnId,p_token:token}); };
+  const root=payload.root as Row<"conversation_turns">; const source=payload.source as Row<"conversation_turns">;
+  if(root.user_id!==owner || source.user_id!==owner || root.id!==turnId || source.id!==job.source_turn_id || source.conversation_id!==root.conversation_id || source.role!=="user") throw new Error("Capture provenance mismatch.");
+  TimeZoneSchema.parse(job.time_zone);
+  const anchorAt=new Date(job.anchor_at).toISOString(); const capturedAt=new Date(job.captured_at).toISOString();
+  // One bounded retry when the model's structured output is internally inconsistent; nothing is saved from an invalid attempt.
+  let result: ExtractionResult | null = null;
+  for (let attempt = 1; attempt <= 2 && !result; attempt++) {
+   let candidates;
+   try { candidates=await extractCandidates({transcript:root.transcript,followup:source.id===root.id?null:source.transcript,previousResult:{ latest:job.result, accepted:job.accepted_result },anchorDate:getLocalDate(anchorAt,job.time_zone),timeZone:job.time_zone,...(source.id===root.id&&question?{question}:{})}); }
+   catch { throw new RequestFailure("The extraction service could not return a complete observation. Check connection, API billing/model access, then retry.",502); }
+   try { result=ExtractionResultSchema.parse(canonicalizeExtraction(candidates,{rootTurnId:turnId,sourceTurnId:source.id,anchorAt,capturedAt,timeZone:job.time_zone,sourceText:[root.transcript,source.id!==root.id?source.transcript:"",source.id===root.id&&question&&shortQuestionAnswer(root.transcript)?question.text:""].join(" ")})); }
+   catch (error) { console.error("[capture] Candidate validation failed", JSON.stringify({attempt, reason: validationReason(error)})); }
+  }
+  if (!result) throw new RequestFailure("The extraction service returned an invalid observation. No new observations were saved. Retry capture.",502);
+  if(source.id===root.id&&question)result=guardQuestionAnswer(result,question as Question,root.transcript);
+  if(source.id!==root.id){
+   const latest=job.result?ExtractionResultSchema.parse(job.result):null;
+   const open=latest?.status==="needs_clarification"?latest.eventTypes:[];
+   result=guardCorrection(result,{original:root.transcript,followup:source.transcript},{accepted:job.accepted_result?ExtractionResultSchema.parse(job.accepted_result):null,open});
+  }
+  const saved=await client.rpc("finish_turn_extraction",{p_root:turnId,p_token:token,p_result:result as unknown as Json});
+  if(saved.error) { databaseFailure("finish",saved.error); throw new RequestFailure("Observations were not confirmed. Retry to recover the transaction result.",503); }
+  release=null;
+  return Response.json({record:record(saved.data as Row<"turn_extractions">,owner)},{headers});
+ } catch(error) {
+  if(release) { try { await release(); } catch { /* The lease expires after 90 seconds if storage is unreachable. */ } }
+  return failed(error);
+ }
+}

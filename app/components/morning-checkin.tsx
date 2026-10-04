@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useHealthSession } from "./session";
 import type { CheckinDimension } from "@/lib/checkin/controller";
+import { useTalkContext } from "./talk-context";
 import { HEALTH_HISTORY_CHANGED } from "./voice-conversation";
 
 type Step =
@@ -40,6 +41,7 @@ function statusText(step: Step, window: Checkin["window"]) {
 // saved as ordinary reports; this card reads back accepted observations rather than trusting what was said.
 export function MorningCheckin() {
  const { session } = useHealthSession();
+ const talk=useTalkContext();
  const [checkin, setCheckin] = useState<Checkin | null>(null);
  const [error, setError] = useState<string | null>(null);
  const [busy, setBusy] = useState(false);
@@ -72,6 +74,11 @@ export function MorningCheckin() {
    const json = await response.json();
    if (!response.ok) throw new Error(json.error ?? "Morning check-in could not update.");
    setCheckin(json.checkin as Checkin);
+   if(method!=="GET"&&talk.context.mode==="morning_checkin"){
+    const next=json.checkin as Checkin;
+    if(next.step.kind==="ask")talk.select({mode:"morning_checkin",date:next.localDate,dimension:next.step.dimension},next.step.question);
+    else talk.select({mode:"report"},"Morning check-in finished. You can report observations normally.");
+   }
    setError(null);
   } catch (caught) {
    setError(caught instanceof Error ? caught.message : "Morning check-in could not update.");
@@ -100,17 +107,17 @@ export function MorningCheckin() {
 
  if (!session) return null;
  return (
-  <section className="card" aria-label="Morning check-in">
+  <section className="card card-body bg-base-100 border border-base-300" aria-label="Morning check-in">
    <h2>Morning check-in</h2>
    {isDevBuild && (
     <details className="small">
      <summary>Test window (temporary, dev only){devWindow ? ` · active ${devWindow}` : ""}</summary>
-     <label>From <input type="time" value={devFrom} onChange={event => setDevFrom(event.target.value)} /></label>{" "}
-     <label>To <input type="time" value={devTo} onChange={event => setDevTo(event.target.value)} /></label>{" "}
-     <button onClick={applyDevWindow} disabled={!devFrom || !devTo || devFrom >= devTo}>Apply window</button>{" "}
-     <button onClick={clearDevWindow} disabled={!devWindow}>Use real window</button>
+     <label>From <input className="input w-full" type="time" value={devFrom} onChange={event => setDevFrom(event.target.value)} /></label>{" "}
+     <label>To <input className="input w-full" type="time" value={devTo} onChange={event => setDevTo(event.target.value)} /></label>{" "}
+     <button className="btn btn-primary" onClick={applyDevWindow} disabled={!devFrom || !devTo || devFrom >= devTo}>Apply window</button>{" "}
+     <button className="btn btn-primary" onClick={clearDevWindow} disabled={!devWindow}>Use real window</button>
      <p className="small">Dev only. Reset clears today&apos;s skips and end marker and deletes today&apos;s energy, soreness, mood and illness answers. Capture history stays.</p>
-     <button onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }} disabled={busy}>Reset today&apos;s check-in and answers</button>
+     <button className="btn btn-primary" onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }} disabled={busy}>Reset today&apos;s check-in and answers</button>
     </details>
    )}
    {checkin ? (
@@ -118,14 +125,15 @@ export function MorningCheckin() {
      <p role="status">{statusText(checkin.step, checkin.window)}</p>
      {checkin.step.kind === "ask" && <>
       <p><strong>{checkin.step.question}</strong></p>
-      <p className="small">Answer aloud in the conversation below. The answer is saved as a normal report and counted here as soon as it is saved.</p>
+      <p className="small">Answer by voice. Say “I don’t know” or “skip” to leave a value unknown.</p>
+      <button className="btn btn-primary" disabled={busy} onClick={()=>{if(checkin.step.kind==="ask"){talk.select({mode:"morning_checkin",date:checkin.localDate,dimension:checkin.step.dimension},checkin.step.question);document.getElementById("voice-controls")?.scrollIntoView({behavior:"smooth",block:"start"});}}}>Start / resume spoken check-in</button>
       <div className="voice-actions">
-       <button onClick={() => void request("POST", { action: "skip", dimension: checkin.step.kind === "ask" ? checkin.step.dimension : undefined })} disabled={busy}>Skip this question</button>
-       <button onClick={() => void request("POST", { action: "end" })} disabled={busy}>End check-in for today</button>
-       <button onClick={() => void request("GET")} disabled={busy}>Refresh</button>
+       <button className="btn btn-primary" onClick={() => void request("POST", { action: "skip", dimension: checkin.step.kind === "ask" ? checkin.step.dimension : undefined })} disabled={busy}>Skip this question</button>
+       <button className="btn btn-primary" onClick={() => void request("POST", { action: "end" })} disabled={busy}>End check-in for today</button>
+       <button className="btn btn-primary" onClick={() => void request("GET")} disabled={busy}>Refresh</button>
       </div>
      </>}
-     {checkin.step.kind !== "ask" && <button onClick={() => void request("GET")} disabled={busy}>Refresh</button>}
+     {checkin.step.kind !== "ask" && <button className="btn btn-primary" onClick={() => void request("GET")} disabled={busy}>Refresh</button>}
      <p className="small">Answered: {checkin.answered.length ? checkin.answered.map(d => labels[d]).join(", ") : "none yet"}. Skipped: {checkin.skipped.length ? checkin.skipped.map(d => labels[d]).join(", ") : "none"}.</p>
     </>
    ) : <p role="status">{busy ? "Loading check-in…" : "Check-in not loaded yet."}</p>}

@@ -11,11 +11,11 @@ export function guardQuestionAnswer(result:ExtractionResult,question:Question,te
  if(result.status!=="captured")return result;
  const answerOnly=bareAnswer.test(text),yesNo=/^\s*(?:yes|no|tak|nie)[.!\s]*$/iu.test(text);
  if(answerOnly&&["alcohol","illness","late_meal"].includes(question.feature)&&!yesNo)return {status:"needs_clarification",eventTypes:[question.feature as SubjectiveEventType],reason:"Please answer yes or no, or state the complete observation. A number alone does not answer this exposure question."};
- if(yesNo&&["stress","workout_rpe"].includes(question.feature))return {status:"needs_clarification",eventTypes:[question.feature as SubjectiveEventType],reason:"Please give an explicit rating from 0 to 10, or skip if you cannot recall it."};
+ if(yesNo&&["energy","soreness","mood","stress","workout_rpe"].includes(question.feature))return {status:"needs_clarification",eventTypes:[question.feature as SubjectiveEventType],reason:"Please give an explicit rating from 0 to 10, or skip if you cannot recall it."};
  // Question words support only a short direct answer. Voluntary full reports must support their own dimensions.
  const supported=result.events.filter(e=>isSupportedBy(e.type,text)||answerOnly&&e.type===question.feature);
  if(!supported.length)return {status:"nothing_trackable",reason:"The answer does not contain a supported report. Please state the observation explicitly, or skip."};
  // Never turn a bare no into a fabricated numeric RPE/stress value.
- if(answerOnly&&/^(no|nie)[.!\s]*$/iu.test(text.trim())&&["stress","workout_rpe"].includes(question.feature))return {status:"needs_clarification",eventTypes:[question.feature as SubjectiveEventType],reason:"Please give an explicit rating from 0 to 10, or skip if you did not train or cannot recall it."};
+ if(answerOnly&&/^(no|nie)[.!\s]*$/iu.test(text.trim())&&["energy","soreness","mood","stress","workout_rpe"].includes(question.feature))return {status:"needs_clarification",eventTypes:[question.feature as SubjectiveEventType],reason:"Please give an explicit rating from 0 to 10, or skip if you did not train or cannot recall it."};
  return {...result,events:supported};
 }

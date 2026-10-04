@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned; specified 2026-10-04. This guide is an implementation specification.**
+**Implemented with Stage 10A, 2026-10-04. Verification and remaining acceptance are recorded below.**
 
 Implement the accepted Stage 10A design in the existing Next.js application. A person can use the complete evidence journey in a phone browser, inspect and correct observations, and understand uncertainty and failures. The resulting mobile web app is ready for Capacitor packaging.
 
@@ -23,7 +23,7 @@ Inspect current routes, session provider, styles, capture/retrieval components a
 1. **Shared mobile shell:** implement the agreed navigation, page hierarchy, responsive containers and active destination state. Respect safe-area CSS insets, phone browser viewport changes, keyboard and scroll behavior. Keep the current desktop experience usable. No Capacitor dependency is needed for this work.
 2. **Components and styling:** implement agreed tokens and reusable observation, question, evidence, source, state and action components. Reuse existing conventions where practical; introduce a UI dependency only with a concrete need. Provide readable focus states, contrast, accessible names, at least 44 × 44 CSS-pixel touch targets and reduced-motion behavior where motion exists.
 3. **Today:** render validated observations and eligible anomalies with one selected next action, relevant missing context and freshness. Link to the owning investigation/question. Empty/sparse users receive an honest path to recording or labeled sample history, without fabricated comparisons.
-4. **Talk:** make the agreed voice controls and listening/transcribing/processing/speaking/muted/disconnected states prominent. Surface confirmed observations and selected clarification/correction directly; make transcripts/provenance accessible as secondary detail. Preserve press-to-speak pointer/keyboard cancellation, explicit correction targets, typed recovery, confirmed feedback and stale-response suppression.
+4. **Talk:** make the agreed voice controls and listening/transcribing/processing/speaking/muted/disconnected states prominent. Surface confirmed observations and selected clarification/correction directly; make transcripts/provenance accessible as secondary detail. Preserve press-to-speak pointer/keyboard cancellation, explicit correction targets, saved-turn recovery, confirmed feedback and stale-response suppression.
 5. **Evidence:** render the actual bundle and relationship results: local dates/lag, period, method, effect/units, usable pairs or group counts, label, competing factors and limitations. A confirmed answer may update current context without strengthening historical evidence; display the actual recomputation result. Keep insufficient history separate from no meaningful signal.
 6. **Timeline:** present owned wearable samples, accepted voice reports and derived summaries distinctly. Expose source and local-date semantics, unknown quantities and explicit negatives; link to owned provenance and supported correction. Reveal browsing caps and incomplete histories; a finite list is not a complete analytics query.
 7. **State and resilience:** implement the Stage 10A state/action table against actual requests. Preserve prior confirmed data during refresh/correction failure with a stale/error indication. Prevent duplicate submissions, make retries explicit and never mark a report saved or evidence updated before confirmation. Show connectivity failure truthfully; do not imply an offline capture queue or background sync exists.
@@ -61,3 +61,16 @@ At completion record date/revision, screenshots, device/browser matrix, checks a
 No new analytics, relationship definitions, question-selection algorithms, native shell, HealthKit ingestion, offline synchronization, experiments, App Store release or authentication redesign. Integration defects belong to their owning stages and must be resolved explicitly rather than hidden in UI fallbacks.
 
 Next: [Stage 11 — Capacitor shell](stage-11-capacitor-shell.md). CSS-safe-area preparation and mobile browser success do not establish native keyboard, permission, background/foreground or microphone behavior.
+
+## Stage 10 implementation checkpoint — 2026-10-04
+
+The owner authorized Stage 10A and 10B together after reviewing the voice-first direction. [MOBILE-UI](../MOBILE-UI.md) specifies the implemented navigation, layouts, data mapping, states, tokens and native handoff. Product names are Talk, Today, Insights and History; existing URLs remain compatible. No normal health-answer text form is required. Voice integration repairs explicitly address missing morning question context, global investigation interception and overlong spoken evidence.
+
+Implementation: mobile shell and primary microphone; committed latest-turn feedback and secondary transcripts; real daily/analytical views with labeled source selection and energy history; readable raw history and source filters; explicit server-validated voice interview context; spoken morning answers/uncertainty/skips; concise fact-selected investigations; durable investigation recovery. No database migration or native package added.
+
+Acceptance is split: implemented source/contracts and automated/static checks are recorded in MOBILE-UI; visual review and physical phone/audio approval are separate. Do not infer microphone or Capacitor acceptance from a build. The dev check-in window/reset are preserved.
+
+
+## Owner acceptance — 2026-10-04
+
+The project owner marked Stage 10 (including 10A and 10B) done so Stage 11–12 can proceed. Known open items are accepted, not passed: voice-agent reliability (owner will fix after the presentation base), real-device microphone walkthrough, populated-account journey rehearsal and two light-theme muted-label contrast values (4.44:1). The daisyUI “Grove” theme and browser measurements are recorded in [MOBILE-UI](../MOBILE-UI.md).

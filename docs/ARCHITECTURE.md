@@ -124,3 +124,7 @@ Stage 7: authenticated `/api/analytics` rebuilds the required 44 daily dates, ru
 Stage 8 builds bundles on demand after current-generation Stage 7 analysis. A private authenticated orchestrator supplies validated facts to an order-only explanation provider, then rechecks generation before responding. Evidence and app-owned voice dispatch share the service; provider failure uses deterministic wording. No new migration or bundle cache is required. See [INVESTIGATION](INVESTIGATION.md).
 
 Stage 9 adds a private revision/generation-checked question/answer transaction and one durable loop per owner. Canonical extraction/validation is reused; personal and simulated answers commit in their own scopes. Derived rebuilding remains outside the raw transaction, with an explicit recoverable refresh state. Evidence and Talk share the controller. See [ACTIVE-SENSING](ACTIVE-SENSING.md).
+
+## Stage 10 integration update
+
+Public route wrappers delegate canonical capture/check-in orchestration to `lib/capture/server.ts` and `lib/checkin/server.ts`, preserving existing RPCs, owner validation and replay. A voice turn carries explicit report/morning/investigation selection; the server validates the current target and persists trusted context in its existing intent plan. This replaces automatic interception by the account’s global question state. UI calls existing analytics/features/questions APIs and renders validated payloads; it does not calculate evidence. See [MOBILE-UI](MOBILE-UI.md).

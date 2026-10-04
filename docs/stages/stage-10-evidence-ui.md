@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Stage 10A/B implemented together, 2026-10-04. Automated/browser verification is recorded below; owner visual and physical audio acceptance remains pending.**
 
 A user can follow an unusual observation through a question and accepted answer to updated evidence, and inspect its origin and uncertainty.
 
@@ -65,3 +65,16 @@ New analytics, new domain variables/relationships, native shell, real HealthKit 
 ## Documentation handoff
 
 Update DEMO with the rehearsed path and expected evidence, CONVERSATION for visible control/state semantics, and relevant canonical docs if product decisions changed.
+
+## Stage 10 implementation checkpoint — 2026-10-04
+
+The owner authorized Stage 10A and 10B together after reviewing the voice-first direction. [MOBILE-UI](../MOBILE-UI.md) specifies the implemented navigation, layouts, data mapping, states, tokens and native handoff. Product names are Talk, Today, Insights and History; existing URLs remain compatible. No normal health-answer text form is required. Voice integration repairs explicitly address missing morning question context, global investigation interception and overlong spoken evidence.
+
+Implementation: mobile shell and primary microphone; committed latest-turn feedback and secondary transcripts; real daily/analytical views with labeled source selection and energy history; readable raw history and source filters; explicit server-validated voice interview context; spoken morning answers/uncertainty/skips; concise fact-selected investigations; durable investigation recovery. No database migration or native package added.
+
+Acceptance is split: implemented source/contracts and automated/static checks are recorded in MOBILE-UI; visual review and physical phone/audio approval are separate. Do not infer microphone or Capacitor acceptance from a build. The dev check-in window/reset are preserved.
+
+
+## Owner acceptance — 2026-10-04
+
+The project owner marked Stage 10 (including 10A and 10B) done so Stage 11–12 can proceed. Known open items are accepted, not passed: voice-agent reliability (owner will fix after the presentation base), real-device microphone walkthrough, populated-account journey rehearsal and two light-theme muted-label contrast values (4.44:1). The daisyUI “Grove” theme and browser measurements are recorded in [MOBILE-UI](../MOBILE-UI.md).

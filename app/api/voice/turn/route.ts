@@ -14,7 +14,11 @@ import { captureFeedback, observationText } from "@/lib/conversation/feedback";
 import { CaptureRecordSchema } from "@/lib/capture/contracts";
 import { addCalendarDays, getLocalDate, TimeZoneSchema } from "@/lib/domain";
 import { parseEventRow } from "@/lib/db/ingestion";
-import { POST as captureTurn } from "../../capture/route";
+import { captureOwnedTurn as captureTurn } from "@/lib/capture/server";
+import { loadCheckin, updateCheckin } from "@/lib/checkin/server";
+import { questionFor } from "@/lib/checkin/controller";
+import { uncertainAnswer } from "@/lib/questions/answer";
+import { investigationSpeech } from "@/lib/investigation/speech";
 import type { Json, Row } from "@/lib/db/database.types";
 export const runtime="nodejs";
 export const maxDuration=120;
@@ -35,7 +39,7 @@ export async function POST(request:Request){
  let release:(()=>Promise<void>)|null=null;
  try {
   const {client,owner}=await authenticatedDatabase(request);
-  const input=VoiceTurnInputSchema.parse(await boundedJson(request,2000));
+  const input=VoiceTurnInputSchema.parse(await boundedJson(request,4000));
   if(input.turnId.startsWith("capture:")||input.turnId.startsWith("demo:"))throw new RequestFailure("Select an original spoken turn.",400);
   const turn=await client.from("conversation_turns").select("*").eq("user_id",owner).eq("id",input.turnId).eq("role","user").single();
   if(turn.error||!turn.data)throw new RequestFailure("This saved user turn is unavailable.",404);
@@ -56,7 +60,7 @@ export async function POST(request:Request){
   if(job.user_id!==owner||job.turn_id!==input.turnId)throw new Error("Voice ownership mismatch");
   if(claimed.state==="cached"){
    let saved=VoiceOutcomeSchema.parse(job.result);
-   if(saved.questions){const current=await readQuestionLoop(client,owner);if(current.revision!==saved.questions.revision){const {questions:old,...rest}=saved;void old;saved={...rest,reply:"This is a previous question receipt. Open Evidence for the current question and refreshed evidence."};}}
+   if(saved.questions){const current=await readQuestionLoop(client,owner);if(current.revision!==saved.questions.revision){const {questions:old,...rest}=saved;void old;saved={...rest,reply:"This is a previous question receipt. Open Insights for the current question and refreshed evidence."};}}
    const state=saved.investigation?await readFeatureGeneration(featureWriter(),owner):null;
    return Response.json({outcome:state?freshInvestigationReceipt(saved,state):saved},{headers});
   }
@@ -70,9 +74,13 @@ export async function POST(request:Request){
    target=t.data;targetTranscript=raw.data.transcript;
   }
   const questions=await readQuestionLoop(client,owner);
-  const activeQuestion=!job.target_root_id&&!questions.loop?.stopped?questions.loop?.question:null;
+  const context=input.context;
+  const activeQuestion=!job.target_root_id&&context.mode==="investigate"&&context.loopId===questions.loop?.id&&context.key===questions.loop?.question?.key&&!questions.loop?.stopped?questions.loop?.question:null;
+  const startCheckin=/^\W*(?:(?:start|begin|answer|resume|do)(?: my| the)? )?morning check[ -]?in\W*$/iu.test(job.transcript.trim());
+  const morning=(context.mode==="morning_checkin"||startCheckin)?await loadCheckin(client,owner,request.headers.get("x-checkin-dev-window")):null;
+  if(!job.plan&&context.mode==="morning_checkin"&&!startCheckin&&(morning?.step.kind!=="ask"||morning.localDate!==context.date||morning.step.dimension!==context.dimension))throw new RequestFailure("The morning question changed. Refresh before answering.",409);
   let intent:z.infer<typeof VoiceIntentSchema>;
-  try {intent=job.plan?VoiceIntentSchema.parse({unsupportedMetric:null,investigationOutcome:null,...(job.plan as object)}):await identifyVoiceIntent({transcript:job.transcript,anchorDate:today,activeQuestion,target:target?{transcript:targetTranscript,latest:target.result,accepted:target.accepted_result}:null});}
+  try {intent=startCheckin&&!job.plan?VoiceIntentSchema.parse({kind:"greeting",language:"en",query:{kind:"unspecified",from:null,to:null,type:null,includeDemo:false},unsupportedMetric:null,investigationOutcome:null}):job.plan?VoiceIntentSchema.parse({unsupportedMetric:null,investigationOutcome:null,...(job.plan as object)}):await identifyVoiceIntent({transcript:job.transcript,anchorDate:today,activeQuestion,target:target?{transcript:targetTranscript,latest:target.result,accepted:target.accepted_result}:null});}
   catch{throw new RequestFailure("I could not understand this turn reliably. No new observations were confirmed. Retry processing.",502);}
   const targetStatus=(target?.result as {status?:string}|null)?.status;
   if(intent.kind==="followup"&&target&&targetStatus!=="needs_clarification"&&!correctionPhrase.test(job.transcript)){
@@ -81,8 +89,14 @@ export async function POST(request:Request){
   if(!job.plan&&intent.kind==="investigate"){const explicit=explicitVoiceDate(job.transcript);if(explicit)intent={...intent,query:{...intent.query,kind:"date",from:explicit,to:null}};else if(explicit===null)throw new RequestFailure("Please give one valid investigation date as YYYY-MM-DD.",400);}
   if(!job.plan&&cancelPhrase.test(job.transcript.trim()))intent={...intent,kind:"cancel"};
   // Selection context does not contaminate command/date interpretation. The app routes meaningful reports/short replies after classification.
+  if(!job.plan&&context.mode==="investigate"&&!activeQuestion&&(intent.kind==="report"||intent.kind==="followup"||shortQuestionAnswer(job.transcript)))throw new RequestFailure("The selected investigation question changed. Reopen it in Insights before answering.",409);
   if(!job.plan&&activeQuestion&&(intent.kind==="report"||intent.kind==="followup"&&!correctionPhrase.test(job.transcript)||shortQuestionAnswer(job.transcript)))intent={...intent,kind:"question_answer"};
   if(!job.plan&&(intent.kind==="question_answer"||intent.kind==="cancel")&&activeQuestion&&questions.loop)intent={...intent,questionContext:{loopId:questions.loop.id,key:activeQuestion.key}};
+  if(!job.plan&&morning?.step.kind==="ask"&&(startCheckin||intent.kind==="report"||intent.kind==="followup"||intent.kind==="cancel"||shortQuestionAnswer(job.transcript))) {
+   intent={...intent,checkinContext:{date:morning.localDate,dimension:morning.step.dimension}};
+   if(!startCheckin&&uncertainAnswer(job.transcript))intent={...intent,kind:"cancel"};
+   else if(!startCheckin&&intent.kind==="followup"&&!correctionPhrase.test(job.transcript))intent={...intent,kind:"report"};
+  }
   if(!job.plan){
    const planned=await client.rpc("plan_voice_turn",{p_turn:input.turnId,p_token:token,p_plan:intent as unknown as Json});
    if(planned.error)throw new RequestFailure("Processing could not be prepared. No new observations were confirmed. Retry.",503);
@@ -98,23 +112,40 @@ export async function POST(request:Request){
   const untrackedMetric=intent.kind==="retrieve"||intent.kind==="unsupported"?(intent.unsupportedMetric??(intent.kind==="retrieve"?untrackedMetricName(job.transcript):null)):null;
   if(intent.kind==="noise"){outcome.disposition="ignore";}
   else if(untrackedMetric){outcome.reply=unsupportedMetricReply(untrackedMetric,intent.language);}
+  else if(startCheckin){
+   outcome.checkin=morning;
+   outcome.targetRootId=null;
+   outcome.reply=morning?.step.kind==="ask"?morning.step.question:morning?.step.kind==="complete"?"Your morning check-in is complete.":"Morning check-in is closed. You can still report observations normally.";
+  }
+  else if(intent.kind==="cancel"&&intent.checkinContext){
+   const c=intent.checkinContext;
+   const state=await loadCheckin(client,owner,request.headers.get("x-checkin-dev-window"));
+   if(state.localDate!==c.date)throw new RequestFailure("This check-in belongs to a previous day.",409);
+   const stop=/^\W*(?:stop|end|cancel)(?: the| my)?(?: check[ -]?in)?\W*$/iu.test(job.transcript);
+   if(!state.skipped.includes(c.dimension)){
+    const response=await updateCheckin(new Request(request.url,{method:"POST",headers:request.headers,body:JSON.stringify(stop?{action:"end"}:{action:"skip",dimension:c.dimension})}));
+    if(!response.ok){const body=await response.json();throw new RequestFailure(body.error,response.status);}
+   }
+   const next=await loadCheckin(client,owner,request.headers.get("x-checkin-dev-window"));outcome.checkin=next;outcome.targetRootId=null;
+   outcome.reply="No observation was recorded for that question. "+(next.step.kind==="ask"?next.step.question:"Morning check-in finished. Skipped values stay unknown.");
+  }
   else if(intent.kind==="question_answer"){
    outcome.questionAnswer=true;
    const replay=await processedQuestionTurn(client,owner,input.turnId);
-   if(!replay&&(!intent.questionContext||intent.questionContext.loopId!==questions.loop?.id||intent.questionContext.key!==activeQuestion?.key))throw new RequestFailure("The question for this saved answer has changed. Open Evidence for the current question.",409);
+   if(!replay&&(!intent.questionContext||intent.questionContext.loopId!==questions.loop?.id||intent.questionContext.key!==activeQuestion?.key))throw new RequestFailure("The question for this saved answer has changed. Open Insights for the current question.",409);
    if(!replay&&(!activeQuestion||!questions.loop))throw new RequestFailure("There is no active question. Start an investigation first.",409);
    const state=await questionAction(client,owner,{action:"answer",revision:questions.revision,answerId:followupId(input.turnId),text:job.transcript},{id:input.turnId,at:new Date(turn.data.occurred_at).toISOString(),text:job.transcript});
    outcome.questions=state;outcome.targetRootId=null;
    if(state.fresh&&state.loop)outcome.investigation=state.loop.current;
    const comparison=state.fresh&&state.loop?compareEvidence(state.loop.before.bundle,state.loop.current.bundle):null;
    outcome.reply=(state.loop?.feedback??"The question remains unanswered.")
-    +(comparison?comparison.historicalChanged?" Historical calculations changed; compare the counts and effects in Evidence.":" Historical association strength, effects and sample sizes are unchanged.":"")
-    +(state.loop?.pending?" Retry the pending answer in Evidence.":state.fresh&&state.loop?.question?` ${state.loop.question.key===activeQuestion?.key?"Question still open":"Next question"}: ${state.loop.question.text}`:state.fresh?" No further answerable question remains.":" Refresh evidence to recover the confirmed state.");
+    +(comparison?comparison.historicalChanged?" Historical calculations changed; see Insights.":" Historical associations are unchanged.":"")
+    +(state.loop?.pending?" Retry the pending answer in Insights.":state.fresh&&state.loop?.question?` ${state.loop.question.key===activeQuestion?.key?"Question still open":"Next question"}: ${state.loop.question.text}`:state.fresh?" No further answerable question remains.":" Refresh evidence to recover the confirmed state.");
   }
   else if(intent.kind==="cancel"&&activeQuestion){
    const context=intent.questionContext;
    if(!context||context.loopId!==questions.loop?.id||context.key!==activeQuestion.key){
-    outcome.questions=questions;outcome.targetRootId=null;outcome.reply="That saved question action is no longer current. Open Evidence for the selected question.";
+    outcome.questions=questions;outcome.targetRootId=null;outcome.reply="That saved question action is no longer current. Open Insights for the selected question.";
    }else{
    const stop=/^\W*(stop|stop questions|end|koniec)\W*$/iu.test(job.transcript);
    const state=await questionAction(client,owner,{action:stop?"stop":"skip",revision:questions.revision});
@@ -127,11 +158,15 @@ export async function POST(request:Request){
    else {
     if(intent.kind==="followup"&&job.transcript.length>2000)throw new RequestFailure("The correction is too long. Use a shorter follow-up or the card's form.",400);
     const root=intent.kind==="followup"?target!.root_turn_id:input.turnId;
-    const response=await captureTurn(new Request(request.url,{method:"POST",headers:{Authorization:request.headers.get("authorization")!,"Content-Type":"application/json"},body:JSON.stringify({turnId:root,...(intent.kind==="followup"?{followup:{id:followupId(input.turnId),text:job.transcript,revision:job.target_revision}}:{})})}));
+    const response=await captureTurn(new Request(request.url,{method:"POST",headers:{Authorization:request.headers.get("authorization")!,"Content-Type":"application/json"},body:JSON.stringify({turnId:root,...(intent.kind==="followup"?{followup:{id:followupId(input.turnId),text:job.transcript,revision:job.target_revision}}:{})})}),intent.checkinContext?{feature:intent.checkinContext.dimension,date:intent.checkinContext.date,text:questionFor(intent.checkinContext.dimension),key:`morning:${intent.checkinContext.date}:${intent.checkinContext.dimension}`}:undefined);
     const body=await response.json();
     if(!response.ok)throw new RequestFailure(body.error??"Capture failed. No new observations were confirmed.",response.status);
     outcome.capture=CaptureRecordSchema.parse(body.record);outcome.disposition=intent.kind==="followup"?"followup":"capture";
     outcome.targetRootId=root;outcome.reply=captureFeedback(outcome.capture,intent.language,intent.kind==="followup");
+    if(intent.checkinContext){
+     const next=await loadCheckin(client,owner,request.headers.get("x-checkin-dev-window"));outcome.checkin=next;
+     if(outcome.capture.result?.status!=="needs_clarification")outcome.reply+=" "+(next.step.kind==="ask"?next.step.question:"Morning check-in complete. Skipped questions remain unknown.");
+    }
    }
   } else if(intent.kind==="investigate"){
    const q=intent.query;
@@ -142,7 +177,7 @@ export async function POST(request:Request){
     const questionState=await questionAction(client,owner,{action:"start",revision:questions.revision,input:{mode:"investigate",outcome:intent.investigationOutcome,date,scope:q.includeDemo?"demo":"personal",language:intent.language}});
     const result=questionState.loop!.current;outcome.questions=questionState;
     outcome.disposition="conversation";outcome.investigation=result;outcome.targetRootId=null;
-    outcome.reply=result.explanation.summary+(questionState.loop?.question?` One missing-context question: ${questionState.loop.question.text}`:" No useful answerable context question remains.");
+    outcome.reply=investigationSpeech(result,questionState.loop?.question?.text);
    }
   } else if(intent.kind==="retrieve"){
    const q=intent.query;
@@ -179,7 +214,7 @@ export async function POST(request:Request){
   return Response.json({outcome:VoiceOutcomeSchema.parse(saved.data)},{headers});
  }catch(error){
   if(release){try{await release();}catch{/* Lease expiry permits recovery. */}}
-  return Response.json({error:error instanceof RequestFailure?error.message:error instanceof z.ZodError?"Invalid voice request or result.":"Voice processing did not complete. Open Evidence or Timeline to recover the confirmed state before retrying."},{status:error instanceof RequestFailure?error.status:error instanceof z.ZodError?400:503,headers});
+  return Response.json({error:error instanceof RequestFailure?error.message:error instanceof z.ZodError?"Invalid voice request or result.":"Voice processing did not complete. Open Insights or Timeline to recover the confirmed state before retrying."},{status:error instanceof RequestFailure?error.status:error instanceof z.ZodError?400:503,headers});
  }
 }
 
@@ -197,7 +232,7 @@ export async function GET(request:Request){
    const state=await readFeatureGeneration(featureWriter(),owner);
    for(const run of parsed)if(run.outcome)run.outcome=freshInvestigationReceipt(run.outcome,state);
   }
-  if(parsed.some(run=>run.outcome?.questions)){const current=await readQuestionLoop(client,owner);for(const run of parsed)if(run.outcome?.questions&&run.outcome.questions.revision!==current.revision){const {questions:old,...rest}=run.outcome;void old;run.outcome={...rest,reply:"Previous question receipt. Open Evidence for the current question."};}}
+  if(parsed.some(run=>run.outcome?.questions)){const current=await readQuestionLoop(client,owner);for(const run of parsed)if(run.outcome?.questions&&run.outcome.questions.revision!==current.revision){const {questions:old,...rest}=run.outcome;void old;run.outcome={...rest,reply:"Previous question receipt. Open Insights for the current question."};}}
   return Response.json({runs:parsed},{headers});
  }catch(error){return Response.json({error:error instanceof RequestFailure?error.message:"Voice history could not load."},{status:error instanceof RequestFailure?error.status:400,headers});}
 }

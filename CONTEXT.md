@@ -101,3 +101,7 @@ Stage 8 implements on-demand evidence bundles, app-authorized voice investigatio
 ## Stage 9 current scope
 
 Stage 9 implements deterministic missing-context questions, durable canonical answers and honest before/after recomputation in Evidence and Talk. [ACTIVE-SENSING](docs/ACTIVE-SENSING.md) owns the implemented choices. Stage 10 mobile product UI is next; physical voice and visual acceptance remain manual.
+
+## Stage 10 mobile product
+
+Stage 10A/B implement Talk as the primary voice destination, Today, Insights and History. [MOBILE-UI](docs/MOBILE-UI.md) owns current layouts and integration decisions. Normal reports/questions/corrections use voice; selected interview context is explicit and server-validated. Wearable measurements remain outside voice writes. Physical mobile audio and owner visual acceptance remain separate; Capacitor and actual HealthKit remain later stages.

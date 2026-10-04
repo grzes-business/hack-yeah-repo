@@ -82,12 +82,12 @@ try{
  // Voice investigation creates a question; an answer retains the original spoken-turn provenance.
  const now=new Date().toISOString(),conversation='stage9-live-voice';
  ok(await b.client.from('conversations').insert({user_id:b.owner,id:conversation,mode:'capture',started_at:now,ended_at:null}));
- async function voice(id,transcript){
+ async function voice(id,transcript,context={mode:"report"}){
   ok(await b.client.from('conversation_turns').insert({user_id:b.owner,id,conversation_id:conversation,role:'user',transcript,occurred_at:new Date().toISOString()}));
-  const response=await fetch(`${base}/api/voice/turn`,{method:'POST',headers:{Authorization:`Bearer ${b.token}`,'Content-Type':'application/json'},body:JSON.stringify({turnId:id,targetRootId:null}),signal:AbortSignal.timeout(120000)});const body=await response.json();assert.equal(response.status,200,body.error);return body.outcome;
+  const response=await fetch(`${base}/api/voice/turn`,{method:'POST',headers:{Authorization:`Bearer ${b.token}`,'Content-Type':'application/json'},body:JSON.stringify({turnId:id,targetRootId:null,context}),signal:AbortSignal.timeout(120000)});const body=await response.json();assert.equal(response.status,200,body.error);return body.outcome;
  }
  const request=await voice('stage9-voice-request','Investigate my HRV today.');assert.equal(request.questions.loop.question.feature,'alcohol');
- const answerVoice=await voice('stage9-voice-answer','No.');assert.equal(answerVoice.questions.fresh,true);
+ const answerVoice=await voice('stage9-voice-answer','No.',{mode:'investigate',loopId:request.questions.loop.id,key:request.questions.loop.question.key});assert.equal(answerVoice.questions.fresh,true);
  const voiceEvent=ok(await b.client.from('subjective_events').select('*').eq('conversation_turn_id','stage9-voice-answer'))[0];assert.equal(voiceEvent.payload.value.consumed,false);
  assert.ok(answerVoice.reply.includes('Next question')||answerVoice.reply.includes('No further'));
  // Simulate loss of the voice receipt after the canonical answer transaction, then change the active investigation.

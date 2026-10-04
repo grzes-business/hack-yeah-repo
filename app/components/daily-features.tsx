@@ -38,14 +38,14 @@ function DailyFeatureInspector({zone}:{zone:string}){
   finally{setBusy(false);}
  }
  const current=loaded?.key===key?loaded:null;
- return <section className="card" aria-label="Daily observations">
+ return <section className="card card-body bg-base-100 border border-base-300" aria-label="Daily observations">
   <h2>Daily observations</h2>
   <p>Combine recorded observations into daily values with source references. These are recorded summaries, not evidence of a cause or a complete day of activity.</p>
   <div className="voice-actions">
-   <label>From<input type="date" value={from} disabled={busy} onChange={e=>setFrom(e.target.value)}/></label>
-   <label>Through<input type="date" value={to} disabled={busy} onChange={e=>setTo(e.target.value)}/></label>
-   <label>History<select value={scope} disabled={busy} onChange={e=>setScope(e.target.value as FeatureScope)}><option value="personal">Personal observations</option><option value="demo">Synthetic demo only</option></select></label>
-   <button disabled={!valid||busy} onClick={()=>void rebuild()}>{busy?"Rebuilding…":"Rebuild daily observations"}</button>
+   <label>From<input className="input w-full" type="date" value={from} disabled={busy} onChange={e=>setFrom(e.target.value)}/></label>
+   <label>Through<input className="input w-full" type="date" value={to} disabled={busy} onChange={e=>setTo(e.target.value)}/></label>
+   <label>History<select className="select w-full" value={scope} disabled={busy} onChange={e=>setScope(e.target.value as FeatureScope)}><option value="personal">Personal observations</option><option value="demo">Synthetic demo only</option></select></label>
+   <button className="btn btn-primary" disabled={!valid||busy} onClick={()=>void rebuild()}>{busy?"Rebuilding…":"Rebuild daily observations"}</button>
   </div>
   {!valid&&<p role="alert">Choose an inclusive range of up to 60 days.</p>}
   {notice&&<p role="status">{notice}</p>}

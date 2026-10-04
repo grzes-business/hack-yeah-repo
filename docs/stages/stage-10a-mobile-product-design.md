@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned; specified 2026-10-04. Documentation does not authorize UI implementation.**
+**Implemented together with Stage 10B at the owner’s explicit request, 2026-10-04. Physical/visual acceptance remains distinct.**
 
 Define a coherent phone experience for the voice-first Personal Health Evidence Engine: what is happening, what is known, and what useful question or action comes next. Produce concrete screen and interaction specifications that Stage 10B can implement without inventing the product.
 
@@ -74,4 +74,17 @@ At completion record date, artifact paths, reviewed scenarios, decisions and rem
 
 ## Exclusions and handoff
 
-No production UI code, new backend/analytics, auth redesign, Capacitor project, HealthKit integration or experiment interface. Stage 10B implements the accepted design in the existing Next.js app. Stage 11 owns actual WebView lifecycle, native navigation, permission and audio compatibility; these cannot be certified by wireframes.
+No production UI code, new backend/analytics, auth redesign, Capacitor project, HealthKit integration or experiment interface. Stage 10B implements the documented design in the existing Next.js app. Stage 11 owns actual WebView lifecycle, native navigation, permission and audio compatibility; these cannot be certified by wireframes.
+
+## Stage 10 implementation checkpoint — 2026-10-04
+
+The owner authorized Stage 10A and 10B together after reviewing the voice-first direction. [MOBILE-UI](../MOBILE-UI.md) specifies the implemented navigation, layouts, data mapping, states, tokens and native handoff. Product names are Talk, Today, Insights and History; existing URLs remain compatible. No normal health-answer text form is required. Voice integration repairs explicitly address missing morning question context, global investigation interception and overlong spoken evidence.
+
+Implementation: mobile shell and primary microphone; committed latest-turn feedback and secondary transcripts; real daily/analytical views with labeled source selection and energy history; readable raw history and source filters; explicit server-validated voice interview context; spoken morning answers/uncertainty/skips; concise fact-selected investigations; durable investigation recovery. No database migration or native package added.
+
+Acceptance is split: implemented source/contracts and automated/static checks are recorded in MOBILE-UI; visual review and physical phone/audio approval are separate. Do not infer microphone or Capacitor acceptance from a build. The dev check-in window/reset are preserved.
+
+
+## Owner acceptance — 2026-10-04
+
+The project owner marked Stage 10 (including 10A and 10B) done so Stage 11–12 can proceed. Known open items are accepted, not passed: voice-agent reliability (owner will fix after the presentation base), real-device microphone walkthrough, populated-account journey rehearsal and two light-theme muted-label contrast values (4.44:1). The daisyUI “Grove” theme and browser measurements are recorded in [MOBILE-UI](../MOBILE-UI.md).

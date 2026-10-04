@@ -1,8 +1,5 @@
-import Link from "next/link";
-import { DailyFeaturePanel } from "../components/daily-features";
+import { MobileEvidence } from "../components/mobile-evidence";
+import { AppleHealthSync } from "../components/apple-health";
 import { DemoHistory } from "../components/demo-history";
 import { ProfileSettings } from "../components/profile";
-export default function Today() {
- return <><header className="header"><p className="eyebrow">Your personal evidence</p><h1>Make sense of how you feel.</h1><p className="lede">Connect what your body records with what only you can tell us.</p></header>
- <section className="card"><h2>Your history starts here</h2><p>No observations have been connected to this view yet. As your history grows, this space will surface unusual changes and useful questions.</p><Link className="text-link" href="/timeline">Explore your timeline →</Link></section><DemoHistory /><DailyFeaturePanel /><ProfileSettings /></>;
-}
+export default function Today(){return <><header className="header"><h1>Today</h1><p className="lede">Your observations and the context behind them.</p></header><MobileEvidence/><AppleHealthSync/><details className="card card-body bg-base-100 border border-base-300"><summary>Sample history and settings</summary><DemoHistory/><ProfileSettings/></details></>;}

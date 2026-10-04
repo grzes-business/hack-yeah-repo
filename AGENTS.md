@@ -99,3 +99,7 @@ Stage 8 checks: 73 tests plus live disposable-account API/provider/typed voice d
 Read [ACTIVE-SENSING](docs/ACTIVE-SENSING.md) before changing questions or question-answer dispatch. `questions-v1` owns deterministic dated targets; `/api/questions` derives owner, commits raw answers atomically and then refreshes evidence. Preserve single-question state, replay/source-turn guards, unknown semantics and personal/demo separation. Hosted migration 010 is applied; do not reapply. Physical voice/UI walkthrough remains manual.
 
 Stage 9 checks: 81 unit tests and build/lint/type checks passed. Disposable-account hosted/provider/typed voice checks and Stage 8 regressions passed; current-scope before/after retains unchanged historical effects where expected. The Stage 9 guide contains an acceptance validation path before Stage 10, not a film script.
+
+## Stage 10 checkpoint
+
+Read [MOBILE-UI](docs/MOBILE-UI.md) before product or voice-mode changes. Stage 10A/B were authorized together. Talk/Today/Insights/History keep the existing route URLs. Normal reporting is voice-only; diagnostics are secondary. Explicit `VoiceTurnInput.context` and persisted server question context prevent unrelated/global question interception. Capture/check-in orchestration now lives in `lib/capture/server.ts` and `lib/checkin/server.ts`; API routes wrap those helpers. No new migrations. `pnpm verify:mobile` exercises disposable accounts on a dev server; physical phone/native audio remains separate.

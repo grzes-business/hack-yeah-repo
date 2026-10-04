@@ -8,7 +8,7 @@ const number=(value:number|null)=>value===null?"Not defined":new Intl.NumberForm
 const label=(value:string)=>value.toLowerCase().replaceAll("_"," ");
 export function AnalyticsPanel(){
  const {session,profile}=useHealthSession();
- if(!session||!profile)return <section className="card"><h2>Start a private demo session</h2><p>Your evidence uses only your session’s recorded history.</p></section>;
+ if(!session||!profile)return <section className="card card-body bg-base-100 border border-base-300"><h2>Start a private demo session</h2><p>Your evidence uses only your session’s recorded history.</p></section>;
  return <AnalyticsInspector key={`${session.user.id}:${profile.time_zone}`} zone={profile.time_zone}/>;
 }
 function AnalyticsInspector({zone}:{zone:string}){
@@ -39,8 +39,8 @@ function AnalyticsInspector({zone}:{zone:string}){
  }
  const current=loaded?.key===key?loaded:null,report=current?.report;
  return <>
-  <section className="card"><h2>Analyze recorded history</h2><p>Compare the selected day with your history and evaluate four predefined relationships. Analysis rebuilds the required daily observations automatically.</p>
-   <div className="voice-actions"><label>Selected day<input type="date" value={date} disabled={busy} onChange={event=>setDate(event.target.value)}/></label><label>History<select value={scope} disabled={busy} onChange={event=>setScope(event.target.value as FeatureScope)}><option value="personal">Personal observations</option><option value="demo">Synthetic demonstration</option></select></label><button disabled={busy||!date} onClick={()=>void analyze()}>{busy?"Analyzing…":"Analyze history"}</button></div>
+  <section className="card card-body bg-base-100 border border-base-300"><h2>Analyze recorded history</h2><p>Compare the selected day with your history and evaluate four predefined relationships. Analysis rebuilds the required daily observations automatically.</p>
+   <div className="voice-actions"><label>Selected day<input className="input w-full" type="date" value={date} disabled={busy} onChange={event=>setDate(event.target.value)}/></label><label>History<select className="select w-full" value={scope} disabled={busy} onChange={event=>setScope(event.target.value as FeatureScope)}><option value="personal">Personal observations</option><option value="demo">Synthetic demonstration</option></select></label><button className="btn btn-primary" disabled={busy||!date} onClick={()=>void analyze()}>{busy?"Analyzing…":"Analyze history"}</button></div>
    <p className="small">{zone} · 28-day baselines · 42-day associations · selected day excluded from both historical windows.</p>
    {scope==="demo"&&<p><strong>Synthetic demonstration data. These results do not describe your health.</strong> Load sample history on Today first.</p>}
    {current?.error&&<p role="alert">{current.error}</p>}
@@ -48,10 +48,10 @@ function AnalyticsInspector({zone}:{zone:string}){
    {!current&&!busy&&<p role="status">Loading current analysis…</p>}
   </section>
   {report&&<>
-   <section className="card"><h2>Compared with your baseline</h2><p>{report.date}: {report.anomalies.length?`${report.anomalies.length} recorded measures meet the unusual-value criteria.`:"No unusual value was identified under the current rules. Missing data or a flat baseline can prevent classification."}</p>
+   <section className="card card-body bg-base-100 border border-base-300"><h2>Compared with your baseline</h2><p>{report.date}: {report.anomalies.length?`${report.anomalies.length} recorded measures meet the unusual-value criteria.`:"No unusual value was identified under the current rules. Missing data or a flat baseline can prevent classification."}</p>
     <ul>{report.baselines.map(baseline=><li key={baseline.feature}><strong>{FeatureRegistry[baseline.feature].label}</strong>: current {number(baseline.currentValue)} · historical median {number(baseline.median)} {FeatureRegistry[baseline.feature].unit} · {baseline.sampleSize} known historical days. {report.anomalies.find(a=>a.metric===baseline.feature)?.classification.replaceAll("_"," ")} {baseline.limitations.join(" ")}</li>)}</ul>
    </section>
-   <section className="card"><h2>Relationships in recorded history</h2>{report.relationships.map(result=>{
+   <section className="card card-body bg-base-100 border border-base-300"><h2>Relationships in recorded history</h2>{report.relationships.map(result=>{
     const definition=RelationshipRegistry[result.relationshipId];
     return <article key={result.relationshipId}><h3>{FeatureRegistry[definition.factor].label} → {FeatureRegistry[definition.outcome].label}</h3><p><strong>{label(result.evidence)}</strong> · {result.sampleSize} eligible pairs · {result.period.from} to {result.period.to} · {definition.lagDays?"factor on the previous day":"same-day factor"}</p>
      {result.effect?.kind==="spearman"&&<p>Rank correlation: {number(result.effect.rho)}. A positive value means the recorded variables tended to rise together; a negative value means they tended to move in opposite directions.</p>}
@@ -59,7 +59,7 @@ function AnalyticsInspector({zone}:{zone:string}){
      <details><summary>Dates and limitations</summary><p>{result.pairedOutcomeDates.join(", ")||"No eligible pairs."}</p><ul>{result.limitations.map(line=><li key={line}>{line}</li>)}</ul></details>
     </article>;
    })}</section>
-   <section className="card"><h2>Interpretation limits</h2><ul>{report.limitations.map(line=><li key={line}>{line}</li>)}</ul><p className="small">Policy: {report.analysisVersion}. Generation: {report.inputGeneration}. Updates to observations invalidate these results.</p></section>
+   <section className="card card-body bg-base-100 border border-base-300"><h2>Interpretation limits</h2><ul>{report.limitations.map(line=><li key={line}>{line}</li>)}</ul><p className="small">Policy: {report.analysisVersion}. Generation: {report.inputGeneration}. Updates to observations invalidate these results.</p></section>
   </>}
  </>;
 }

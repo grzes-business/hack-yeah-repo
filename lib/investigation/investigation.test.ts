@@ -8,6 +8,7 @@ import { buildEvidenceBundle } from "./bundle";
 import { InvestigationInputSchema } from "./contracts";
 import { evidenceFacts, orderEvidenceFacts } from "./facts";
 import { explainEvidence } from "./explain";
+import { investigationSpeech } from "./speech";
 import { freshInvestigationReceipt } from "./receipt";
 import { VoiceIntentSchema } from "../conversation/controller-contracts";
 function fixture(known=true){
@@ -70,4 +71,13 @@ test("cached voice investigations cannot replay as current after generation/zone
   const stale=freshInvestigationReceipt(receipt,state);assert.equal(stale.investigation,undefined);assert.match(stale.reply!,/no longer current/);
  }
  assert.equal(VoiceIntentSchema.safeParse({kind:"investigate",language:"en",investigationOutcome:"energy",unsupportedMetric:null,query:{kind:"today",from:null,to:null,type:null,includeDemo:false}}).success,true);
+});
+
+test("spoken investigations select validated facts and keep the question within a short reply",async()=>{
+ const {report,context}=fixture(false),bundle=buildEvidenceBundle(report,"hrv",context);
+ const explanation=await explainEvidence(bundle,"personal","en",async()=>{throw new Error("offline");});
+ const reply=investigationSpeech({mode:"investigate",scope:"personal",inputGeneration:"4",bundle,explanation},"Did you drink alcohol yesterday?");
+ assert.ok(reply.length<900);assert.ok(reply.endsWith("Did you drink alcohol yesterday?"));assert.match(reply,/do not establish a cause/);
+ assert.ok(reply.includes(explanation.facts.find(f=>f.id==="current")!.text));
+ assert.ok(!reply.includes(explanation.facts.find(f=>f.id.startsWith("context:"))!.text));
 });

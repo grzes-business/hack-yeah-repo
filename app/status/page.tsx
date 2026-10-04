@@ -31,15 +31,15 @@ export default function Home() {
         <p className="lede">Edit app/page.tsx to start building.</p>
       </header>
 
-      <section className="card" aria-labelledby="deployment-heading">
+      <section className="card card-body bg-base-100 border border-base-300" aria-labelledby="deployment-heading">
         <h2 id="deployment-heading">Deployment</h2>
-        <span className={`badge badge-${environment}`}>{name}</span>
+        <span className={`badge badge-soft ${environment==="local"?"badge-warning":"badge-success"}`}>{name}</span>
         <p>{description}</p>
       </section>
 
-      <section className="card" aria-labelledby="supabase-heading">
+      <section className="card card-body bg-base-100 border border-base-300" aria-labelledby="supabase-heading">
         <h2 id="supabase-heading">Supabase</h2>
-        <span className={`badge ${supabaseConfigured ? "badge-ok" : "badge-muted"}`}>
+        <span className={`badge ${supabaseConfigured ? "badge-soft badge-success" : "badge-ghost"}`}>
           {supabaseConfigured ? "Configured" : "Not configured"}
         </span>
         <p>

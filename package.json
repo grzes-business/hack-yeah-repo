@@ -12,9 +12,16 @@
     "verify:hosted": "pnpm test && node --env-file=.env.local scripts/verify-hosted.mjs",
     "verify:voice": "pnpm test && node --env-file=.env.local scripts/verify-voice.mjs",
     "verify:investigation": "pnpm test && node --env-file=.env.local scripts/verify-investigation.mjs",
-    "verify:questions": "pnpm test && node --env-file=.env.local scripts/verify-questions.mjs"
+    "verify:mobile": "pnpm test && node --env-file=.env.local scripts/verify-mobile.mjs",
+    "verify:questions": "pnpm test && node --env-file=.env.local scripts/verify-questions.mjs",
+    "cap:sync": "cap sync ios",
+    "cap:open": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
+    "@capgo/capacitor-health": "8.11.4",
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.8",
     "react": "19.2.8",
@@ -22,11 +29,15 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.2",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "daisyui": "^5.7.47",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   }
 }

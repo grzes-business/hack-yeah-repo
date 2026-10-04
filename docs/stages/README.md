@@ -28,9 +28,9 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 7 | [Deterministic analytics](stage-07-deterministic-analytics.md) | Implemented; acceptance pending |
 | 8 | [Evidence-backed investigation and explanation](stage-08-evidence-investigation.md) | Implemented; automatic checks recorded in guide |
 | 9 | [Missing evidence and active sensing](stage-09-missing-evidence-loop.md) | Implemented; manual voice/UI review pending |
-| 10 | [Evidence-first product UI](stage-10-evidence-ui.md) | Planned; umbrella for 10A/10B |
-| 10A | [Mobile product design](stage-10a-mobile-product-design.md) | Planned; design may start before Stages 5–9 finish |
-| 10B | [Mobile UI implementation](stage-10b-mobile-ui-implementation.md) | Planned; complete before Capacitor |
+| 10 | [Evidence-first product UI](stage-10-evidence-ui.md) | Done — Accepted as done by the project owner 2026-10-04; voice-agent fixes deferred until the presentation base is ready |
+| 10A | [Mobile product design](stage-10a-mobile-product-design.md) | Done — accepted with Stage 10 |
+| 10B | [Mobile UI implementation](stage-10b-mobile-ui-implementation.md) | Done — accepted with Stage 10; open items in MOBILE-UI |
 | 11 | [Capacitor shell](stage-11-capacitor-shell.md) | Planned |
 | 12 | [Apple Health source adapter](stage-12-healthkit-adapter.md) | Planned |
 | 13 | [Real-data hardening](stage-13-real-data-hardening.md) | Planned |

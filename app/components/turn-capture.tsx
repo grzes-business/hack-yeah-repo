@@ -6,7 +6,7 @@ import { formatObservation } from "@/lib/capture/display";
 import { SubjectiveEventRegistry } from "@/lib/domain";
 import type { ConversationTurn } from "@/lib/db/records";
 
-export function TurnCapture({ turn, saved, autoReady, record, onRecord, managed=false }: { managed?:boolean; turn:ConversationTurn; saved:boolean; autoReady:boolean; record:CaptureRecord|null; onRecord:(record:CaptureRecord)=>void }) {
+export function TurnCapture({ turn, saved, autoReady, record, onRecord, managed=false, voiceOnly=false }: { managed?:boolean; voiceOnly?:boolean; turn:ConversationTurn; saved:boolean; autoReady:boolean; record:CaptureRecord|null; onRecord:(record:CaptureRecord)=>void }) {
  const {session,refreshHistory}=useHealthSession();
  const [busy,setBusy]=useState(false); const [error,setError]=useState<string|null>(null); const [text,setText]=useState("");
  const [editing,setEditing]=useState(false);
@@ -44,13 +44,13 @@ export function TurnCapture({ turn, saved, autoReady, record, onRecord, managed=
   {record?.acceptedResult?.status==="captured" && <><ul>{record.acceptedResult.events.map(event=><li key={event.id}><strong>{SubjectiveEventRegistry[event.type].label}</strong>: {formatObservation(event)} <span className="small">· {new Intl.DateTimeFormat(undefined,{timeZone:event.timeZone,dateStyle:"medium"}).format(new Date(event.occurredAt))} ({event.timeZone})</span></li>)}</ul>{record.result?.status!=="captured" && <p className="small">Earlier saved observations remain until a complete correction is accepted.</p>}</>}
   {error && <p role="alert">{error}</p>}
   <div className="voice-actions">
-   {(!record || record.pending || error) && <button disabled={!saved||busy} onClick={()=>void capture()}>Retry capture</button>}
-   {record && <button disabled={busy||record.pending} onClick={()=>setEditing(v=>!v)}>{record.result?.status==="needs_clarification"?"Clarify this observation":"Correct this observation"}</button>}
+   {(!record || record.pending || error) && <button className="btn btn-primary" disabled={!saved||busy} onClick={()=>void capture()}>Retry capture</button>}
+   {record && !voiceOnly && <button className="btn btn-primary" disabled={busy||record.pending} onClick={()=>setEditing(v=>!v)}>{record.result?.status==="needs_clarification"?"Clarify this observation":"Correct this observation"}</button>}
   </div>
   {editing && <form onSubmit={event=>{event.preventDefault();void capture(true);}}>
-   <label>Clarification or correction<textarea maxLength={2000} value={text} onChange={event=>setText(event.target.value)} required disabled={busy}/></label>
+   <label>Clarification or correction<textarea className="textarea w-full" maxLength={2000} value={text} onChange={event=>setText(event.target.value)} required disabled={busy}/></label>
    <p className="small">Clarify the original statement. “Yesterday” refers to the day before that original turn. A complete correction replaces its earlier observations; the transcript and capture revisions remain traceable.</p>
-   <button disabled={busy||!text.trim()} type="submit">Save clarification/correction</button>
+   <button className="btn btn-primary" disabled={busy||!text.trim()} type="submit">Save clarification/correction</button>
   </form>}
  </div>;
 }

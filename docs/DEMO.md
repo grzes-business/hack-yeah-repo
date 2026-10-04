@@ -50,3 +50,7 @@ Load sample history on Today. On Evidence choose HRV, the last completed sample 
 ## Stage 9 reproducible loop
 
 Load default samples in a fresh session, select HRV / **2026-09-20** / Synthetic demonstration in Evidence, and ask about missing context. Alcohol on **2026-09-19** is deliberately omitted. Answer **No.**; show false becoming known while historical effects remain unchanged. Answers are visibly simulated and isolated from personal records. See the [Stage 9 acceptance validation](stages/stage-09-missing-evidence-loop.md).
+
+## Stage 10 mobile walkthrough
+
+Open Talk and start the private session if needed. Start voice and hold/release to report. Use the morning card’s spoken-check-in action (dev test window/reset stay in its expandable controls). Today shows real derived values; synthetic samples are loaded from its expandable settings and remain explicitly separated. Choose date/source/outcome in Today or Insights and Explore by voice: the selected question opens in Talk. Answer aloud; Insights shows current evidence and actual before/after. History separates sources and exposes the voice correction path. Physical audio remains a separate rehearsal; this path is not proof of native HealthKit connectivity.

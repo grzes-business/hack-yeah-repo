@@ -33,15 +33,15 @@ function Controls({ timeZone }: { timeZone: string }) {
       setMessage(remove ? "Sample removal did not finish. Try again." : "History could not be fully loaded. Some samples may have been saved; load the same history again to finish.");
     } finally { refreshHistory(); setBusy(false); }
   }
-  return <section className="card" aria-labelledby="sample-history-heading">
-    <span className="badge">Synthetic demo</span>
+  return <section className="card card-body bg-base-100 border border-base-300" aria-labelledby="sample-history-heading">
+    <span className="badge badge-soft badge-info">Synthetic demo</span>
     <h2 id="sample-history-heading">Explore 56 days of sample history</h2>
     <p>Try wearable measurements alongside sample reports of energy, stress, and habits. These are fictional observations, with deliberate gaps. They are not your health data.</p>
     <label htmlFor="history-end-date">Last day of sample history</label>
-    <input id="history-end-date" type="date" value={endDate} max={latestDate} required disabled={busy} onChange={event => setEndDate(event.target.value)} />
+    <input className="input w-full" id="history-end-date" type="date" value={endDate} max={latestDate} required disabled={busy} onChange={event => setEndDate(event.target.value)} />
     <p className="small">Time zone: {timeZone}. Repeated loads are safe. Removal clears this demo’s samples for this time zone.</p>
-    <div className="button-row"><button onClick={() => run(false)} disabled={busy || !endDate || endDate > latestDate}>{busy ? "Working…" : "Load sample history"}</button><button className="secondary-button" onClick={() => run(true)} disabled={busy || !endDate || endDate > latestDate}>Remove sample history</button></div>
+    <div className="button-row"><button className="btn btn-primary" onClick={() => run(false)} disabled={busy || !endDate || endDate > latestDate}>{busy ? "Working…" : "Load sample history"}</button><button className="btn btn-soft" onClick={() => run(true)} disabled={busy || !endDate || endDate > latestDate}>Remove sample history</button></div>
     {message && <p role={failed ? "alert" : "status"}>{message}</p>}
-    <Link className="text-link" href="/timeline">Open timeline →</Link>
+    <Link className="link link-primary text-link" href="/timeline">Open timeline →</Link>
   </section>;
 }

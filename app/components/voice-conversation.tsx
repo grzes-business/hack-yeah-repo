@@ -1,7 +1,10 @@
 "use client";
 
+import { MicrophoneIcon, WaveformIcon, StopIcon, MicrophoneSlashIcon, SunHorizonIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { useHealthSession } from "./session";
+import { useTalkContext } from "./talk-context";
+import type { VoiceContext } from "@/lib/conversation/controller-contracts";
 import { TurnCapture } from "./turn-capture";
 import { CaptureRecordSchema, type CaptureRecord } from "@/lib/capture/contracts";
 import { VoiceTransport, type VoiceInputOptions, type VoiceActivity } from "@/lib/conversation/transport";
@@ -14,6 +17,10 @@ import { ConversationSchema, ConversationTurnSchema, type Conversation, type Con
 export const HEALTH_HISTORY_CHANGED = "health-history-changed";
 type Pending = { kind: "conversation"; value: Conversation } | { kind: "turn"; value: ConversationTurn };
 type Phase = "idle" | "requesting" | "connecting" | "active" | "stopping" | "failed";
+function devWindowHeaders():Record<string,string>{
+ if(process.env.NODE_ENV==="production")return {};
+ try{const value=localStorage.getItem("checkin-dev-window");return value?{"x-checkin-dev-window":value}:{};}catch{return {};}
+}
 const labels: Record<Phase, string> = { idle: "Microphone off", requesting: "Waiting for microphone permission…", connecting: "Connecting voice…", active: "Conversation live", stopping: "Stopping…", failed: "Microphone off · connection ended" };
 
 export function VoiceConversation() {
@@ -23,6 +30,9 @@ export function VoiceConversation() {
 
 function VoiceSession() {
  const { session, repository, refreshHistory } = useHealthSession();
+ const talk=useTalkContext();
+ const contextRef=useRef(talk.context),promptRef=useRef(talk.prompt),announced=useRef(-1);
+ useEffect(()=>{contextRef.current=talk.context;promptRef.current=talk.prompt;},[talk.context,talk.prompt]);
  const owner = session?.user.id;
  const [phase, setPhase] = useState<Phase>("idle");
  const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +46,7 @@ function VoiceSession() {
  const [voiceTarget,setVoiceTarget]=useState<string|null>(null);
  const targetRef=useRef<string|null>(null);
  const voiceEpoch=useRef(0);
- const voiceQueue=useRef<{turn:ConversationTurn;run:number;epoch:number;target:string|null}[]>([]);
+ const voiceQueue=useRef<{turn:ConversationTurn;run:number;epoch:number;target:string|null;context:VoiceContext}[]>([]);
  const voiceQueued=useRef(new Set<string>());
  const processingRef=useRef(false);
  const controllerAbort=useRef<AbortController|null>(null);
@@ -65,7 +75,8 @@ function VoiceSession() {
  const busy = ["requesting", "connecting", "active", "stopping"].includes(phase);
  const storageKey = owner ? `personal-evidence:voice-pending:${owner}` : null;
 
- function chooseTarget(root:string|null){
+ function chooseTarget(root:string|null,manual=false){
+  if(manual){contextRef.current={mode:"report"};talk.select({mode:"report"},undefined,false);}
   targetRef.current=root;setVoiceTarget(root);
   if(owner){try{if(root)sessionStorage.setItem(`personal-evidence:voice-target:${owner}`,root);else sessionStorage.removeItem(`personal-evidence:voice-target:${owner}`);}catch{/* Explicit card selection remains available. */}}
  }
@@ -79,7 +90,7 @@ function VoiceSession() {
     voiceQueue.current.shift();
     const abort=new AbortController();controllerAbort.current=abort;
     try{
-     const response=await fetch("/api/voice/turn",{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`,"Content-Type":"application/json"},body:JSON.stringify({turnId:entry.turn.id,targetRootId:entry.target}),signal:abort.signal});
+     const response=await fetch("/api/voice/turn",{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`,"Content-Type":"application/json",...devWindowHeaders()},body:JSON.stringify({turnId:entry.turn.id,targetRootId:entry.target,context:entry.context}),signal:abort.signal});
      const body=await response.json();if(!response.ok)throw new Error(body.error||"Voice processing failed. Retry this turn.");
      const outcome=VoiceOutcomeSchema.parse(body.outcome);if(outcome.turnId!==entry.turn.id)throw new Error("Voice result mismatch.");
      if(!alive.current||uid.current!==owner)return;
@@ -92,6 +103,16 @@ function VoiceSession() {
        // must not make the next independent intake/negative report a replacement.
        const needsAnswer=outcome.capture.result?.status==="needs_clarification";
        chooseTarget(needsAnswer?outcome.targetRootId:null);
+      }
+      if(outcome.questions?.loop){
+       const loop=outcome.questions.loop;
+       if(loop.question&&!loop.stopped){const next:VoiceContext={mode:"investigate",loopId:loop.id,key:loop.question.key};contextRef.current=next;talk.select(next,loop.question.text,false);}
+       else {contextRef.current={mode:"report"};talk.select({mode:"report"},undefined,false);}
+      }
+      if(outcome.checkin){
+       const state=outcome.checkin as {localDate:string;step:{kind:string;dimension:"energy"|"soreness"|"mood"|"illness";question:string}};
+       if(state.step.kind==="ask"){const next:VoiceContext={mode:"morning_checkin",date:state.localDate,dimension:state.step.dimension};contextRef.current=next;talk.select(next,state.step.question,false);}
+       else {contextRef.current={mode:"report"};talk.select({mode:"report"},undefined,false);}
       }
       if(outcome.reply&&entry.epoch===voiceEpoch.current)transport.current?.say(outcome.reply,entry.turn.id);
      }
@@ -107,7 +128,7 @@ function VoiceSession() {
  }
  function queueVoice(turn:ConversationTurn,run=generation.current,epoch=voiceEpoch.current,target=targetRef.current){
   if(voiceQueued.current.has(turn.id))return;
-  voiceQueued.current.add(turn.id);voiceQueue.current.push({turn,run,epoch,target});void pumpVoice();
+  voiceQueued.current.add(turn.id);voiceQueue.current.push({turn,run,epoch,target,context:contextRef.current});void pumpVoice();
  }
  function publish() {
   if (!alive.current) return;
@@ -222,6 +243,21 @@ function VoiceSession() {
   window.addEventListener("blur",pause);window.addEventListener("focus",resume);document.addEventListener("visibilitychange",onVisibility);
   return()=>{window.removeEventListener("blur",pause);window.removeEventListener("focus",resume);document.removeEventListener("visibilitychange",onVisibility);};
  },[]);
+ useEffect(()=>{
+  if(phase==="active"&&talk.prompt&&announced.current!==talk.request&&!processingRef.current){announced.current=talk.request;transport.current?.say(talk.prompt,`prompt:${talk.request}`);}
+ },[phase,talk.prompt,talk.request,processing]);
+ async function beginMorning(){
+  if(!session||processing)return;
+  try{
+   const devHeaders=devWindowHeaders();
+   const response=await fetch("/api/checkin",{headers:{Authorization:`Bearer ${session.access_token}`,...devHeaders}});
+   const body=await response.json();if(!response.ok)throw new Error(body.error);
+   if(body.checkin.step.kind!=="ask"){setMessage(body.checkin.step.kind==="complete"?"Morning check-in is complete for today.":"Morning check-in is closed. Open its development controls below to change the test window.");return;}
+   const next:VoiceContext={mode:"morning_checkin",date:body.checkin.localDate,dimension:body.checkin.step.dimension};contextRef.current=next;promptRef.current=body.checkin.step.question;
+   chooseTarget(null);talk.select(next,body.checkin.step.question);
+   if(!busy)await start();
+  }catch(failure){setMessage(failure instanceof Error?failure.message:"Morning check-in could not start.");}
+ }
  async function start() {
   if (!session || !repository || !audio.current || transport.current || pending.current.size) return;
   const run = ++generation.current;
@@ -271,47 +307,50 @@ function VoiceSession() {
  const displayed = [...new Map([...turns, ...pendingTurns].map(t => [t.id, t])).values()].sort((a,b) => a.occurredAt.localeCompare(b.occurredAt) || a.id.localeCompare(b.id));
 
  return <>
-  <section className="card" aria-label="Voice conversation">
-   <h2>Tell us about your day</h2>
-   <p>Speak naturally. Your audio is sent to OpenAI for this conversation. Finalized transcripts are saved to your private demo history; audio recordings are not stored by this app.</p>
-   <p className="small">Your saved words are sent to OpenAI to extract predefined observations. Capture status appears below each turn; investigations and dated missing-context questions use the validated application controller.</p>
-   <p role="status">{labels[phase]}{phase==="active"?` · ${processing?"Processing saved speech…":activity==="recording"?"Listening…":activity==="transcribing"?"Transcribing…":activity==="replying"?"Speaking…":voiceInput.mode==="press_to_speak"?"Hold the button to speak":"Listening for speech"}`:""}{muted && phase === "active" ? " · microphone muted" : ""}</p>
-   <div className="voice-actions">
-    <label>Input mode<select value={voiceInput.mode} disabled={busy} onChange={event=>setVoiceInput(v=>({...v,mode:event.target.value as VoiceInputOptions["mode"]}))}><option value="press_to_speak">Press to speak</option><option value="continuous">Continuous listening</option></select></label>
-    <label>Microphone type<select value={voiceInput.microphone} disabled={busy} onChange={event => setVoiceInput(previous => ({ ...previous, microphone:event.target.value as VoiceInputOptions["microphone"] }))}><option value="laptop">Laptop / room microphone</option><option value="headset">Headset / close microphone</option></select></label>
-    <label>Speech detection<select value={voiceInput.sensitivity} disabled={busy} onChange={event => setVoiceInput(previous => ({ ...previous, sensitivity:event.target.value as VoiceInputOptions["sensitivity"] }))}><option value="less_sensitive">Reduce quiet noise triggers</option><option value="normal">Normal · for quieter speech</option></select></label>
-   </div>
-   <p className="small">Choose your microphone before starting. If quiet speech is missed, try Normal. Mute the microphone when you want to pause listening.</p>
-   <div className="voice-actions">
-    <button onClick={() => void start()} disabled={!session || !repository || busy || pendingSnapshot.length > 0 || saving}>Start voice</button>
-    <button onClick={() => { setPhase("stopping"); finish(); }} disabled={!busy}>Stop voice</button>
-    <button onClick={() => { transport.current?.mute(!muted); setMuted(v => !v); }} disabled={phase !== "active"}>{muted ? "Unmute microphone" : "Mute microphone"}</button>
-   </div>
-   {voiceInput.mode==="press_to_speak"&&<button className="speak-button" disabled={phase!=="active"||muted} aria-pressed={activity==="recording"}
-    onPointerDown={event=>{event.preventDefault();event.currentTarget.focus();event.currentTarget.setPointerCapture(event.pointerId);transport.current?.beginSpeech();}}
+  <section id="voice-controls" className="card card-body bg-base-100 border border-base-300 voice-hub" aria-label="Voice conversation">
+   <div className="mode-row"><span className="badge badge-soft badge-primary">{talk.context.mode==="report"?"Personal reporting":talk.context.mode==="morning_checkin"?"Morning check-in":"Investigation answer"}</span>{talk.context.mode!=="report"&&<button className="btn btn-soft" disabled={processing} onClick={()=>{chooseTarget(null);talk.select({mode:"report"});}}>Return to reporting</button>}</div>
+   {talk.prompt&&<p className="current-question"><strong>{talk.prompt}</strong></p>}
+<p className="voice-status" role="status">{labels[phase]}{phase==="active"?` · ${processing?"Processing saved speech…":activity==="recording"?"Listening…":activity==="transcribing"?"Transcribing…":activity==="replying"?"Speaking…":voiceInput.mode==="press_to_speak"?"Hold the button to speak":"Listening for speech"}`:""}{muted && phase === "active" ? " · microphone muted" : ""}</p>
+   {<button className="btn btn-primary btn-circle speak-button" disabled={!session||!repository||phase==="requesting"||phase==="connecting"||muted||saving||pendingSnapshot.length>0} onClick={()=>{if(!busy)void start();}} aria-label={!busy?"Start voice":activity==="recording"?"Release to send":"Hold to speak"} aria-pressed={activity==="recording"}
+    onPointerDown={event=>{event.preventDefault();event.currentTarget.focus();event.currentTarget.setPointerCapture(event.pointerId);if(phase==="active")transport.current?.beginSpeech();}}
     onPointerUp={()=>transport.current?.endSpeech()}
     onPointerCancel={()=>transport.current?.endSpeech(true)} onLostPointerCapture={()=>transport.current?.endSpeech(true)} onBlur={()=>transport.current?.endSpeech(true)}
-    onKeyDown={event=>{if([" ","Enter"].includes(event.key)){event.preventDefault();if(!event.repeat)transport.current?.beginSpeech();}}}
+    onKeyDown={event=>{if([" ","Enter"].includes(event.key)){event.preventDefault();if(!event.repeat){if(phase==="active")transport.current?.beginSpeech();else if(!busy)void start();}}}}
     onKeyUp={event=>{if([" ","Enter"].includes(event.key)){event.preventDefault();transport.current?.endSpeech();}}}
-   >{activity==="recording"?"Release to send":"Hold to speak · or hold Space/Enter"}</button>}
-   {voiceTarget&&<p>Voice follow-up target selected. Your next clear clarification or correction will refer to that report. <button onClick={()=>chooseTarget(null)}>Clear target</button></p>}
-   <audio ref={audio} controls aria-label="Assistant voice playback" />
+   ><span className="mic-symbol" aria-hidden="true">{activity==="recording"?<WaveformIcon size={42} weight="regular"/>:<MicrophoneIcon size={42} weight="regular"/>}</span><span className="mic-label">{!busy?"Start voice":activity==="recording"?"Release to send":voiceInput.mode==="press_to_speak"?"Hold to speak":"Listening"}</span></button>}
+   <p className="mic-hint">{phase==="active"?voiceInput.mode==="press_to_speak"?"Hold to talk. Release to send.":"Speak naturally. Mute to pause.":"Tap the microphone to connect."}</p>
+   <button className="btn btn-soft checkin-shortcut" disabled={!session||processing||phase==="requesting"||phase==="connecting"} onClick={()=>void beginMorning()}><SunHorizonIcon size={20} aria-hidden="true"/> Morning check-in</button>
+   <div className="voice-actions call-controls">
+    <button onClick={() => { setPhase("stopping"); finish(); }} disabled={!busy} className="btn btn-soft"> <StopIcon size={18} aria-hidden="true"/> End call</button>
+    <button onClick={() => { transport.current?.mute(!muted); setMuted(v => !v); }} className="btn btn-soft" disabled={phase !== "active"}><MicrophoneSlashIcon size={18} aria-hidden="true"/>{muted ? "Unmute microphone" : "Mute microphone"}</button>
+   </div>
+   <details className="voice-settings privacy-detail"><summary>Privacy and data use</summary><p>Your audio is sent to OpenAI. Finalized transcripts are saved privately; this app does not store audio recordings.</p><p className="small">Your saved words are sent to OpenAI to extract predefined observations. Capture status appears below each turn; investigations and dated missing-context questions use the validated application controller.</p>
+   </details>
+   <details className="voice-settings"><summary>Microphone settings</summary><div className="voice-actions">
+    <label>Input mode<select className="select w-full" value={voiceInput.mode} disabled={busy} onChange={event=>setVoiceInput(v=>({...v,mode:event.target.value as VoiceInputOptions["mode"]}))}><option value="press_to_speak">Press to speak</option><option value="continuous">Continuous listening</option></select></label>
+    <label>Microphone type<select className="select w-full" value={voiceInput.microphone} disabled={busy} onChange={event => setVoiceInput(previous => ({ ...previous, microphone:event.target.value as VoiceInputOptions["microphone"] }))}><option value="laptop">Laptop / room microphone</option><option value="headset">Headset / close microphone</option></select></label>
+    <label>Speech detection<select className="select w-full" value={voiceInput.sensitivity} disabled={busy} onChange={event => setVoiceInput(previous => ({ ...previous, sensitivity:event.target.value as VoiceInputOptions["sensitivity"] }))}><option value="less_sensitive">Reduce quiet noise triggers</option><option value="normal">Normal · for quieter speech</option></select></label>
+   </div>
+   <p className="small">If quiet speech is missed, try Normal. Choose your microphone before starting.</p></details>
+   {voiceTarget&&<p>Voice follow-up target selected. Your next clear clarification or correction will refer to that report. <button className="btn btn-primary" onClick={()=>chooseTarget(null)}>Clear target</button></p>}
+   <details className="playback-detail"><summary>Playback controls</summary><audio ref={audio} controls aria-label="Assistant voice playback" /></details>
    {!session && <p>Start a private demo session above to use voice.</p>}
    {message && <p role="alert">{message}</p>}
-   <p role="status">{saving ? "Saving transcript…" : pendingSnapshot.length ? `${pendingSnapshot.length} changes not saved` : "No pending transcript saves"}</p>
-   {pendingSnapshot.length > 0 && <button onClick={() => void flush()} disabled={saving}>Retry saving transcript</button>}
-   <p className="small">Stop ends the current call. Start opens a new conversation. Unfinished speech is not saved; finalized assistant text can include words generated before an interruption, so it may differ from what you heard.</p>
+   {(saving||pendingSnapshot.length>0)&&<p role="status">{saving ? "Saving transcript…" : pendingSnapshot.length ? `${pendingSnapshot.length} changes not saved` : "No pending transcript saves"}</p>}
+   {pendingSnapshot.length > 0 && <button className="btn btn-primary" onClick={() => void flush()} disabled={saving}>Retry saving transcript</button>}
+
   </section>
-  <section className="card" aria-label="Saved conversations">
+  {displayed.filter(t=>t.role==="user").slice(-1).map(turn=><section key={turn.id} className="card card-body bg-base-100 border border-base-300 latest-turn"><h2>Latest conversation</h2><p><strong>You:</strong> {turn.transcript}</p><p role="status">{voiceErrors[turn.id]??voiceOutcomes[turn.id]?.reply??(pendingSnapshot.some(v=>v.kind==="turn"&&v.value.id===turn.id)?"Saving transcript…":"Processing your saved words…")}</p>{voiceErrors[turn.id]&&<button className="btn btn-primary" disabled={processing} onClick={()=>queueVoice(turn)}>Retry processing</button>}{captures[turn.id]?.acceptedResult?.status==="captured"&&<span className="badge badge-soft badge-success">Observations confirmed</span>}{captures[turn.id]&&!captures[turn.id].pending&&<button className="btn btn-soft" disabled={processing} onClick={()=>chooseTarget(turn.id,true)}>Correct this report by voice</button>}</section>)}
+  <details className="card card-body bg-base-100 border border-base-300 transcript-detail"><summary>Transcripts, saved reports and recovery</summary><section aria-label="Saved conversations">
    <h2>Conversation history</h2>
-   <label>Choose a conversation<select value={selected ?? ""} disabled={busy} onChange={event => { setTurns([]); setSelected(event.target.value || null); }}><option value="">Select history</option>{conversations.map(c => <option key={c.id} value={c.id}>{new Date(c.startedAt).toLocaleString()} {c.endedAt ? "" : "· end not recorded"}</option>)}</select></label>
+   <label>Choose a conversation<select className="select w-full" value={selected ?? ""} disabled={busy} onChange={event => { setTurns([]); setSelected(event.target.value || null); }}><option value="">Select history</option>{conversations.map(c => <option key={c.id} value={c.id}>{new Date(c.startedAt).toLocaleString()} {c.endedAt ? "" : "· end not recorded"}</option>)}</select></label>
    {historyError && <p role="alert">{historyError}</p>}
    {captureHistoryError && <p role="alert">{captureHistoryError}</p>}
-   <button onClick={() => setHistoryRevision(v => v + 1)} disabled={busy}>Retry history</button>
+   <button className="btn btn-primary" onClick={() => setHistoryRevision(v => v + 1)} disabled={busy}>Retry history</button>
    <p className="small">History shows up to 100 conversations and 500 turns per conversation. Unsaved recovery copies stay in this tab’s session storage when available; closing the tab can lose them.</p>
    {!displayed.length && <p>No finalized transcript to show yet.</p>}
-   <ol className="voice-transcript">{displayed.map(turn => <li key={turn.id}><strong>{turn.role === "user" ? "You" : "Assistant"}</strong><p>{turn.transcript}</p><span className="small">{new Date(turn.occurredAt).toLocaleTimeString()} · {pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id) ? "Not saved" : "Saved"}</span>{turn.role === "user" && <><div className="voice-result">{voiceOutcomes[turn.id]?.reply&&<p><strong>App feedback for this turn:</strong> {voiceOutcomes[turn.id].reply}</p>}{voiceOutcomes[turn.id]?.disposition==="ignore"&&<p className="small">No reply or observation: non-report input.</p>}{voiceOutcomes[turn.id]?.disposition==="followup"&&<p className="small">This turn was applied to the selected original report.</p>}{voiceErrors[turn.id]&&<p role="alert">{voiceErrors[turn.id]}</p>}{!turn.id.startsWith("capture:")&&!turn.id.startsWith("demo:")&&voiceHistoryFor===selected&&(!voiceOutcomes[turn.id]||voiceErrors[turn.id])&&<button disabled={processing||pendingSnapshot.some(v=>v.kind==="turn"&&v.value.id===turn.id)} onClick={()=>queueVoice(turn)}>Process / retry this saved turn</button>}{captures[turn.id]&&!captures[turn.id].pending&&<button onClick={()=>chooseTarget(turn.id)} disabled={processing}>Use this report for voice clarification / correction</button>}{voiceOutcomes[turn.id]?.retrieval&&<ul>{voiceOutcomes[turn.id].retrieval!.events.map(e=><li key={e.id}>{new Intl.DateTimeFormat(undefined,{timeZone:voiceOutcomes[turn.id].retrieval!.timeZone,dateStyle:"medium"}).format(new Date(e.occurredAt))}: {observationText(e,"en")} · {e.id.startsWith("demo:")?"Synthetic demo":"Conversation report"}</li>)}</ul>}</div>{voiceOutcomes[turn.id]?.questions?.loop?.question&&<p><strong>Selected context question:</strong> {voiceOutcomes[turn.id].questions!.loop!.question!.text} · <a href="/evidence">Open the current question in Evidence</a></p>}{voiceOutcomes[turn.id]?.investigation&&<details><summary>Investigation evidence and limits</summary><p>Evidence snapshot for {voiceOutcomes[turn.id].investigation!.bundle.dailyFeatures.date}. Historical associations do not prove a cause.</p><ul>{voiceOutcomes[turn.id].investigation!.explanation.facts.map(fact=><li key={fact.id}>{fact.text}</li>)}</ul><a href="/evidence">Open Evidence</a></details>}{voiceOutcomes[turn.id]?.questionAnswer?<p className="small">This answer was processed through the missing-context pipeline. See Evidence and Timeline for its confirmed status.</p>:<TurnCapture managed turn={turn} saved={!pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id)} autoReady={false} record={captures[turn.id] ?? null} onRecord={record => setCaptures(previous => ({ ...previous, [record.rootTurnId]: record }))} />}</>}</li>)}</ol>
+   <ol className="voice-transcript">{displayed.map(turn => <li key={turn.id}><strong>{turn.role === "user" ? "You" : "Assistant"}</strong><p>{turn.transcript}</p><span className="small">{new Date(turn.occurredAt).toLocaleTimeString()} · {pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id) ? "Not saved" : "Saved"}</span>{turn.role === "user" && <><div className="voice-result">{voiceOutcomes[turn.id]?.reply&&<p><strong>App feedback for this turn:</strong> {voiceOutcomes[turn.id].reply}</p>}{voiceOutcomes[turn.id]?.disposition==="ignore"&&<p className="small">No reply or observation: non-report input.</p>}{voiceOutcomes[turn.id]?.disposition==="followup"&&<p className="small">This turn was applied to the selected original report.</p>}{voiceErrors[turn.id]&&<p role="alert">{voiceErrors[turn.id]}</p>}{!turn.id.startsWith("capture:")&&!turn.id.startsWith("demo:")&&voiceHistoryFor===selected&&(!voiceOutcomes[turn.id]||voiceErrors[turn.id])&&<button className="btn btn-primary" disabled={processing||pendingSnapshot.some(v=>v.kind==="turn"&&v.value.id===turn.id)} onClick={()=>queueVoice(turn)}>Process / retry this saved turn</button>}{captures[turn.id]&&!captures[turn.id].pending&&<button className="btn btn-primary" onClick={()=>chooseTarget(turn.id,true)} disabled={processing}>Use this report for voice clarification / correction</button>}{voiceOutcomes[turn.id]?.retrieval&&<ul>{voiceOutcomes[turn.id].retrieval!.events.map(e=><li key={e.id}>{new Intl.DateTimeFormat(undefined,{timeZone:voiceOutcomes[turn.id].retrieval!.timeZone,dateStyle:"medium"}).format(new Date(e.occurredAt))}: {observationText(e,"en")} · {e.id.startsWith("demo:")?"Synthetic demo":"Conversation report"}</li>)}</ul>}</div>{voiceOutcomes[turn.id]?.questions?.loop?.question&&<p><strong>Selected context question:</strong> {voiceOutcomes[turn.id].questions!.loop!.question!.text} · <a href="/evidence">Open the current question in Evidence</a></p>}{voiceOutcomes[turn.id]?.investigation&&<details><summary>Investigation evidence and limits</summary><p>Evidence snapshot for {voiceOutcomes[turn.id].investigation!.bundle.dailyFeatures.date}. Historical associations do not prove a cause.</p><ul>{voiceOutcomes[turn.id].investigation!.explanation.facts.map(fact=><li key={fact.id}>{fact.text}</li>)}</ul><a href="/evidence">Open Evidence</a></details>}{voiceOutcomes[turn.id]?.questionAnswer?<p className="small">This answer was processed through the missing-context pipeline. See Evidence and Timeline for its confirmed status.</p>:<TurnCapture managed voiceOnly turn={turn} saved={!pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id)} autoReady={false} record={captures[turn.id] ?? null} onRecord={record => setCaptures(previous => ({ ...previous, [record.rootTurnId]: record }))} />}</>}</li>)}</ol>
    {Object.entries(drafts).map(([key, draft]) => <p key={key} className="voice-draft"><strong>{draft.role === "user" ? "You" : "Assistant"} · live, not saved:</strong> {draft.text}</p>)}
-  </section>
+  </section></details>
  </>;
 }

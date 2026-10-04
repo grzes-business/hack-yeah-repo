@@ -49,8 +49,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 }
 export function SessionPanel() {
  const { repository, session, profile, loading, busy, error, start, retry } = useHealthSession();
- return <section className="card session-panel" aria-label="Demo session">
-  {!repository ? <><h2>Demo setup needed</h2><p>The app is available to explore. Add the Supabase connection to start a private demo session.</p></> : loading ? <p role="status">Restoring your session…</p> : session ? <><span className="badge badge-ok">Private session</span><p>{profile ? `Welcome, ${profile.display_name}. Your time zone is ${profile.time_zone}.` : "Preparing your profile…"}</p></> : <><h2>Start with your own history</h2><p>Create a private demo session with one click. No email or password needed.</p><button onClick={start} disabled={busy}>{busy ? "Starting…" : "Start demo"}</button><p className="small">This session stays in this browser. Clearing browser data loses access; use sample information for the demo.</p></>}
-  {error && <div role="alert"><p>{error}</p><button onClick={retry} disabled={busy}>Retry connection</button></div>}
+ return <section className={`card card-body bg-base-100 border border-base-300 session-panel ${session&&profile&&!error?"session-ready":""}`} aria-label="Demo session">
+  {!repository ? <><h2>Demo setup needed</h2><p>The app is available to explore. Add the Supabase connection to start a private demo session.</p></> : loading ? <p role="status">Restoring your session…</p> : session ? <><span className="badge badge-soft badge-success">Private session</span><p>{profile ? `Welcome, ${profile.display_name}. Your time zone is ${profile.time_zone}.` : "Preparing your profile…"}</p></> : <><h2>Start with your own history</h2><p>Create a private demo session with one click. No email or password needed.</p><button className="btn btn-primary" onClick={start} disabled={busy}>{busy ? "Starting…" : "Start demo"}</button><p className="small">This session stays in this browser. Clearing browser data loses access; use sample information for the demo.</p></>}
+  {error && <div role="alert"><p>{error}</p><button className="btn btn-primary" onClick={retry} disabled={busy}>Retry connection</button></div>}
  </section>;
 }
