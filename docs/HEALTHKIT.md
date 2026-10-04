@@ -44,7 +44,7 @@ A Capacitor plugin object is a Proxy that answers every property, including `the
 | --- | --- | --- |
 | `hrv` | `heartRateVariabilitySDNN` samples | ms, one sample per HealthKit object (SDNN only) |
 | `resting_hr` | `restingHeartRate` samples | bpm |
-| `sleep_duration`, `sleep_start`, `sleep_end` | `sleepAnalysis` segments | Asleep states only (unspecified/core/deep/REM; never in-bed/awake) grouped per source into sessions with gaps ≤ 90 min; duration = union of asleep minutes |
+| `sleep_duration`, `sleep_start`, `sleep_end` | `sleepAnalysis` segments | Asleep states (unspecified/core/deep/REM) grouped per source into sessions with gaps ≤ 90 min; duration = union of asleep minutes. Nights with **no asleep records from any source** (iPhone-only users) use in-bed sessions instead; awake is never counted |
 | `steps` | `HKStatisticsCollectionQuery`, day buckets | Daily total (HealthKit de-duplicates iPhone + Watch); today's bucket ends at "now" |
 | `active_energy` | same, `activeEnergyBurned` | kcal daily total |
 | `workout_duration` | workouts | minutes per workout |
@@ -76,6 +76,7 @@ Policies:
 | C5 iPhone + Watch sleep | overlapping sessions | 480 min, not summed | Pass |
 | C6 unexpected unit | HRV in seconds | metric fails, nothing stored | Pass |
 | C7 empty/repeated sync | no data; same window twice | nothing written or deleted; same IDs | Pass |
+| C8 iPhone-only night | 30 min in bed, no stages; plus a Watch night with in-bed | 30 min; Watch night stays 480 | Pass |
 | Real device | owner's iPhone, Apple Health, 2026-10-04 | permission sheet, sync completes, records visible in History | Connected by owner; per-metric counts not recorded |
 | Time-zone travel, device replacement, Health deletions | — | — | **Not tested** |
 

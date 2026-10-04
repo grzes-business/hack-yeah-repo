@@ -51,6 +51,7 @@ const SLEEP_SESSION_GAP_MS = 90 * 60000;
 /** Sleep reads are widened so sessions crossing the range edge are complete. */
 const SLEEP_READ_MARGIN_MS = 18 * HOUR;
 const ASLEEP_STATES = new Set(["asleep", "light", "deep", "rem"]);
+const IN_BED_STATES = new Set(["inBed"]);
 const READ_LIMIT = 20000;
 /** A HealthKit read that has not answered by then is reported as failed, not left spinning. */
 export const APPLE_READ_TIMEOUT_MS = 45000;
@@ -114,9 +115,17 @@ function unionMinutes(intervals: [number, number][]) {
  * than summing both.
  */
 export function buildSleepSessions(raw: AppleSample[]): SleepSession[] {
+  const asleep = groupSleep(raw, ASLEEP_STATES);
+  // iPhone without a Watch records only "In Bed". Such nights would otherwise be invisible, so in-bed
+  // sessions count when no source recorded asleep stages overlapping them (Stage 13 source policy).
+  const inBed = groupSleep(raw, IN_BED_STATES).filter(b => !asleep.some(a => a.start < b.end && b.start < a.end));
+  return dedupeOverlapping([...asleep, ...inBed]);
+}
+
+function groupSleep(raw: AppleSample[], states: Set<string>): SleepSession[] {
   const bySource = new Map<string, AppleSample[]>();
   for (const s of uniqueByPlatformId(raw)) {
-    if (!s.sleepState || !ASLEEP_STATES.has(s.sleepState) || !s.platformId) continue;
+    if (!s.sleepState || !states.has(s.sleepState) || !s.platformId) continue;
     const source = s.sourceId ?? s.sourceName ?? "unknown";
     bySource.set(source, [...(bySource.get(source) ?? []), s]);
   }
@@ -140,6 +149,10 @@ export function buildSleepSessions(raw: AppleSample[]): SleepSession[] {
     }
     flush();
   }
+  return sessions;
+}
+
+function dedupeOverlapping(sessions: SleepSession[]): SleepSession[] {
   const kept: SleepSession[] = [];
   for (const session of [...sessions].sort((a, b) => b.minutes - a.minutes || a.key.localeCompare(b.key))) {
     if (!kept.some(k => k.source !== session.source && k.start < session.end && session.start < k.end)) kept.push(session);

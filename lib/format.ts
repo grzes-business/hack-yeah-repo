@@ -40,3 +40,14 @@ export function formatDate(date: string, withYear = false) {
 export function formatPeriod(from: string, to: string) {
   return `${formatDate(from, from.slice(0, 4) !== to.slice(0, 4))} – ${formatDate(to, true)}`;
 }
+
+/** Readable daily feature state for change lists ("1,440 steps", "Reported absent", "unknown"). */
+export function formatState(feature: Feature, state: unknown): string {
+  const st = state as { status?: string; value?: unknown } | null;
+  if (!st || st.status !== "known") return "unknown";
+  const v = st.value;
+  if (typeof v === "number") return formatValue(feature, v);
+  if (typeof v === "boolean") return v ? "yes" : "no";
+  if (typeof v === "string") return v;
+  return "reported";
+}

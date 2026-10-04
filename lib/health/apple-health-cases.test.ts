@@ -74,3 +74,13 @@ test("C7 repeated and empty syncs never inflate or erase stored history", async 
   // An empty read is not evidence of deletion: nothing is written and the writer has no delete path.
   assert.deepEqual([result.fetched, result.stored, writes], [0, 0, 0]);
 });
+
+test("C8 iPhone-only nights (in bed, no asleep stages) still count; nights with stages ignore in-bed time", () => {
+  const phoneOnly = normalizeSleep([seg("b", "2026-10-04T04:00:00Z", "2026-10-04T04:30:00Z", "inBed", "phone")], ["sleep_duration"], 0, Date.parse("2026-10-05T00:00:00Z"));
+  assert.equal(phoneOnly[0].value, 30);
+  const both = normalizeSleep([
+    seg("w", "2026-10-01T22:00:00Z", "2026-10-02T06:00:00Z", "light", "watch"),
+    seg("p", "2026-10-01T21:30:00Z", "2026-10-02T06:30:00Z", "inBed", "phone"),
+  ], ["sleep_duration"], 0, Date.parse("2026-10-03T00:00:00Z"));
+  assert.deepEqual(both.map(s => s.value), [480]);
+});

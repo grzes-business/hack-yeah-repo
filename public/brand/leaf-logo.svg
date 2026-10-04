@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- Same as the app mark: linear-gradient(135deg, #C5D86D, #2D6A3E), border-radius: 50% 0 -->
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C5D86D"/>
+      <stop offset="1" stop-color="#2D6A3E"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="#EFE8D8"/>
+  <path d="M232 512 A280 280 0 0 1 512 232 L792 232 L792 512 A280 280 0 0 1 512 792 L232 792 Z" fill="url(#leaf)"/>
+</svg>
