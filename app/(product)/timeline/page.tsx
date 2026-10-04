@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { formatValue } from "@/lib/format";
+import { cached, historyKey } from "@/app/components/data-cache";
 import { formatObservation } from "@/lib/capture/display";
 import { HistoryReset } from "../../components/history-reset";
 import { useEffect, useState } from "react";
@@ -17,7 +18,7 @@ export default function Timeline() {
  useEffect(() => {
   if (!id || !repository) return;
   let active = true;
-  repository.listObservations().then(data => {
+  cached(historyKey(id, historyRevision), () => repository.listObservations()).then(data => {
    const items = [...data.metrics.map(v => ({ key: `metric:${v.id}`, label: MetricRegistry[v.metric].label, at: v.endedAt, value: typeof v.value === "number" ? formatValue(v.metric, v.value) : new Date(v.value).toLocaleTimeString(undefined, { timeZone: profile?.time_zone, timeStyle: "short" }), source: v.source.type === "mock" ? "Synthetic demo sample" : "Apple Health", provenance: [["Record ID", v.id], ["Source ID", v.source.externalId], ["Interval", `${v.startedAt} → ${v.endedAt}`]] as [string, string][], note: undefined as string | undefined })), ...data.events.map(v => ({ key: `event:${v.id}`, label: SubjectiveEventRegistry[v.type].label, at: v.occurredAt, dateOnly: false, timeZone: v.timeZone, value: formatObservation(v), provenance: [["Report ID", v.id], ["Source turn", v.conversationTurnId], ["Captured", v.capturedAt], ["Time zone", v.timeZone]] as [string, string][], note: "Stored occurrence time can be representative if only a date was reported.", source: v.id.startsWith("demo:") ? "Synthetic conversation fixture" : v.id.startsWith("sample:") ? "Sample report (fictional)" : "Voice report" }))].sort((a,b) => Date.parse(b.at) - Date.parse(a.at) || a.key.localeCompare(b.key));
    if (active) setState({ owner: id, items, error: false });
   }).catch(() => { if (active) setState({ owner: id, items: [], error: true }); });

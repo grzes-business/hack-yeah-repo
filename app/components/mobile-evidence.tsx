@@ -3,12 +3,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useHealthSession } from "./session";
+import { cached, evidenceKey, loadEvidence } from "./data-cache";
 import { useTalkContext } from "./talk-context";
-import { AnalyticsReportSchema, type AnalyticsReport } from "@/lib/analytics/contracts";
+import { type AnalyticsReport } from "@/lib/analytics/contracts";
 import { compareEvidence } from "@/lib/questions/select";
 import { answerSummary } from "@/lib/investigation/speech";
 import { LoopViewSchema, type LoopView } from "@/lib/questions/contracts";
-import { DailyFeaturesSchema, FeatureRegistry, RelationshipRegistry, addCalendarDays, getLocalDate, type DailyFeatures, type Feature, type Outcome } from "@/lib/domain";
+import { FeatureRegistry, RelationshipRegistry, addCalendarDays, getLocalDate, type DailyFeatures, type Feature, type Outcome } from "@/lib/domain";
 import type { FeatureScope } from "@/lib/features/contracts";
 import { formatDate, formatParts, formatPeriod, formatState, formatValue } from "@/lib/format";
 const number=(value:number)=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(value);
@@ -74,19 +75,14 @@ function EvidenceView({zone,insights}:{zone:string;insights:boolean}){
   async function load(){
    setBusy(true);setError(null);setDays([]);
    try{
-    const headers={Authorization:`Bearer ${session!.access_token}`};
-    let response=await fetch(`/api/analytics?${new URLSearchParams({date,scope})}`,{headers,signal:abort.signal});
-    let body=await response.json();if(!response.ok)throw new Error(body.error);
-    if(body.needsAnalysis){response=await fetch("/api/analytics",{method:"POST",headers:{...headers,"Content-Type":"application/json"},body:JSON.stringify({date,scope}),signal:abort.signal});body=await response.json();if(!response.ok)throw new Error(body.error);}
-    const report=AnalyticsReportSchema.parse(body.report);
-    if(!abort.signal.aborted)setLoaded({key,report});
-    const trend=await fetch(`/api/features?${new URLSearchParams({from:addCalendarDays(date,-6),to:date,scope})}`,{headers,signal:abort.signal});
-    if(trend.ok){const history=await trend.json();if(!abort.signal.aborted)setDays(history.rows.map((row:unknown)=>DailyFeaturesSchema.parse(row)));}
+    // Shared prefetch cache: opens instantly when the shell already loaded this day/source.
+    const data=await cached(evidenceKey(session!.user.id,date,scope,historyRevision),()=>loadEvidence(session!.access_token,date,scope));
+    if(!abort.signal.aborted){setLoaded({key,report:data.report});setDays(data.days);}
    }catch(failure){if(!abort.signal.aborted)setError(failure instanceof Error?failure.message:"Evidence could not load.");}
    finally{if(!abort.signal.aborted)setBusy(false);}
   }
   void load();return()=>abort.abort();
- },[session,date,scope,key,retry]);
+ },[session,date,scope,key,retry,historyRevision]);
  useEffect(()=>{
   if(!session)return;const abort=new AbortController();
   fetch("/api/questions",{headers:{Authorization:`Bearer ${session.access_token}`},signal:abort.signal}).then(async response=>{if(response.ok){const body=LoopViewSchema.parse(await response.json());if(!abort.signal.aborted)setView(body);}}).catch(()=>{});

@@ -6,6 +6,7 @@ import type { ExperimentEvent, ExperimentPlan, ExperimentStatus } from "@/lib/ex
 import { formatDate, formatPeriod } from "@/lib/format";
 import { useHealthSession } from "./session";
 import { useTalkContext } from "./talk-context";
+import { cached, experimentsKey, loadExperiments, prime } from "./data-cache";
 
 type View = { plan: ExperimentPlan; status: ExperimentStatus; events: ExperimentEvent[]; result: ExperimentResult | null; resultError?: string };
 type Scope = "personal" | "demo";
@@ -38,7 +39,9 @@ export function Experiments() {
   useEffect(() => {
     if (!session) return;
     let active = true;
-    request(session.access_token).then(r => { if (!active) return; if ("error" in r) setError(r.error); else { setError(null); setViews(r.experiments); } });
+    cached(experimentsKey(session.user.id, historyRevision), () => loadExperiments(session.access_token))
+      .then(r => { if (active) { setError(null); setViews(r.experiments as View[]); } })
+      .catch((e: unknown) => { if (active) setError(e instanceof Error ? e.message : "Experiments are unavailable."); });
     return () => { active = false; };
   }, [session, historyRevision]);
 
@@ -46,7 +49,7 @@ export function Experiments() {
     if (!session || busy) return;
     setBusy(true); setError(null);
     const r = await request(session.access_token, body);
-    if ("error" in r) setError(r.error); else setViews(r.experiments);
+    if ("error" in r) setError(r.error); else { setViews(r.experiments); prime(experimentsKey(session.user.id, historyRevision), r); }
     setBusy(false);
   }
   if (!session) return null;
