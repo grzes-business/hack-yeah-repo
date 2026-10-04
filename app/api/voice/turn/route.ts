@@ -1,3 +1,9 @@
+import { compareEvidence } from "@/lib/questions/select";
+import { explicitVoiceDate } from "@/lib/questions/voice-context";
+import { shortQuestionAnswer } from "@/lib/questions/answer";
+import { questionAction, readQuestionLoop, processedQuestionTurn } from "@/lib/questions/server";
+import { freshInvestigationReceipt } from "@/lib/investigation/receipt";
+import { featureWriter, readFeatureGeneration } from "@/lib/features/server";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { authenticatedDatabase, boundedJson, RequestFailure } from "@/lib/db/server";
@@ -11,7 +17,7 @@ import { parseEventRow } from "@/lib/db/ingestion";
 import { POST as captureTurn } from "../../capture/route";
 import type { Json, Row } from "@/lib/db/database.types";
 export const runtime="nodejs";
-export const maxDuration=90;
+export const maxDuration=120;
 const headers={"Cache-Control":"no-store"};
 function claimRefusalMessage(reason: string) {
  if(reason.includes("Completed owned target"))return "The selected report is still saving or has no completed capture. Wait a moment, or clear the follow-up target and try again.";
@@ -48,7 +54,12 @@ export async function POST(request:Request){
   if(claimed.state==="busy")throw new RequestFailure("This turn is still processing. Wait briefly, then retry.",409);
   const job=claimed.job as Row<"voice_turn_runs">;
   if(job.user_id!==owner||job.turn_id!==input.turnId)throw new Error("Voice ownership mismatch");
-  if(claimed.state==="cached")return Response.json({outcome:VoiceOutcomeSchema.parse(job.result)},{headers});
+  if(claimed.state==="cached"){
+   let saved=VoiceOutcomeSchema.parse(job.result);
+   if(saved.questions){const current=await readQuestionLoop(client,owner);if(current.revision!==saved.questions.revision){const {questions:old,...rest}=saved;void old;saved={...rest,reply:"This is a previous question receipt. Open Evidence for the current question and refreshed evidence."};}}
+   const state=saved.investigation?await readFeatureGeneration(featureWriter(),owner):null;
+   return Response.json({outcome:state?freshInvestigationReceipt(saved,state):saved},{headers});
+  }
   release=async()=>{await client.rpc("release_voice_turn",{p_turn:input.turnId,p_token:token});};
   let target:Row<"turn_extractions">|null=null;
   let targetTranscript:string|null=null;
@@ -58,13 +69,20 @@ export async function POST(request:Request){
    if(t.error||!t.data||raw.error||!raw.data)throw new RequestFailure("The selected report is unavailable.",409);
    target=t.data;targetTranscript=raw.data.transcript;
   }
+  const questions=await readQuestionLoop(client,owner);
+  const activeQuestion=!job.target_root_id&&!questions.loop?.stopped?questions.loop?.question:null;
   let intent:z.infer<typeof VoiceIntentSchema>;
-  try {intent=job.plan?VoiceIntentSchema.parse({unsupportedMetric:null,...(job.plan as object)}):await identifyVoiceIntent({transcript:job.transcript,anchorDate:today,target:target?{transcript:targetTranscript,latest:target.result,accepted:target.accepted_result}:null});}
+  try {intent=job.plan?VoiceIntentSchema.parse({unsupportedMetric:null,investigationOutcome:null,...(job.plan as object)}):await identifyVoiceIntent({transcript:job.transcript,anchorDate:today,activeQuestion,target:target?{transcript:targetTranscript,latest:target.result,accepted:target.accepted_result}:null});}
   catch{throw new RequestFailure("I could not understand this turn reliably. No new observations were confirmed. Retry processing.",502);}
   const targetStatus=(target?.result as {status?:string}|null)?.status;
   if(intent.kind==="followup"&&target&&targetStatus!=="needs_clarification"&&!correctionPhrase.test(job.transcript)){
    intent={...intent,kind:"report"};
   }
+  if(!job.plan&&intent.kind==="investigate"){const explicit=explicitVoiceDate(job.transcript);if(explicit)intent={...intent,query:{...intent.query,kind:"date",from:explicit,to:null}};else if(explicit===null)throw new RequestFailure("Please give one valid investigation date as YYYY-MM-DD.",400);}
+  if(!job.plan&&cancelPhrase.test(job.transcript.trim()))intent={...intent,kind:"cancel"};
+  // Selection context does not contaminate command/date interpretation. The app routes meaningful reports/short replies after classification.
+  if(!job.plan&&activeQuestion&&(intent.kind==="report"||intent.kind==="followup"&&!correctionPhrase.test(job.transcript)||shortQuestionAnswer(job.transcript)))intent={...intent,kind:"question_answer"};
+  if(!job.plan&&(intent.kind==="question_answer"||intent.kind==="cancel")&&activeQuestion&&questions.loop)intent={...intent,questionContext:{loopId:questions.loop.id,key:activeQuestion.key}};
   if(!job.plan){
    const planned=await client.rpc("plan_voice_turn",{p_turn:input.turnId,p_token:token,p_plan:intent as unknown as Json});
    if(planned.error)throw new RequestFailure("Processing could not be prepared. No new observations were confirmed. Retry.",503);
@@ -80,6 +98,29 @@ export async function POST(request:Request){
   const untrackedMetric=intent.kind==="retrieve"||intent.kind==="unsupported"?(intent.unsupportedMetric??(intent.kind==="retrieve"?untrackedMetricName(job.transcript):null)):null;
   if(intent.kind==="noise"){outcome.disposition="ignore";}
   else if(untrackedMetric){outcome.reply=unsupportedMetricReply(untrackedMetric,intent.language);}
+  else if(intent.kind==="question_answer"){
+   outcome.questionAnswer=true;
+   const replay=await processedQuestionTurn(client,owner,input.turnId);
+   if(!replay&&(!intent.questionContext||intent.questionContext.loopId!==questions.loop?.id||intent.questionContext.key!==activeQuestion?.key))throw new RequestFailure("The question for this saved answer has changed. Open Evidence for the current question.",409);
+   if(!replay&&(!activeQuestion||!questions.loop))throw new RequestFailure("There is no active question. Start an investigation first.",409);
+   const state=await questionAction(client,owner,{action:"answer",revision:questions.revision,answerId:followupId(input.turnId),text:job.transcript},{id:input.turnId,at:new Date(turn.data.occurred_at).toISOString(),text:job.transcript});
+   outcome.questions=state;outcome.targetRootId=null;
+   if(state.fresh&&state.loop)outcome.investigation=state.loop.current;
+   const comparison=state.fresh&&state.loop?compareEvidence(state.loop.before.bundle,state.loop.current.bundle):null;
+   outcome.reply=(state.loop?.feedback??"The question remains unanswered.")
+    +(comparison?comparison.historicalChanged?" Historical calculations changed; compare the counts and effects in Evidence.":" Historical association strength, effects and sample sizes are unchanged.":"")
+    +(state.loop?.pending?" Retry the pending answer in Evidence.":state.fresh&&state.loop?.question?` ${state.loop.question.key===activeQuestion?.key?"Question still open":"Next question"}: ${state.loop.question.text}`:state.fresh?" No further answerable question remains.":" Refresh evidence to recover the confirmed state.");
+  }
+  else if(intent.kind==="cancel"&&activeQuestion){
+   const context=intent.questionContext;
+   if(!context||context.loopId!==questions.loop?.id||context.key!==activeQuestion.key){
+    outcome.questions=questions;outcome.targetRootId=null;outcome.reply="That saved question action is no longer current. Open Evidence for the selected question.";
+   }else{
+   const stop=/^\W*(stop|stop questions|end|koniec)\W*$/iu.test(job.transcript);
+   const state=await questionAction(client,owner,{action:stop?"stop":"skip",revision:questions.revision});
+   outcome.questions=state;outcome.targetRootId=null;outcome.reply=(state.loop?.feedback??"Question skipped.")+(state.loop?.question?` Next question: ${state.loop.question.text}`:" No further question remains.");
+   }
+  }
   else if(intent.kind==="cancel"){outcome.disposition="cancel";outcome.targetRootId=null;outcome.reply=pl?"Przerwano wyjaśnianie. Poprzednie zapisy pozostają bez zmian.":"Clarification cancelled. Existing saved reports remain unchanged.";}
   else if(intent.kind==="report"||intent.kind==="followup"){
    if(intent.kind==="followup"&&!target){outcome.reply=pl?"Wybierz kartę obserwacji przyciskiem do odpowiedzi głosowej, a potem powtórz poprawkę.":"Select the observation card for a voice follow-up, then repeat your clarification or correction.";}
@@ -91,6 +132,17 @@ export async function POST(request:Request){
     if(!response.ok)throw new RequestFailure(body.error??"Capture failed. No new observations were confirmed.",response.status);
     outcome.capture=CaptureRecordSchema.parse(body.record);outcome.disposition=intent.kind==="followup"?"followup":"capture";
     outcome.targetRootId=root;outcome.reply=captureFeedback(outcome.capture,intent.language,intent.kind==="followup");
+   }
+  } else if(intent.kind==="investigate"){
+   const q=intent.query;
+   const date=q.kind==="yesterday"?addCalendarDays(today,-1):q.kind==="date"?q.from:q.kind==="today"||q.kind==="unspecified"?today:null;
+   if(!intent.investigationOutcome||!date||q.kind==="range"){
+    outcome.reply=pl?"Wybierz energie, HRV albo dlugosc snu oraz jeden dzien.":"Choose energy, HRV or sleep duration and a single day to investigate.";
+   }else{
+    const questionState=await questionAction(client,owner,{action:"start",revision:questions.revision,input:{mode:"investigate",outcome:intent.investigationOutcome,date,scope:q.includeDemo?"demo":"personal",language:intent.language}});
+    const result=questionState.loop!.current;outcome.questions=questionState;
+    outcome.disposition="conversation";outcome.investigation=result;outcome.targetRootId=null;
+    outcome.reply=result.explanation.summary+(questionState.loop?.question?` One missing-context question: ${questionState.loop.question.text}`:" No useful answerable context question remains.");
    }
   } else if(intent.kind==="retrieve"){
    const q=intent.query;
@@ -116,10 +168,10 @@ export async function POST(request:Request){
     if(q.includeDemo)outcome.reply+=pl?" Uwzględniono dane demonstracyjne.":" Synthetic demo records were included.";
    }
   } else if(intent.kind==="capabilities"){
-   outcome.reply=pl?"Mogę zapisywać i odczytywać energię, stres, nastrój, bolesność mięśni, wysiłek treningowy, alkohol, kofeinę, późne posiłki, objawy choroby i ból. Oceny są od zera do dziesięciu. Możesz powiedzieć: wypiłem kawę, albo zapytać o wczorajsze zapisy. Analiza przyczyn nie jest jeszcze dostępna.":"I can record and retrieve energy, stress, mood, soreness, workout effort, alcohol, caffeine, late meals, illness symptoms, and pain. Ratings use zero to ten. Try: I drank coffee, or: what did I record yesterday? Cause analysis is not available yet.";
+   outcome.reply=pl?"Mogę zapisywać i odczytywać energię, stres, nastrój, bolesność mięśni, wysiłek treningowy, alkohol, kofeinę, późne posiłki, objawy choroby i ból. Oceny są od zera do dziesięciu. Możesz powiedzieć: wypiłem kawę, albo zapytać o wczorajsze zapisy. Moge tez badac energie, HRV i dlugosc snu na podstawie zapisanej historii, bez ustalania przyczyn.":"I can record and retrieve energy, stress, mood, soreness, workout effort, alcohol, caffeine, late meals, illness symptoms, and pain. Ratings use zero to ten. Try: I drank coffee, or: what did I record yesterday? I can also investigate recorded energy, HRV and sleep duration using historical associations, with uncertainty. Try: investigate my energy today.";
   } else if(intent.kind==="greeting"){outcome.reply=pl?"Słucham. Możesz podać obserwację lub zapytać o zapisane dane.":"I'm listening. You can report an observation or ask about saved reports.";}
   else if(intent.kind==="unclear"){outcome.reply=pl?"Nie zrozumiałem tej wypowiedzi. Powtórz ją proszę; nie zapisano nowych obserwacji.":"I didn't understand that. Please repeat it; no new observations were saved.";}
-  else{outcome.reply=pl?"Mogę pomóc zapisywać i odczytywać obsługiwane obserwacje. Nie mam jeszcze danych do analizy przyczyn ani diagnozy.":"I can help record and retrieve supported observations. I don't have an evidence investigation or diagnosis to offer.";}
+  else{outcome.reply=pl?"Mogę pomóc zapisywać i odczytywać obsługiwane obserwacje. Nie mam jeszcze danych do analizy przyczyn ani diagnozy.":"I can help record and retrieve supported observations. I can investigate energy, HRV and sleep duration using recorded evidence. I cannot diagnose or establish a cause.";}
   const validated=VoiceOutcomeSchema.parse(outcome);
   const saved=await client.rpc("finish_voice_turn",{p_turn:input.turnId,p_token:token,p_result:validated as unknown as Json});
   if(saved.error)throw new RequestFailure("The processing receipt was not confirmed. Retry to recover the result.",503);
@@ -127,7 +179,7 @@ export async function POST(request:Request){
   return Response.json({outcome:VoiceOutcomeSchema.parse(saved.data)},{headers});
  }catch(error){
   if(release){try{await release();}catch{/* Lease expiry permits recovery. */}}
-  return Response.json({error:error instanceof RequestFailure?error.message:error instanceof z.ZodError?"Invalid voice request or result.":"Voice processing failed. No new observations were confirmed. Retry processing."},{status:error instanceof RequestFailure?error.status:error instanceof z.ZodError?400:503,headers});
+  return Response.json({error:error instanceof RequestFailure?error.message:error instanceof z.ZodError?"Invalid voice request or result.":"Voice processing did not complete. Open Evidence or Timeline to recover the confirmed state before retrying."},{status:error instanceof RequestFailure?error.status:error instanceof z.ZodError?400:503,headers});
  }
 }
 
@@ -140,6 +192,12 @@ export async function GET(request:Request){
   if(!turns.data.length)return Response.json({runs:[]},{headers});
   const runs=await client.from("voice_turn_runs").select("turn_id,target_root_id,result").eq("user_id",owner).in("turn_id",turns.data.map(t=>t.id));
   if(runs.error)throw new RequestFailure("Voice history is unavailable. Apply migration 005.",503);
-  return Response.json({runs:runs.data.map(j=>({turnId:j.turn_id,targetRootId:j.target_root_id,outcome:j.result?VoiceOutcomeSchema.parse(j.result):null}))},{headers});
+  const parsed=runs.data.map(j=>({turnId:j.turn_id,targetRootId:j.target_root_id,outcome:j.result?VoiceOutcomeSchema.parse(j.result):null}));
+  if(parsed.some(run=>run.outcome?.investigation)){
+   const state=await readFeatureGeneration(featureWriter(),owner);
+   for(const run of parsed)if(run.outcome)run.outcome=freshInvestigationReceipt(run.outcome,state);
+  }
+  if(parsed.some(run=>run.outcome?.questions)){const current=await readQuestionLoop(client,owner);for(const run of parsed)if(run.outcome?.questions&&run.outcome.questions.revision!==current.revision){const {questions:old,...rest}=run.outcome;void old;run.outcome={...rest,reply:"Previous question receipt. Open Evidence for the current question."};}}
+  return Response.json({runs:parsed},{headers});
  }catch(error){return Response.json({error:error instanceof RequestFailure?error.message:"Voice history could not load."},{status:error instanceof RequestFailure?error.status:400,headers});}
 }

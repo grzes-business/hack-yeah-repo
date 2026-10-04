@@ -1,4 +1,4 @@
-// Schema snapshot for migrations 202610030001 through 202610040009. Regenerate from hosted Supabase
+// Schema snapshot for migrations 202610030001 through 202610040010. Regenerate from hosted Supabase
 // after applying migrations; review changes rather than overwriting blindly.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 type Table<Row, Insert, Update = Partial<Insert>> = {
@@ -16,6 +16,7 @@ type TurnExtraction = { user_id: string; root_turn_id: string; extractor_version
 export type Database = {
  public: {
   Tables: {
+   evidence_question_loops: Table<{user_id:string;conversation_id:string;revision:number;payload:Json},{user_id:string;conversation_id:string;revision:number;payload:Json}>,
    reset_conversation_ids: Table<{user_id:string;id:string},{user_id:string;id:string}>;
    feature_input_generations: Table<{user_id:string;generation:number;changed_at:string},{user_id:string;generation?:number;changed_at?:string}>;
    voice_turn_runs: Table<{user_id:string;turn_id:string;transcript:string;target_root_id:string|null;target_revision:number|null;plan:Json|null;result:Json|null;lease_token:string|null;lease_until:string|null}, {user_id:string;turn_id:string;transcript:string;target_root_id?:string|null;target_revision?:number|null;plan?:Json|null;result?:Json|null;lease_token?:string|null;lease_until?:string|null}>;
@@ -30,6 +31,7 @@ export type Database = {
    relationship_results: Table<Result, Omit<Result, "input_generation"> & {input_generation?:number|null}>;
   };
   Views: { [_ in never]: never }; Functions: {
+   commit_question_loop: {Args:{p_owner:string;p_revision:number;p_generation:string;p_zone:string;p_state:Json;p_capture?:Json|null};Returns:number};
    commit_relationship_results: {Args:{p_owner:string;p_generation:string;p_zone:string;p_builder:string;p_rows:Json};Returns:number};
    reset_owned_history: {Args:{p_owner:string};Returns:undefined};
    read_feature_generation: {Args:{p_owner:string};Returns:Json};

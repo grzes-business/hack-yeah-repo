@@ -72,3 +72,15 @@ Stage 2 supplies seeded histories and documented planted patterns. Stage 7 shoul
 ## Implemented Stage 6 foundation
 
 [DAILY-FEATURES](DAILY-FEATURES.md) owns the implemented aggregation manifest and generation protocol. Daily recorded totals are not proof of full-day coverage; unknown/conflicting dose or reports remain unknown. Stage 7 must consume complete current-generation rows for the chosen scope/zone/version, commit results against that generation and invalidate cached bundles on changes. Privileged clients bypass RLS and must enforce freshness explicitly. No baseline or evidence-label computation is implemented by Stage 6.
+
+## Implemented Stage 7
+
+[ANALYTICS](ANALYTICS.md) owns the adopted `analytics-v1` windows, eligibility, median/MAD rules, Spearman ties, exposure effects, label matrix and generation protocol. Earlier candidate formulas above are historical direction; use the implemented policy. The Evidence screen runs authenticated analysis with explicit personal/synthetic scope. Stage 8 bundles and explanations, and Stage 9 question selection remain future work.
+
+## Implemented Stage 8
+
+[INVESTIGATION](INVESTIGATION.md) owns on-demand bundle assembly, exact missing feature/date references, generation checks around explanation latency, app-authorized dispatch and guarded fact rendering. The model can order supplied fact IDs but cannot author new numbers or claims. Computation failure is an error; provider failure uses deterministic explanation of the same evidence. Stage 9 question selection remains separate.
+
+## Stage 9 recomputation
+
+[ACTIVE-SENSING](ACTIVE-SENSING.md) owns confirmed capture → fresh rebuild/investigation → semantic before/after comparison. Current-context changes do not automatically strengthen historical associations. Stale snapshots are labeled and cannot be answered until refreshed.

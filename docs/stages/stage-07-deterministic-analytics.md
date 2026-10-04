@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04; numerical, hosted-security and live acceptance pending. The owner deferred manual walkthroughs to prioritize delivery.**
 
 Code calculates reproducible personal baselines, unusual observations, and conservative registered associations with actual counts, effects, and limitations.
 
@@ -58,3 +58,13 @@ LLM explanations, arbitrary graph discovery, causal inference, medical predictio
 ## Documentation handoff
 
 Update EVIDENCE with adopted formulas/eligibility/classification matrix, DOMAIN only for deliberate representation changes, and PERSISTENCE with result freshness/version metadata.
+
+## Implementation record - 2026-10-04
+
+[ANALYTICS](../ANALYTICS.md) owns the adopted policy. Pure `lib/analytics/engine.ts`, strict contracts, authenticated `/api/analytics`, generation-checked orchestration and private result commit migration 009 are implemented. Evidence has a date/scope selector, automatic rebuild, baselines/anomalies, all four relationships, paired dates/counts/effects and limitations. No LLM explanation or active sensing was introduced. Step baseline medians allow fractional values; raw/current counts remain integers.
+
+S07-AC01 through S07-AC08 numerical/security/live checks remain pending actual verification. Compilation is not numerical evidence. Manual acceptance is deferred by the owner so delivery can proceed.
+
+Completion checks: `pnpm build`, `pnpm typecheck`, `pnpm lint` and `git diff --check` passed. Hosted SQL Editor reported migration 009 success (no rows returned). No numerical test suite, live analytical API request, microphone walkthrough or hosted writer-denial/concurrency check was run. These remain acceptance gaps; no owner history was altered by applying the schema migration.
+
+Automatic follow-up during Stage 8 (2026-10-04): six added analytics tests passed, covering median/MAD/current-day exclusion, average-rank ties/constants, exposure arithmetic/lag eligibility, sparse data, fractional step baselines, deterministic replay and seeded sleep/stress/alcohol directions. Live investigation checks also verified current analytical persistence, browser-writer denial and generation invalidation/recompute with disposable accounts. The earlier statement that no numerical/live checks ran describes the original Stage 7 implementation turn. Exhaustive classification boundaries and concurrency contention are not certified by these checks.

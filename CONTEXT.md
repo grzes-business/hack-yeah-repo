@@ -93,3 +93,11 @@ Stage -1 establishes shared understanding and agent routing only. It does not im
 Stage -1 is complete when a new agent can explain the thesis and evidence boundary, locate domain/integration rules, distinguish current code from intended features, find each later stage's scope, and turn that stage into an issue without reinventing the architecture. The documentation is versioned project knowledge and should evolve with explicit decisions.
 
 Stage 5 morning check-in and Stage 6 daily-feature implementations are now in place with live/behavioral acceptance pending (2026-10-04). [DAILY-FEATURES](docs/DAILY-FEATURES.md) owns the aggregation manifest, provenance and generation freshness rules; analytics/evidence generation remain later work.
+
+Stage 7 implements deterministic baselines, unusual-value criteria and registered relationships; [ANALYTICS](docs/ANALYTICS.md) owns the exact policy and trust boundary. Behavioral acceptance remains pending. Stage 8 investigation and Stage 9 active sensing are next; Evidence is currently an analytical inspector, not the later mobile product design.
+
+Stage 8 implements on-demand evidence bundles, app-authorized voice investigation and explanations rendered from validated facts. [INVESTIGATION](docs/INVESTIGATION.md) owns permissions, freshness and fallback. Stage 9 active questioning remains the next stage.
+
+## Stage 9 current scope
+
+Stage 9 implements deterministic missing-context questions, durable canonical answers and honest before/after recomputation in Evidence and Talk. [ACTIVE-SENSING](docs/ACTIVE-SENSING.md) owns the implemented choices. Stage 10 mobile product UI is next; physical voice and visual acceptance remain manual.

@@ -117,3 +117,15 @@ Add `SUPABASE_SERVICE_ROLE_KEY` to server secrets only (never `NEXT_PUBLIC_`); `
 ## Clear your history
 
 On Timeline choose **Clear all history…**, read the deletion scope and type `CLEAR MY HISTORY` to confirm. This permanently clears your personal/demo history, transcripts, check-in progress and derived rows, while preserving your account/profile and signed-in session. Stop voice and imports in other tabs first. The feature uses server-only migration 008; read [PERSISTENCE](docs/PERSISTENCE.md) for reset/recovery semantics.
+
+### Recorded-history analysis
+
+On Evidence, select a local date and personal or synthetic history, then choose **Analyze history**. It rebuilds daily rows and calculates baselines, unusual values and four registered associations. For a film demo, load sample history on Today and select Synthetic demonstration on Evidence; sample history ends yesterday, so select yesterday to inspect a known current sample. Sparse personal history stays insufficient. See [ANALYTICS](docs/ANALYTICS.md).
+
+### Outcome investigation
+
+Evidence now investigates energy, HRV or sleep duration for a local day and explicit personal/synthetic scope. Talk also accepts “Investigate my energy today.” Explanations come from validated bundle facts; provider failure retains the same deterministic facts. See [INVESTIGATION](docs/INVESTIGATION.md). Run `pnpm verify:investigation` for disposable-account live checks while localhost is running.
+
+## Active sensing (Stage 9)
+
+Evidence and Talk can ask one deterministic, dated missing-context question, record a canonical answer and refresh a before/after investigation. See [ACTIVE-SENSING](docs/ACTIVE-SENSING.md) and the [acceptance validation](docs/stages/stage-09-missing-evidence-loop.md). Hosted migration 010 is applied. `pnpm verify:questions` runs disposable-account live checks; it requires the local server and existing private environment configuration.

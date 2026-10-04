@@ -42,3 +42,11 @@ Do not present synthetic measurements as real personal data. Show an evidence-st
 ## Stage 4 capture milestone
 
 After voice saves a finalized user turn, Talk extracts predefined observations and displays saved/clarification/no-trackable/failure status. Try an explicit energy rating plus yesterday’s alcohol, then use the original turn’s correction form and inspect Timeline. [CAPTURE](CAPTURE.md) records the time/retry/correction rules and manual acceptance matrix; analytics are still unavailable.
+
+## Stage 8 film preparation
+
+Load sample history on Today. On Evidence choose HRV, the last completed sample date (yesterday with the default loader), and Synthetic demonstration; choose Investigate. The result shows the current recorded HRV or an explicit gap, the preceding 42-day alcohol comparison with real eligible counts/effects, prior-day exposure and competing context, plus unknown factors and interpretation limits. Alternatively say “Investigate the synthetic demo HRV for yesterday” in Talk. Do not script a fixed percentage: seeded outputs and missingness determine the facts. Stage 9 adds the selected missing-context question and answer/recompute loop.
+
+## Stage 9 reproducible loop
+
+Load default samples in a fresh session, select HRV / **2026-09-20** / Synthetic demonstration in Evidence, and ask about missing context. Alcohol on **2026-09-19** is deliberately omitted. Answer **No.**; show false becoming known while historical effects remain unchanged. Answers are visibly simulated and isolated from personal records. See the [Stage 9 acceptance validation](stages/stage-09-missing-evidence-loop.md).

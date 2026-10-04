@@ -118,3 +118,9 @@ Authenticated `/api/voice/turn` loads owned saved speech, freezes an allow-liste
 ## Stage 6 builder boundary
 
 `lib/features/builder.ts` projects validated raw input into the unchanged daily schema. Authenticated `/api/features` uses complete owner-scoped paginated reads; `lib/features/server.ts` separately holds the server-only writer. SQL mutation generations and a locked generation-checked commit prevent mixed/stale output; owner RLS hides old daily/results rows. All raw changes conservatively invalidate all downstream dates, covering lagged dependencies. See [DAILY-FEATURES](DAILY-FEATURES.md) for manifest, scope/version identity and explicit rebuild policy. No analytics or evidence cache exists yet.
+
+Stage 7: authenticated `/api/analytics` rebuilds the required 44 daily dates, runs pure `lib/analytics/engine.ts`, and atomically commits four registered relationships through the private server writer. Evidence reads only compatible current-generation results. [ANALYTICS](ANALYTICS.md) owns formulas, eligibility and labels; Stage 8 explanation/bundle and Stage 9 active sensing remain separate.
+
+Stage 8 builds bundles on demand after current-generation Stage 7 analysis. A private authenticated orchestrator supplies validated facts to an order-only explanation provider, then rechecks generation before responding. Evidence and app-owned voice dispatch share the service; provider failure uses deterministic wording. No new migration or bundle cache is required. See [INVESTIGATION](INVESTIGATION.md).
+
+Stage 9 adds a private revision/generation-checked question/answer transaction and one durable loop per owner. Canonical extraction/validation is reused; personal and simulated answers commit in their own scopes. Derived rebuilding remains outside the raw transaction, with an explicit recoverable refresh state. Evidence and Talk share the controller. See [ACTIVE-SENSING](ACTIVE-SENSING.md).

@@ -84,7 +84,8 @@ function anomalySchema<const K extends "hrv" | "resting_hr" | "sleep_duration" |
   metric: K, definition: { valueSchema: V; unit: U },
 ) {
   return z.strictObject({
-    metric: z.literal(metric), value: definition.valueSchema, baseline: definition.valueSchema,
+    // A median of integer step counts may be fractional; it is a derived value.
+    metric: z.literal(metric), value: definition.valueSchema, baseline: metric === "steps" ? z.number().nonnegative() : definition.valueSchema,
     unit: z.literal(definition.unit), baselinePeriod: AnalysisPeriodSchema,
     baselineSampleSize: z.number().int().positive(),
     relativeDifference: z.number().nullable(),

@@ -2,7 +2,7 @@
 
 ## Status and intended outcome
 
-**Planned. This guide is an implementation specification, not a claim that the feature exists.**
+**Implemented 2026-10-04. Automatic checks and remaining acceptance are recorded below; physical microphone/audio checks remain deferred.**
 
 The user can investigate an outcome/date and receive an explanation whose facts and numbers trace to a validated bundle.
 
@@ -57,3 +57,18 @@ Automatic missing-factor question selection, new relationships, causal explanati
 ## Documentation handoff
 
 Update EVIDENCE with orchestration/freshness, CONVERSATION with tool permissions/explanation rules, and DEMO with a reproducible outcome/date example.
+
+## Implementation record - 2026-10-04
+
+[INVESTIGATION](../INVESTIGATION.md) is the canonical policy. `lib/investigation/` assembles on-demand owned bundles and renders all explanations from approved facts. `/api/investigate` accepts only allow-listed outcome/date/scope/mode. Evidence controls and app-owned voice intent dispatch use the same service. Freshness checks cover provider latency and cached voice snapshots. Missing context is shown but no question is selected. No new migration is needed.
+
+The provider only orders supplied fact IDs. Unsupported IDs, additional prose, omissions and duplicates are rejected, with deterministic fallback for invalid/unavailable provider output. No free model prose enters explanations. Automatic test outcomes are recorded after execution.
+
+## Automatic verification - 2026-10-04
+
+- `pnpm test`: 73/73 passed, including six analytics reference/fixture checks and six investigation checks. The explanation corpus covers all three outcomes with known/unknown current values; invalid fact selections, extra claims, omissions, duplicates, ordering requirements, provider failure and stale receipts are checked.
+- Live `scripts/verify-investigation.mjs`: passed against localhost and hosted Supabase. Verified unauthenticated denial, strict owner/mode/outcome/payload/future-date rejection, seeded HRV comparison, exact prior-day context, independent unknown history for a second user, browser-writer denial, raw-change invalidation/rebuild, real provider fact ordering, typed voice requests for personal energy and explicit synthetic HRV, durable replay and stale-receipt handling after timezone change. Both disposable accounts and their records were deleted after each run. Existing user history was preserved.
+- Automatic checks found and fixed a receipt compatibility issue: investigation remains an existing conversation receipt with a typed investigation field, so no migration/new database category is needed.
+- Build, lint, TypeScript and diff checks passed. Physical microphone/audio fidelity and the later mobile UI remain outside these automatic checks. Provider-failure fallback was tested with injected failures; the live provider returned valid model ordering. No Stage 9 code was implemented.
+
+AC01/AC02: contract, bundle and live owner/lag checks passed. AC03: unknown/insufficient/stale paths passed; no fabricated effects/anomalies. AC04/AC05: approved-fact corpus and guarded live rendering passed; no free model claims enter the output. AC06: injected provider failure/invalid selection fallback passed alongside live successful provider ordering. AC07: strict dispatch/payload and owner/writer checks passed; physical audio rendering is still pending manual review. This evidence does not certify every possible malicious speech utterance or future provider behavior.

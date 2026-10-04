@@ -2,7 +2,11 @@
 
 These guides preserve the implementation context in the repository so work can resume without chat history. Read [AGENTS](../../AGENTS.md), [CONTEXT](../../CONTEXT.md), the relevant guide, and its canonical references before editing code.
 
-## Current checkpoint
+## Latest checkpoint - 2026-10-04
+
+Stages 7 and 8 are implemented. Stage 8 ran 73 automatic tests and live disposable-account API/provider/voice-dispatch checks successfully; build/lint/type checks passed. Physical microphone/audio review remains deferred. Stage 9 is now implemented; its completion record and active-sensing reference describe the subsequent checks. See the stage completion records below.
+
+## Earlier checkpoint
 
 As of **2026-10-03**, Stages **-1, 0, 1, and 2 are implemented**. Stage 1 hosted/browser acceptance and Stage 2 fixture/ingestion/replay/removal checks passed. **Stage 3 is implemented with live/provider/browser acceptance pending. The user confirmed live voice works. Stage 4 structured capture is implemented with behavioral acceptance pending; Stage 4.5 voice reliability is implemented with failed live interpretation cases and acceptance pending, before Stage 5 check-ins.** The guides themselves do not authorize future-stage implementation. Previous checks describe that checkpoint, not a guarantee about a later checkout or hosted configuration.
 
@@ -21,9 +25,9 @@ The starter remains Next.js + Supabase. Hosted Supabase, anonymous demo sign-in,
 | 4.5 | [Voice reliability and grounded conversation](stage-04a-voice-reliability.md) | Implemented; accepted 2026-10-04 by the project owner |
 | 5 | [Deterministic morning check-ins](stage-05-deterministic-check-ins.md) | Implemented; live acceptance pending |
 | 6 | [Deterministic daily feature pipeline](stage-06-daily-features.md) | Implemented; behavioral acceptance pending |
-| 7 | [Deterministic analytics](stage-07-deterministic-analytics.md) | Planned |
-| 8 | [Evidence-backed investigation and explanation](stage-08-evidence-investigation.md) | Planned |
-| 9 | [Missing evidence and active sensing](stage-09-missing-evidence-loop.md) | Planned |
+| 7 | [Deterministic analytics](stage-07-deterministic-analytics.md) | Implemented; acceptance pending |
+| 8 | [Evidence-backed investigation and explanation](stage-08-evidence-investigation.md) | Implemented; automatic checks recorded in guide |
+| 9 | [Missing evidence and active sensing](stage-09-missing-evidence-loop.md) | Implemented; manual voice/UI review pending |
 | 10 | [Evidence-first product UI](stage-10-evidence-ui.md) | Planned; umbrella for 10A/10B |
 | 10A | [Mobile product design](stage-10a-mobile-product-design.md) | Planned; design may start before Stages 5–9 finish |
 | 10B | [Mobile UI implementation](stage-10b-mobile-ui-implementation.md) | Planned; complete before Capacitor |
@@ -83,3 +87,5 @@ Handoff: [canonical docs and completion evidence to update]
 [ROADMAP](../ROADMAP.md) owns sequence and umbrella scope; these guides own stage work/ACs. [CONTEXT](../../CONTEXT.md) owns product intent. [DOMAIN](../DOMAIN.md), [ARCHITECTURE](../ARCHITECTURE.md), [CONVERSATION](../CONVERSATION.md), [EVIDENCE](../EVIDENCE.md), [PERSISTENCE](../PERSISTENCE.md), [FIXTURES](../FIXTURES.md), and [DEMO](../DEMO.md) own shared rules and implemented details. Update the authority for a decision, then link it from the stage; do not maintain conflicting copies.
 
 Stage 6 checkpoint (2026-10-04): see [DAILY-FEATURES](../DAILY-FEATURES.md) for manifest, trusted writer configuration and current-generation requirements before Stage 7.
+
+Stage 9 checkpoint (2026-10-04): active sensing is implemented. Read [ACTIVE-SENSING](../ACTIVE-SENSING.md) and the Stage 9 completion/manual walkthrough before Stage 10. Earlier historical checkpoints above remain dated.

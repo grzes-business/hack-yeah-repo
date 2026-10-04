@@ -1,0 +1,11 @@
+import { z } from "zod";
+import { EvidenceBundleSchema, LocalDateSchema, OutcomeSchema } from "../domain";
+import { FeatureScopeSchema } from "../features/contracts";
+export const InvestigationInputSchema=z.strictObject({mode:z.literal("investigate").default("investigate"),outcome:OutcomeSchema,date:LocalDateSchema,scope:FeatureScopeSchema.default("personal"),language:z.enum(["en","pl"]).default("en")});
+export type InvestigationInput=z.infer<typeof InvestigationInputSchema>;
+export const EvidenceFactSchema=z.strictObject({id:z.string().min(1),text:z.string().min(1),paths:z.array(z.string()).min(1)});
+export type EvidenceFact=z.infer<typeof EvidenceFactSchema>;
+export const ExplanationPlanSchema=z.strictObject({order:z.array(z.string().min(1)).min(1).max(40)});
+export const ExplanationSchema=z.strictObject({source:z.enum(["model_ordered","deterministic_fallback"]),fallbackReason:z.enum(["provider_unavailable","invalid_plan"]).nullable(),facts:z.array(EvidenceFactSchema),summary:z.string()});
+export const InvestigationResultSchema=z.strictObject({mode:z.literal("investigate"),scope:FeatureScopeSchema,inputGeneration:z.string().regex(/^[0-9]+$/),bundle:EvidenceBundleSchema,explanation:ExplanationSchema});
+export type InvestigationResult=z.infer<typeof InvestigationResultSchema>;

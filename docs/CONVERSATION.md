@@ -56,4 +56,12 @@ Stage 3 owns denied microphone access, disconnected/expired sessions, and transc
 
 Read [domain](DOMAIN.md) for contracts and [evidence](EVIDENCE.md) for explanation rules.
 
-Stage 4.5 selection, replay, response ordering and retrieval bounds are implemented in [VOICE](VOICE.md). Model interpretation remains an open acceptance risk; [Stage 4.5](stages/stage-04a-voice-reliability.md) records failed live cases. No Stage 5 question selector is implemented.
+Stage 4.5 selection, replay, response ordering and retrieval bounds are implemented in [VOICE](VOICE.md). Model interpretation remains an open acceptance risk; [Stage 4.5](stages/stage-04a-voice-reliability.md) records failed live cases. The Stage 5 question selector is implemented in `lib/checkin/`.
+
+## Implemented investigation dispatch
+
+Stage 8 adds schema-constrained investigation intent for energy, HRV and sleep duration, executed by the authenticated application controller. The audio model retains no database tools and reads confirmed application text. Transcript instructions cannot choose an owner, add outcomes or authorize arbitrary writes. Cached investigation receipts are checked against generation/zone/versions before presenting them as current. See [INVESTIGATION](INVESTIGATION.md). Stage 9 questions now use the app-owned controller; see [ACTIVE-SENSING](ACTIVE-SENSING.md).
+
+## Stage 9 active sensing
+
+Deterministic, dated missing-context questions and canonical answers are implemented in Evidence and Talk. Read [ACTIVE-SENSING](ACTIVE-SENSING.md) for selection, lease/replay, English question wording, explicit date precedence and voluntary skip/stop. The live audio model still has no database tools.

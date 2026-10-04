@@ -62,7 +62,7 @@ See [`README.md`](README.md) for startup, environment variables, and deployment 
 
 ## Working and documentation conventions
 
-- The current acceptance gate is [Stage 4.5 — Voice reliability](docs/stages/stage-04a-voice-reliability.md), before Stage 5. It owns deliberate turn-taking, capture-result feedback, spoken clarification/correction, grounded saved-report retrieval, communication, and live acceptance. Its controller is implemented; live interpretation failures and physical acceptance remain unresolved. Future tools must be explicitly authorized and server-validated; the current live session still has no tools.
+- The historical voice acceptance checklist is [Stage 4.5 — Voice reliability](docs/stages/stage-04a-voice-reliability.md), and remains relevant to later voice changes. The owner authorized onward delivery with manual walkthroughs deferred; do not treat that checklist as an implicit implementation block. It owns deliberate turn-taking, capture-result feedback, spoken clarification/correction, grounded saved-report retrieval, communication, and live acceptance. Its controller is implemented; live interpretation failures and physical acceptance remain unresolved. Future tools must be explicitly authorized and server-validated; the current live session still has no tools.
 
 - Stage 3 capture-only WebRTC and transcript persistence are implemented, with live acceptance pending. Read [VOICE](docs/VOICE.md) before changes. Preserve server-verified ownership, final-turn IDs, save-status/recovery semantics, resource cleanup, and the absence of health/tool dispatch in the live model. Stage 4 adds a separate app-owned extraction pipeline; read [CAPTURE](docs/CAPTURE.md) before capture/storage changes. Preserve all-or-clarify, application-owned dates/provenance, lease/revision replay, atomic correction, and the documented RPC trust boundary.
 
@@ -81,3 +81,21 @@ See [`README.md`](README.md) for startup, environment variables, and deployment 
 ## Stage 6 implementation checkpoint
 
 Stage 5 and Stage 6 are implemented with behavioral/live acceptance pending; earlier acceptance notes remain dated. Before derived-data work, read [DAILY-FEATURES](docs/DAILY-FEATURES.md). Use pure builders and authenticated `/api/features` orchestration; never bypass generation freshness or mix synthetic/personal scopes. `SUPABASE_SERVICE_ROLE_KEY` is server-only and only the authenticated server writer may invoke the new derived commit. Hosted migration 007 is applied; do not reapply it. Stage 7 must verify generation on privileged reads/writes and use complete requested histories.
+
+## Stage 7 checkpoint
+
+Implementation is in `lib/analytics/`, `/api/analytics` and Evidence. Read [ANALYTICS](docs/ANALYTICS.md) before analytical changes. Preserve the four-edge graph, fixed windows, exact lags, deterministic labels, undefined-statistic nulls, personal/demo separation and generation checks. The owner deferred manual acceptance; static checks do not certify numerical/hosted ACs.
+
+Hosted analytical migration 009 is applied; do not reapply it. Stage 7 static build/type/lint checks passed; numerical/live/security acceptance remains pending.
+
+## Stage 8 checkpoint
+
+Read [INVESTIGATION](docs/INVESTIGATION.md) before investigation/tool/explanation changes. `lib/investigation/`, `/api/investigate`, Evidence and app-owned voice dispatch implement outcome investigation. Preserve owner-derived requests, current generation/zone/policy, exact dated missing references, approved fact-only explanations and truthful provider fallback. Stage 9 selection/capture rules are documented in [ACTIVE-SENSING](docs/ACTIVE-SENSING.md). `pnpm verify:investigation` uses and cleans only disposable accounts.
+
+Stage 8 checks: 73 tests plus live disposable-account API/provider/typed voice dispatch passed; build/lint/type checks passed. Stage 9 implementation is recorded below. Preserve the Stage 8 completion record and remaining physical audio limitations.
+
+## Stage 9 checkpoint
+
+Read [ACTIVE-SENSING](docs/ACTIVE-SENSING.md) before changing questions or question-answer dispatch. `questions-v1` owns deterministic dated targets; `/api/questions` derives owner, commits raw answers atomically and then refreshes evidence. Preserve single-question state, replay/source-turn guards, unknown semantics and personal/demo separation. Hosted migration 010 is applied; do not reapply. Physical voice/UI walkthrough remains manual.
+
+Stage 9 checks: 81 unit tests and build/lint/type checks passed. Disposable-account hosted/provider/typed voice checks and Stage 8 regressions passed; current-scope before/after retains unchanged historical effects where expected. The Stage 9 guide contains an acceptance validation path before Stage 10, not a film script.

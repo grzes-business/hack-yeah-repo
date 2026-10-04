@@ -119,3 +119,5 @@ Adapters can be bound to a user's source context; source requests/payloads do no
 Run `pnpm test`, `pnpm typecheck`, and `pnpm lint` for contract changes; `pnpm build` verifies integration. Tests cover invalid observations, time/lag boundaries, provenance, false-versus-unknown, extraction candidates, graph integrity, evidence counts/units, temporal missing context, and source ranges. The test harness uses TypeScript and Node's built-in runner; emitted files are ignored.
 
 Version 1 changes should update schemas/registries, these semantics, and relevant tests together. Future stages still own database access/identity checks (1), mock generation (2), voice API (3), extraction orchestration (4), interview logic (5), aggregation (6), statistics/thresholds (7), investigation (8), question ranking (9), and native behavior (11–13). Stage 0 implements none of those pipelines.
+
+Stage 7 anomaly clarification: step-count baselines are nonnegative medians and may be fractional; raw/current step counts remain integers. This admits even-sized medians without rounding evidence. Adopted analytical semantics live in [ANALYTICS](ANALYTICS.md).

@@ -98,5 +98,5 @@ test("unsupported metric replies name the metric and the supported types", () =>
 
 test("intent schema requires the unsupported metric field", () => {
  assert.throws(() => VoiceIntentSchema.parse({ kind: "retrieve", language: "en", query: { kind: "unspecified", from: null, to: null, type: null, includeDemo: false } }));
- assert.equal(VoiceIntentSchema.parse({ kind: "retrieve", language: "en", query: { kind: "unspecified", from: null, to: null, type: null, includeDemo: false }, unsupportedMetric: "hrv" }).unsupportedMetric, "hrv");
+ assert.equal(VoiceIntentSchema.parse({ kind: "retrieve", language: "en", query: { kind: "unspecified", from: null, to: null, type: null, includeDemo: false }, unsupportedMetric: "hrv", investigationOutcome:null }).unsupportedMetric, "hrv");
 });

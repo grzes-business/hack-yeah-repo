@@ -76,3 +76,13 @@ Migration 008 was applied successfully in hosted SQL Editor on 2026-10-04; do no
 After confirmed success, the current tab clears its owner-specific voice pending/target recovery copies and reloads to remove cached history. Stop voice and demo imports in other tabs before resetting: new or already-running writes can create history after the reset. Old queues in another tab may encounter the cleared-conversation rejection; reload/discard those copies before a new call. The reset is not a global block on future recording or an account/provider data-deletion feature.
 
 Implementation checks: build/lint/type checks. Actual destructive reset and behavioral ownership/replay checks have not been run against user data. The button adds a way to reset; implementing it does not itself clear any history.
+
+## Stage 7 analytical persistence (2026-10-04)
+
+Hosted migration `202610040009_relationship_analytics.sql` was applied successfully in SQL Editor. It adds result time-zone/builder metadata and a server-role-only four-result atomic commit. Current generation, profile zone, scope/policy version and complete 44-day feature coverage are enforced; browser writes remain denied. Legacy results lacking new metadata are hidden. SQL Editor application does not update the CLI migration ledger. Do not reapply 009 or replay prior creation migrations. Read [ANALYTICS](ANALYTICS.md).
+
+Stage 8 adds no tables/migration. Bundles are on-demand; existing voice-turn receipts can retain a dated evidence snapshot. App reads suppress it as current after generation, zone or policy changes. `verify:investigation` creates and deletes only its own disposable Auth users, with auth cascades cleaning their records. See [INVESTIGATION](INVESTIGATION.md).
+
+## Stage 9 question state
+
+Hosted migration 010 is applied. One owner-readable, server-writable loop row and a private generation/revision-checked commit preserve selected context, pending/completed answers and atomic raw provenance. Its conversation foreign key cascades on full history reset. No new secret is required. See [ACTIVE-SENSING](ACTIVE-SENSING.md); do not replay SQL Editor migrations.

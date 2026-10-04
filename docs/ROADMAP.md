@@ -213,3 +213,11 @@ Stages 1–2 are verified. Stage 3 is implemented with live acceptance pending; 
 ## Stage 5–6 checkpoint — 2026-10-04
 
 Both stages are implemented with acceptance pending. Stage 5 storage exists in hosted Supabase; Stage 6 migration 007 is applied. Daily projection/read/rebuild, personal/demo scopes and generation invalidation are documented in [DAILY-FEATURES](DAILY-FEATURES.md). Type/lint/build passed; numerical/concurrency/live acceptance is not certified. Stage 7 remains planned and must honor current-generation reads and commits.
+
+Stage 7 checkpoint (2026-10-04): deterministic engine and authenticated Evidence inspector implemented. [ANALYTICS](ANALYTICS.md) defines adopted policies. Numerical/hosted acceptance is pending; the owner deferred manual walkthroughs for delivery. Stage 8 is next.
+
+Stage 8 checkpoint (2026-10-04): owned investigation, validated bundles, approved fact explanations with provider fallback, Evidence controls and voice dispatch implemented. Stage 9 active questioning remains next and is not part of this change.
+
+## Stage 9 delivery checkpoint
+
+Stage 9 is implemented; [ACTIVE-SENSING](ACTIVE-SENSING.md) and the [Stage 9 guide](stages/stage-09-missing-evidence-loop.md) record the runtime policy and manual walkthrough. Stage 10 UI design/implementation remains the next stage.
