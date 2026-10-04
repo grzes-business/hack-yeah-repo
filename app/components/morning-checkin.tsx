@@ -1,9 +1,11 @@
 "use client";
 
+import { CheckIcon, MicrophoneIcon, SunHorizonIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { useHealthSession } from "./session";
 import type { CheckinDimension } from "@/lib/checkin/controller";
 import { useTalkContext } from "./talk-context";
+import { morningPrompt } from "@/lib/checkin/prompt";
 import { HEALTH_HISTORY_CHANGED } from "./voice-conversation";
 
 type Step =
@@ -28,7 +30,8 @@ function savedDevWindow(): string | null {
  try { return window.localStorage.getItem(DEV_WINDOW_KEY); } catch { return null; }
 }
 
-const labels: Record<CheckinDimension, string> = { energy: "Energy", soreness: "Soreness", mood: "Mood", illness: "Illness symptoms" };
+const labels: Record<CheckinDimension, string> = { energy: "Energy", soreness: "Soreness", mood: "Mood", illness: "Feeling ill" };
+const DIMENSIONS: CheckinDimension[] = ["energy", "soreness", "mood", "illness"];
 
 function statusText(step: Step, window: Checkin["window"]) {
  if (step.kind === "ask") return "Next question:";
@@ -106,38 +109,42 @@ export function MorningCheckin() {
  }, [token, devWindow]);
 
  if (!session) return null;
+ const pending = checkin ? DIMENSIONS.filter(d => !checkin.answered.includes(d) && !checkin.skipped.includes(d)) : [];
+ const open = checkin?.step.kind === "ask";
+ const prompt = morningPrompt(pending);
+ function answerByVoice() {
+  talk.select({ mode: "report" }, prompt);
+  document.getElementById("voice-controls")?.scrollIntoView({ behavior: "smooth", block: "center" });
+ }
  return (
-  <section className="card card-body bg-base-100 border border-base-300" aria-label="Morning check-in">
-   <h2>Morning check-in</h2>
+  <section className="card card-body bg-base-100 border border-base-300 checkin-card" aria-label="Morning check-in">
+   <div className="section-heading"><h2><SunHorizonIcon size={20} aria-hidden="true" /> Morning check-in</h2>{checkin && <span>{checkin.localDate}</span>}</div>
+   {checkin ? <>
+    <ul className="checkin-chips" aria-label="Check-in progress">{DIMENSIONS.map(d => {
+     const state = checkin.answered.includes(d) ? "answered" : checkin.skipped.includes(d) ? "skipped" : "pending";
+     return <li key={d} className={`badge badge-soft ${state === "answered" ? "badge-success" : state === "skipped" ? "badge-ghost" : "badge-warning"}`}>{state === "answered" ? <CheckIcon size={14} aria-hidden="true" /> : null}{labels[d]}<span className="sr-only"> {state}</span>{state === "skipped" ? " · skipped" : ""}</li>;
+    })}</ul>
+    {open ? <>
+     <p className="checkin-prompt">“{prompt}”</p>
+     <p className="small">One sentence is enough, for example: “Energy six, a bit sore, maybe three, mood seven, not sick.” Say “I don’t know” to leave something unknown.</p>
+     <div className="button-row">
+      <button className="btn btn-primary" disabled={busy} onClick={answerByVoice}><MicrophoneIcon size={18} aria-hidden="true" /> Answer by voice</button>
+      <button className="btn btn-soft" onClick={() => void request("POST", { action: "end" })} disabled={busy}>Skip the rest today</button>
+     </div>
+    </> : <p role="status">{statusText(checkin.step, checkin.window)}</p>}
+   </> : <p role="status">{busy ? "Loading check-in…" : "Loading today’s check-in…"}</p>}
+   {error && <p role="alert">{error}</p>}
    {isDevBuild && (
     <details className="small">
      <summary>Test window (temporary, dev only){devWindow ? ` · active ${devWindow}` : ""}</summary>
      <label>From <input className="input w-full" type="time" value={devFrom} onChange={event => setDevFrom(event.target.value)} /></label>{" "}
      <label>To <input className="input w-full" type="time" value={devTo} onChange={event => setDevTo(event.target.value)} /></label>{" "}
-     <button className="btn btn-primary" onClick={applyDevWindow} disabled={!devFrom || !devTo || devFrom >= devTo}>Apply window</button>{" "}
-     <button className="btn btn-primary" onClick={clearDevWindow} disabled={!devWindow}>Use real window</button>
+     <button className="btn btn-soft" onClick={applyDevWindow} disabled={!devFrom || !devTo || devFrom >= devTo}>Apply window</button>{" "}
+     <button className="btn btn-soft" onClick={clearDevWindow} disabled={!devWindow}>Use real window</button>
      <p className="small">Dev only. Reset clears today&apos;s skips and end marker and deletes today&apos;s energy, soreness, mood and illness answers. Capture history stays.</p>
-     <button className="btn btn-primary" onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }} disabled={busy}>Reset today&apos;s check-in and answers</button>
+     <button className="btn btn-soft" onClick={() => { if (window.confirm("Reset today's check-in? This deletes today's energy, soreness, mood and illness answers.")) void request("DELETE"); }} disabled={busy}>Reset today&apos;s check-in and answers</button>
     </details>
    )}
-   {checkin ? (
-    <>
-     <p role="status">{statusText(checkin.step, checkin.window)}</p>
-     {checkin.step.kind === "ask" && <>
-      <p><strong>{checkin.step.question}</strong></p>
-      <p className="small">Answer by voice. Say “I don’t know” or “skip” to leave a value unknown.</p>
-      <button className="btn btn-primary" disabled={busy} onClick={()=>{if(checkin.step.kind==="ask"){talk.select({mode:"morning_checkin",date:checkin.localDate,dimension:checkin.step.dimension},checkin.step.question);document.getElementById("voice-controls")?.scrollIntoView({behavior:"smooth",block:"start"});}}}>Start / resume spoken check-in</button>
-      <div className="voice-actions">
-       <button className="btn btn-primary" onClick={() => void request("POST", { action: "skip", dimension: checkin.step.kind === "ask" ? checkin.step.dimension : undefined })} disabled={busy}>Skip this question</button>
-       <button className="btn btn-primary" onClick={() => void request("POST", { action: "end" })} disabled={busy}>End check-in for today</button>
-       <button className="btn btn-primary" onClick={() => void request("GET")} disabled={busy}>Refresh</button>
-      </div>
-     </>}
-     {checkin.step.kind !== "ask" && <button className="btn btn-primary" onClick={() => void request("GET")} disabled={busy}>Refresh</button>}
-     <p className="small">Answered: {checkin.answered.length ? checkin.answered.map(d => labels[d]).join(", ") : "none yet"}. Skipped: {checkin.skipped.length ? checkin.skipped.map(d => labels[d]).join(", ") : "none"}.</p>
-    </>
-   ) : <p role="status">{busy ? "Loading check-in…" : "Check-in not loaded yet."}</p>}
-   {error && <p role="alert">{error}</p>}
   </section>
  );
 }

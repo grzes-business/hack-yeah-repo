@@ -3,6 +3,7 @@ import { FlaskIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { ExperimentResult } from "@/lib/experiments/compare";
 import type { ExperimentEvent, ExperimentPlan, ExperimentStatus } from "@/lib/experiments/contracts";
+import { formatDate, formatPeriod } from "@/lib/format";
 import { useHealthSession } from "./session";
 
 type View = { plan: ExperimentPlan; status: ExperimentStatus; events: ExperimentEvent[]; result: ExperimentResult | null; resultError?: string };
@@ -57,7 +58,7 @@ export function Experiments() {
     {!views && !error && <p role="status">Loading experiments…</p>}
     {views && !open && <Proposal scope={scope} busy={busy} onAccept={() => void act({ action: "accept", templateId: "sleep_target__energy", scope })} />}
     {open && <Active view={open} busy={busy} act={action => void act({ action, id: open.plan.id })} />}
-    {past.length > 0 && <details><summary>Past experiments ({past.length})</summary>{past.map(v => <div key={v.plan.id} className="experiment-past"><p><strong>{v.status === "completed" ? "Completed" : "Abandoned"}</strong> · {v.plan.intervention.from} to {v.plan.intervention.to} · {v.plan.scope === "demo" ? "synthetic" : "personal"}</p>{v.result && <ResultSummary result={v.result} />}</div>)}</details>}
+    {past.length > 0 && <details><summary>Past experiments ({past.length})</summary>{past.map(v => <div key={v.plan.id} className="experiment-past"><p><strong>{v.status === "completed" ? "Completed" : "Abandoned"}</strong> · <span className="nowrap">{formatPeriod(v.plan.intervention.from, v.plan.intervention.to)}</span> · {v.plan.scope === "demo" ? "synthetic" : "personal"}</p>{v.result && <ResultSummary result={v.result} />}</div>)}</details>}
   </section>;
 }
 
@@ -86,7 +87,7 @@ function Active({ view, busy, act }: { view: View; busy: boolean; act: (a: "paus
     <div className="experiment-status">
       <span className={`badge badge-soft ${status === "paused" ? "badge-warning" : "badge-success"}`}>{status === "paused" ? "Paused" : "Active"}</span>
       {plan.retrospectiveDemo && <span className="badge badge-soft badge-info">Synthetic · retrospective</span>}
-      <span className="small">{plan.intervention.from} → {plan.intervention.to}</span>
+      <span className="small nowrap">{formatPeriod(plan.intervention.from, plan.intervention.to)}</span>
     </div>
     <p className="experiment-day">Day <strong>{day}</strong> of {PERIOD_DAYS}</p>
     <progress className="progress progress-primary w-full" value={day} max={PERIOD_DAYS} aria-label={`Day ${day} of ${PERIOD_DAYS}`} />
@@ -117,7 +118,7 @@ function ResultSummary({ result }: { result: ExperimentResult }) {
     <details><summary>Counts, missing days and limitations</summary><ul>
       <li>Before: {b.days} days, {b.missingEnergy} without energy, {b.nightsMeetingTarget} already met the target, {b.illnessDays} illness, {b.alcoholPreviousDays} after alcohol, stress median {fmt(b.stressMedian)}.</li>
       <li>During: {i.eligibleDays} eligible days, {i.missingSleep} without recorded sleep, {i.pausedDays} paused, {i.illnessDays} illness, {i.alcoholPreviousDays} after alcohol on target days.</li>
-      <li>Evaluated through {result.evaluatedThrough}.</li>
+      <li>Evaluated through {formatDate(result.evaluatedThrough, true)}.</li>
       {result.limitations.map(l => <li key={l}>{l}</li>)}
     </ul></details>
   </div>;

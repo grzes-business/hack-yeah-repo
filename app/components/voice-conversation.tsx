@@ -3,6 +3,7 @@
 import { MicrophoneIcon, WaveformIcon, StopIcon, MicrophoneSlashIcon, SunHorizonIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { useHealthSession } from "./session";
+import { morningPrompt, pendingDimensions } from "@/lib/checkin/prompt";
 import { useTalkContext } from "./talk-context";
 import type { VoiceContext } from "@/lib/conversation/controller-contracts";
 import { TurnCapture } from "./turn-capture";
@@ -23,6 +24,9 @@ function devWindowHeaders():Record<string,string>{
 }
 const labels: Record<Phase, string> = { idle: "Microphone off", requesting: "Waiting for microphone permission…", connecting: "Connecting voice…", active: "Conversation live", stopping: "Stopping…", failed: "Microphone off · connection ended" };
 
+// Fixed microphone defaults; the settings panel was removed from Talk.
+const VOICE_INPUT: VoiceInputOptions = { microphone: "laptop", sensitivity: "less_sensitive", mode: "press_to_speak" };
+
 export function VoiceConversation() {
  const { session } = useHealthSession();
  return <VoiceSession key={session?.user.id ?? "signed-out"} />;
@@ -37,7 +41,7 @@ function VoiceSession() {
  const [phase, setPhase] = useState<Phase>("idle");
  const [message, setMessage] = useState<string | null>(null);
  const [muted, setMuted] = useState(false);
- const [voiceInput, setVoiceInput] = useState<VoiceInputOptions>({ microphone: "laptop", sensitivity: "less_sensitive", mode:"press_to_speak" });
+ const voiceInput = VOICE_INPUT;
  const [activity,setActivity]=useState<VoiceActivity>("ready");
  const [processing,setProcessing]=useState(false);
  const [voiceOutcomes,setVoiceOutcomes]=useState<Record<string,VoiceOutcome>>({});
@@ -253,8 +257,9 @@ function VoiceSession() {
    const response=await fetch("/api/checkin",{headers:{Authorization:`Bearer ${session.access_token}`,...devHeaders}});
    const body=await response.json();if(!response.ok)throw new Error(body.error);
    if(body.checkin.step.kind!=="ask"){setMessage(body.checkin.step.kind==="complete"?"Morning check-in is complete for today.":"Morning check-in is closed. Open its development controls below to change the test window.");return;}
-   const next:VoiceContext={mode:"morning_checkin",date:body.checkin.localDate,dimension:body.checkin.step.dimension};contextRef.current=next;promptRef.current=body.checkin.step.question;
-   chooseTarget(null);talk.select(next,body.checkin.step.question);
+   // One sentence answers every open dimension; it is captured as an ordinary report.
+   const prompt=morningPrompt(pendingDimensions(body.checkin.answered,body.checkin.skipped));const next:VoiceContext={mode:"report"};contextRef.current=next;promptRef.current=prompt;
+   chooseTarget(null);talk.select(next,prompt);
    if(!busy)await start();
   }catch(failure){setMessage(failure instanceof Error?failure.message:"Morning check-in could not start.");}
  }
@@ -324,16 +329,9 @@ function VoiceSession() {
     <button onClick={() => { setPhase("stopping"); finish(); }} disabled={!busy} className="btn btn-soft"> <StopIcon size={18} aria-hidden="true"/> End call</button>
     <button onClick={() => { transport.current?.mute(!muted); setMuted(v => !v); }} className="btn btn-soft" disabled={phase !== "active"}><MicrophoneSlashIcon size={18} aria-hidden="true"/>{muted ? "Unmute microphone" : "Mute microphone"}</button>
    </div>
-   <details className="voice-settings privacy-detail"><summary>Privacy and data use</summary><p>Your audio is sent to OpenAI. Finalized transcripts are saved privately; this app does not store audio recordings.</p><p className="small">Your saved words are sent to OpenAI to extract predefined observations. Capture status appears below each turn; investigations and dated missing-context questions use the validated application controller.</p>
-   </details>
-   <details className="voice-settings"><summary>Microphone settings</summary><div className="voice-actions">
-    <label>Input mode<select className="select w-full" value={voiceInput.mode} disabled={busy} onChange={event=>setVoiceInput(v=>({...v,mode:event.target.value as VoiceInputOptions["mode"]}))}><option value="press_to_speak">Press to speak</option><option value="continuous">Continuous listening</option></select></label>
-    <label>Microphone type<select className="select w-full" value={voiceInput.microphone} disabled={busy} onChange={event => setVoiceInput(previous => ({ ...previous, microphone:event.target.value as VoiceInputOptions["microphone"] }))}><option value="laptop">Laptop / room microphone</option><option value="headset">Headset / close microphone</option></select></label>
-    <label>Speech detection<select className="select w-full" value={voiceInput.sensitivity} disabled={busy} onChange={event => setVoiceInput(previous => ({ ...previous, sensitivity:event.target.value as VoiceInputOptions["sensitivity"] }))}><option value="less_sensitive">Reduce quiet noise triggers</option><option value="normal">Normal · for quieter speech</option></select></label>
-   </div>
-   <p className="small">If quiet speech is missed, try Normal. Choose your microphone before starting.</p></details>
-   {voiceTarget&&<p>Voice follow-up target selected. Your next clear clarification or correction will refer to that report. <button className="btn btn-primary" onClick={()=>chooseTarget(null)}>Clear target</button></p>}
-   <details className="playback-detail"><summary>Playback controls</summary><audio ref={audio} controls aria-label="Assistant voice playback" /></details>
+
+   {voiceTarget&&<p>Voice follow-up target selected. Your next clear clarification or correction will refer to that report. <button className="btn btn-soft" onClick={()=>chooseTarget(null)}>Clear target</button></p>}
+   {/* Plays the assistant voice; no visible controls. */}<audio ref={audio} className="voice-audio" aria-hidden="true" />
    {!session && <p>Start a private demo session above to use voice.</p>}
    {message && <p role="alert">{message}</p>}
    {(saving||pendingSnapshot.length>0)&&<p role="status">{saving ? "Saving transcript…" : pendingSnapshot.length ? `${pendingSnapshot.length} changes not saved` : "No pending transcript saves"}</p>}
@@ -346,7 +344,7 @@ function VoiceSession() {
    <label>Choose a conversation<select className="select w-full" value={selected ?? ""} disabled={busy} onChange={event => { setTurns([]); setSelected(event.target.value || null); }}><option value="">Select history</option>{conversations.map(c => <option key={c.id} value={c.id}>{new Date(c.startedAt).toLocaleString()} {c.endedAt ? "" : "· end not recorded"}</option>)}</select></label>
    {historyError && <p role="alert">{historyError}</p>}
    {captureHistoryError && <p role="alert">{captureHistoryError}</p>}
-   <button className="btn btn-primary" onClick={() => setHistoryRevision(v => v + 1)} disabled={busy}>Retry history</button>
+   <button className="btn btn-soft" onClick={() => setHistoryRevision(v => v + 1)} disabled={busy}>Retry history</button>
    <p className="small">History shows up to 100 conversations and 500 turns per conversation. Unsaved recovery copies stay in this tab’s session storage when available; closing the tab can lose them.</p>
    {!displayed.length && <p>No finalized transcript to show yet.</p>}
    <ol className="voice-transcript">{displayed.map(turn => <li key={turn.id}><strong>{turn.role === "user" ? "You" : "Assistant"}</strong><p>{turn.transcript}</p><span className="small">{new Date(turn.occurredAt).toLocaleTimeString()} · {pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id) ? "Not saved" : "Saved"}</span>{turn.role === "user" && <><div className="voice-result">{voiceOutcomes[turn.id]?.reply&&<p><strong>App feedback for this turn:</strong> {voiceOutcomes[turn.id].reply}</p>}{voiceOutcomes[turn.id]?.disposition==="ignore"&&<p className="small">No reply or observation: non-report input.</p>}{voiceOutcomes[turn.id]?.disposition==="followup"&&<p className="small">This turn was applied to the selected original report.</p>}{voiceErrors[turn.id]&&<p role="alert">{voiceErrors[turn.id]}</p>}{!turn.id.startsWith("capture:")&&!turn.id.startsWith("demo:")&&voiceHistoryFor===selected&&(!voiceOutcomes[turn.id]||voiceErrors[turn.id])&&<button className="btn btn-primary" disabled={processing||pendingSnapshot.some(v=>v.kind==="turn"&&v.value.id===turn.id)} onClick={()=>queueVoice(turn)}>Process / retry this saved turn</button>}{captures[turn.id]&&!captures[turn.id].pending&&<button className="btn btn-primary" onClick={()=>chooseTarget(turn.id,true)} disabled={processing}>Use this report for voice clarification / correction</button>}{voiceOutcomes[turn.id]?.retrieval&&<ul>{voiceOutcomes[turn.id].retrieval!.events.map(e=><li key={e.id}>{new Intl.DateTimeFormat(undefined,{timeZone:voiceOutcomes[turn.id].retrieval!.timeZone,dateStyle:"medium"}).format(new Date(e.occurredAt))}: {observationText(e,"en")} · {e.id.startsWith("demo:")?"Synthetic demo":"Conversation report"}</li>)}</ul>}</div>{voiceOutcomes[turn.id]?.questions?.loop?.question&&<p><strong>Selected context question:</strong> {voiceOutcomes[turn.id].questions!.loop!.question!.text} · <a href="/evidence">Open the current question in Evidence</a></p>}{voiceOutcomes[turn.id]?.investigation&&<details><summary>Investigation evidence and limits</summary><p>Evidence snapshot for {voiceOutcomes[turn.id].investigation!.bundle.dailyFeatures.date}. Historical associations do not prove a cause.</p><ul>{voiceOutcomes[turn.id].investigation!.explanation.facts.map(fact=><li key={fact.id}>{fact.text}</li>)}</ul><a href="/evidence">Open Evidence</a></details>}{voiceOutcomes[turn.id]?.questionAnswer?<p className="small">This answer was processed through the missing-context pipeline. See Evidence and Timeline for its confirmed status.</p>:<TurnCapture managed voiceOnly turn={turn} saved={!pendingSnapshot.some(item => item.kind === "turn" && item.value.id === turn.id)} autoReady={false} record={captures[turn.id] ?? null} onRecord={record => setCaptures(previous => ({ ...previous, [record.rootTurnId]: record }))} />}</>}</li>)}</ol>

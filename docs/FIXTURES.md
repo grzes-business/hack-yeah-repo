@@ -67,3 +67,11 @@ The interval migration is applied to the current hosted project. On a fresh proj
 ## Stage 6 derived rows
 
 Demo daily building is an explicit `demo` scope (`daily-v1:demo`), separate from personal observations. Fixture upsert/removal and cascaded event removal advance input generation through database triggers; previous derived rows become stale and disappear from current reads. Rebuild the chosen date range after changing samples; there is no automatic background rebuild. Removed observations produce unknown states, not zeros. See [DAILY-FEATURES](DAILY-FEATURES.md).
+
+## Sample voice reports in personal history (owner decision, 2026-10-04)
+
+For demos with real Apple Health data, the owner can opt in to **sample reports**: 30 days of fictional subjective reports (energy, mood, soreness, stress, alcohol, caffeine, late meal, illness, pain, workout RPE) ending yesterday, saved in personal history next to real wearable data. They reuse the fixed scenario generator under the `sample:v1:<seed>:<zone>:` namespace (`lib/demo/sample-reports.ts`). Rules:
+
+- Values come from the scenario, never from the owner's real measurements, so no relationship with real data is manufactured.
+- Every surface labels them: transcripts start “[Sample report; fictional…]”, History shows “Sample report (fictional)” with its own filter, Today shows “Sample report · fictional”.
+- Only the `demo:` prefix routes records to the synthetic scope; `sample:` records are personal-scope inputs and therefore appear in personal evidence. One tap (“Remove sample reports”) deletes the conversations, cascading to turns and events; real data is untouched.

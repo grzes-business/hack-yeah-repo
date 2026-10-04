@@ -14,6 +14,15 @@ export const DEMO_PREFIX = `demo:${DEMO_VERSION}:`;
 export function demoNamespace(options: ResolvedDemoOptions) {
   return `${DEMO_PREFIX}${options.seed}:${encodeURIComponent(options.timeZone)}:`;
 }
+/**
+ * Fictional voice reports placed in *personal* history next to real wearable
+ * data (owner opt-in). The `sample:` prefix keeps them identifiable and removable;
+ * only the `demo:` prefix routes records to the synthetic scope.
+ */
+export const SAMPLE_PREFIX = `sample:${DEMO_VERSION}:`;
+export function sampleNamespace(options: ResolvedDemoOptions) {
+  return `${SAMPLE_PREFIX}${options.seed}:${encodeURIComponent(options.timeZone)}:`;
+}
 
 // Independent keyed randomness makes overlapping windows reproduce the same day.
 function random(seed: number, date: string, channel: string): number {

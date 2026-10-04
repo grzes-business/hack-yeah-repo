@@ -51,7 +51,7 @@ export function ActiveQuestions({input}:{input:InvestigationInput}){
    {view?.fresh&&<><h3>Before / after</h3><p>Generations: {loop.before.inputGeneration} → {loop.current.inputGeneration}. The original investigation is a historical snapshot; the refreshed evidence is current at the server check.</p>
     {comparison&&<><p>{comparison.historicalChanged?"Historical calculations changed. Compare the counts and effects below.":"Historical association strength, effects and sample sizes are unchanged. Filling current context does not establish a cause."}</p>
      {comparison.changes.length?<ul>{comparison.changes.map(change=><li key={`${change.feature}:${change.date}`}>{change.date} · {change.feature}: {JSON.stringify(change.before)} → {JSON.stringify(change.after)}</li>)}</ul>:<p>No daily value changed.</p>}</>}
-    <details><summary>Historical comparisons</summary><pre style={{whiteSpace:"pre-wrap"}}>{JSON.stringify({before:loop.before.bundle.relationships,after:loop.current.bundle.relationships},null,2)}</pre></details>
+    <details><summary>Historical comparisons</summary><pre>{JSON.stringify({before:loop.before.bundle.relationships,after:loop.current.bundle.relationships},null,2)}</pre></details>
     <h3>Refreshed evidence</h3><ul>{loop.current.explanation.facts.map(fact=><li key={fact.id}>{fact.text}</li>)}</ul></>}
   </>}
  </section>;

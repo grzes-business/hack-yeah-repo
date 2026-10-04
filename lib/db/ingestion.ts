@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { MetricSampleSchema, SubjectiveEventSchema } from "../domain";
-import { DemoOptionsSchema, demoNamespace, type DemoOptions } from "../demo/scenario";
+import { DemoOptionsSchema, demoNamespace, sampleNamespace, type DemoOptions } from "../demo/scenario";
 import { HealthDataSourceRequestSchema, parseHealthDataSourceResponse, type HealthDataSourceRequest } from "../health/data-source";
 import { ConversationSchema, ConversationTurnSchema } from "./records";
 import type { Database, Json, Row } from "./database.types";
@@ -114,6 +114,15 @@ export function createIngestionRepository(client: SupabaseClient<Database>) {
       }
       if (new Set(events.map(v => v.id)).size !== events.length) throw new Error("History changed during read; retry.");
       return events;
+    },
+    /** Removes fictional sample reports (conversations cascade to turns/events); real data is untouched. */
+    async removeSampleReports(input: DemoOptions) {
+      const options = DemoOptionsSchema.parse(input), id = await userId();
+      const prefix = likePrefix(sampleNamespace(options));
+      fail((await client.from("conversations").delete().eq("user_id", id).like("id", prefix)).error);
+      const left = await client.from("subjective_events").select("id").eq("user_id", id).like("id", prefix).limit(1);
+      fail(left.error);
+      if (left.data?.length) throw new Error("Sample report removal was incomplete. Retry.");
     },
     async removeDemoHistory(input: DemoOptions) {
       const options = DemoOptionsSchema.parse(input), id = await userId();

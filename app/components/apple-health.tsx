@@ -5,6 +5,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Metrics, MetricRegistry, type MetricSample } from "@/lib/domain";
 import { APPLE_READ_TYPES, AppleHealthDataSource, type AppleHealthClient, type AppleMetricStatus } from "@/lib/health/apple-health";
 import { ingestHealthData } from "@/lib/health/ingestion";
+import { SampleReports } from "./sample-reports";
 import { useHealthSession } from "./session";
 
 /** History window read on each sync; re-syncing the same days is idempotent. */
@@ -94,5 +95,6 @@ export function AppleHealthSync() {
       <ul className="small">{result.report.map(r => <li key={r.metric}>{MetricRegistry[r.metric].label}: {r.status === "records" ? `${r.count} ${describe.records}` : describe[r.status]}</li>)}</ul>
       <p className="small">iOS does not reveal whether reading was declined, so missing data stays unknown rather than zero. Change access in Settings → Health → Data Access.</p>
     </div>}
+    {result && <SampleReports compact />}
   </section>;
 }

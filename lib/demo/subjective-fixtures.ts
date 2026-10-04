@@ -1,10 +1,10 @@
 import { SubjectiveEventSchema, SubjectiveEventRegistry, type SubjectiveEvent, type SubjectiveEventType } from "../domain";
 import { ConversationSchema, ConversationTurnSchema, type Conversation, type ConversationTurn } from "../db/records";
-import { demoNamespace, DemoOptionsSchema, localInstant, scenarioDays, type DemoOptions } from "./scenario";
+import { demoNamespace, DemoOptionsSchema, localInstant, sampleNamespace, scenarioDays, type DemoOptions } from "./scenario";
 
-export function createSubjectiveFixtures(input: DemoOptions) {
+export function createSubjectiveFixtures(input: DemoOptions, kind: "demo" | "sample" = "demo") {
   const options = DemoOptionsSchema.parse(input);
-  const namespace = demoNamespace(options);
+  const namespace = kind === "sample" ? sampleNamespace(options) : demoNamespace(options);
   const conversations: Conversation[] = [], turns: ConversationTurn[] = [], events: SubjectiveEvent[] = [];
   for (const day of scenarioDays(options)) {
     const capturedAt = localInstant(day.date, 22, 0, options.timeZone);
@@ -30,7 +30,7 @@ export function createSubjectiveFixtures(input: DemoOptions) {
     push("pain", { present: false, location: null, intensity: 0 }, 21);
     if (day.workoutRpe !== null) push("workout_rpe", day.workoutRpe, 20, `${namespace}${day.date}:workout`);
     conversations.push(ConversationSchema.parse({ id: conversationId, mode: "capture", startedAt: capturedAt, endedAt: capturedAt }));
-    const transcript = "[Synthetic demo fixture; not recorded speech] " + dayEvents.map(event =>
+    const transcript = (kind === "sample" ? "[Sample report; fictional, not recorded speech] " : "[Synthetic demo fixture; not recorded speech] ") + dayEvents.map(event =>
       `${SubjectiveEventRegistry[event.type].label}: ${JSON.stringify(event.value)}`).join("; ");
     turns.push(ConversationTurnSchema.parse({ id: turnId, conversationId, role: "user", transcript, occurredAt: capturedAt }));
     events.push(...dayEvents);

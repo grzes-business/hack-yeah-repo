@@ -94,3 +94,12 @@ Production build (`next start`) in the Claude desktop in-app Chromium, viewport 
 - Keyboard: skip link appears on first Tab; 3px visible focus outline on header, dock and controls.
 - **Contrast (resolved by the Grove theme):** with stock daisyUI, stock dark theme primary buttons and links 4.13:1 (needs 4.5:1); light-theme soft success/info badges (“Private session”, “Synthetic demo”) about 2:1. The custom Grove theme (all pairs ≥ 4.5:1) and 72% muted text resolve these.
 - Not performed: populated-account screens, the Today → Talk → Insights journey, failure/sparse rehearsal, real device, microphone.
+
+## Owner revisions — 2026-10-04 (post-device review)
+
+- Talk: privacy, microphone settings and playback controls were removed from the screen. Microphone defaults are fixed (press to speak, far-field noise reduction, reduced sensitivity); the assistant audio element stays hidden.
+- Morning check-in: one spoken sentence answers every open dimension (“In one sentence: energy, soreness and mood from 0 to 10, and are you feeling ill?”). It is captured as an ordinary report; dimension chips tick off from accepted observations. The Talk shortcut uses the same prompt. Step-by-step voice prompting is no longer offered in the UI.
+- Today: metric cards show the value and a plain source label (Apple Health / Voice report / Sample report); raw provenance JSON was removed (record-level provenance stays in History).
+- Insights: “How today compares” lists each metric with today vs usual (backend median), the backend relative difference, a chip from backend anomalies (“Typical for you” / “Unusually high/low”) and a bar positioned by the backend robust z-score (capped ±3). Patterns show only evaluated relationships; insufficient ones collapse into one “not enough of your data yet” line.
+- Display rounding (`lib/format.ts`): durations as h/min, steps/kcal/ms/bpm as integers, ratings to one decimal, periods as short dates. Stored and evidence values are unchanged.
+- Layout audit: no horizontal overflow, clipped labels, sub-44px targets or touching boxes at 320–430 px in both themes (automated check over all routes with sections expanded).

@@ -37,7 +37,7 @@ function InvestigationInspector({zone}:{zone:string}){
   {saved&&!current&&!busy&&<p>The selected date, outcome or history changed. Run a fresh investigation.</p>}
   {current&&<><h3>What the evidence says</h3><ul>{current.explanation.facts.map(fact=><li key={fact.id}>{fact.text}</li>)}</ul>
    {current.explanation.source==="deterministic_fallback"&&<p className="small">The explanation provider was unavailable or its response was invalid. These statements are rendered directly from the validated evidence.</p>}
-   <details><summary>Structured evidence and provenance</summary><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(current.bundle,null,2)}</pre></details>
+   <details><summary>Structured evidence and provenance</summary><pre>{JSON.stringify(current.bundle,null,2)}</pre></details>
   </>}
  </section><ActiveQuestions input={{mode:"investigate",date,outcome,scope,language:"en"}}/></>;
 }
