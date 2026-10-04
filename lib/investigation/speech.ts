@@ -12,13 +12,18 @@ const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
  * nothing is calculated here. `results` are the asked outcome first, then any
  * outcome followed because it was flagged unusual today.
  */
-export function answerSpeech(results: InvestigationResult[], question?: string) {
+export function answerSummary(results: InvestigationResult[]) {
   const [primary] = results, parts: string[] = [];
   if (primary.scope === "demo") parts.push("This is synthetic demo data.");
   const today = primary.bundle.dailyFeatures.features[primary.bundle.outcome];
   if (today.status === "known" && typeof today.value === "number") parts.push(`Your ${lower(FeatureRegistry[primary.bundle.outcome].label)} today is ${formatValue(primary.bundle.outcome, today.value)}.`);
   for (const a of primary.bundle.currentAnomalies.slice(0, 2)) {
     parts.push(`Your ${lower(FeatureRegistry[a.metric].label)} was ${formatValue(a.metric, a.value)}, ${a.classification === "unusually_low" ? "well below" : "well above"} your usual ${formatValue(a.metric, a.baseline)}.`);
+  }
+  // Today's known values of the outcome's registered same-day factors, when not already flagged above.
+  for (const d of Object.values(RelationshipRegistry).filter(r => r.outcome === primary.bundle.outcome && r.lagDays === 0)) {
+    const f = primary.bundle.dailyFeatures.features[d.factor];
+    if (f.status === "known" && typeof f.value === "number" && !primary.bundle.currentAnomalies.some(a => a.metric === d.factor)) parts.push(`Your ${lower(FeatureRegistry[d.factor].label)} was ${formatValue(d.factor, f.value)}.`);
   }
   const relationships = results.flatMap(r => r.bundle.relationships).filter(r => r.status === "evaluated" && STRENGTH[r.evidence] >= 2)
     .sort((a, b) => STRENGTH[b.evidence] - STRENGTH[a.evidence]);
@@ -27,9 +32,13 @@ export function answerSpeech(results: InvestigationResult[], question?: string) 
     const d = RelationshipRegistry[best.relationshipId];
     parts.push(`In your history, ${lower(FeatureRegistry[d.factor].label)}${d.lagDays ? " the day before" : ""} and ${lower(FeatureRegistry[d.outcome].label)} show ${LABEL[best.evidence]}, not proof of a cause.`);
   }
+  else parts.push("Your history doesn't have enough overlapping days yet to compare patterns.");
   if (parts.length === (primary.scope === "demo" ? 1 : 0)) parts.push("Nothing stands out in your recorded data yet.");
-  parts.push(question ?? "I have no open question for that day; Insights shows the details.");
   return parts.join(" ");
+}
+
+export function answerSpeech(results: InvestigationResult[], question?: string) {
+  return `${answerSummary(results)} ${question ?? "I have no open question for that day; Insights shows the details."}`;
 }
 
 /** Backwards-compatible single-result form. */
